@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 University Corporation for Atmospheric Research/Unidata
+ * Copyright (c) 2025 John L. Caron
  * See LICENSE for license information.
  */
 
@@ -95,7 +95,7 @@ public class ViewerMain extends JPanel {
 
     // Popup info window
     this.infoTA = new TextHistoryPane(true);
-    this.infoWindow = new IndependentWindow("Details", BAMutil.getImage("electionguard-logo.png"), new JScrollPane(infoTA));
+    this.infoWindow = new IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), new JScrollPane(infoTA));
     Rectangle bounds = (Rectangle) prefs.getBean(ViewerMain.FRAME_SIZE, new Rectangle(200, 50, 500, 700));
     this.infoWindow.setBounds(bounds);
     AbstractAction infoAction = new AbstractAction() {
@@ -160,10 +160,11 @@ public class ViewerMain extends JPanel {
     }
 
     // put UI in a JFrame
+    JFrame.setDefaultLookAndFeelDecorated(true);
     frame = new JFrame("Rlauxe Viewer");
     ui = new ViewerMain(prefs);
 
-    frame.setIconImage(BAMutil.getImage("electionguard-logo.png"));
+    frame.setIconImage(BAMutil.getImage("rlauxe-logo.png"));
     frame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
         if (!done) {
