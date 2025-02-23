@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2019 University Corporation for Atmospheric Research/Unidata
+ * Copyright (c) 2025 John L. Caron
  * See LICENSE for license information.
  */
 
