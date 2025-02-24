@@ -98,6 +98,10 @@ public class TextHistoryPane extends JPanel {
     fileChooser = new FileManager(null, null, null, null);
   }
 
+  public void setFontSize(float size) {
+    ta.setFont(ta.getFont().deriveFont(size));
+  }
+
   /**
    * Append this line to the bottom of the JTextArea.
    * A newline is added and JTextArea is scrolled to bottom;

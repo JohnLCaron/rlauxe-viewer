@@ -20,6 +20,7 @@ import ucar.util.prefs.PreferencesExt;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.Objects;
 import java.util.TreeMap;
 
@@ -38,8 +39,9 @@ public class AuditTable extends JPanel {
 
     private String auditRecordLocation = "none";
     private AuditConfig auditConfig;
+    private int totalMvrs = 0;
 
-    public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow) {
+    public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
 
         contestTable = new BeanTable<>(ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false,
@@ -68,6 +70,7 @@ public class AuditTable extends JPanel {
                 "AssertionRound", "AuditRoundResult", null);
         assertionRoundTable.addPopupOption("Show AuditRoundResult", assertionRoundTable.makeShowAction(infoTA, infoWindow,
                 bean -> bean.toString()));
+        setFontSize(fontSize);
 
         // layout of tables
         split2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, assertionTable);
@@ -76,6 +79,12 @@ public class AuditTable extends JPanel {
         split3.setDividerLocation(prefs.getInt("splitPos3", 200));
         setLayout(new BorderLayout());
         add(split3, BorderLayout.CENTER);
+    }
+
+    public void setFontSize(float size) {
+        contestTable.setFontSize(size);
+        assertionTable.setFontSize(size);
+        assertionRoundTable.setFontSize(size);
     }
 
     void setSelected(String wantRecordDir) {
@@ -91,7 +100,7 @@ public class AuditTable extends JPanel {
             var auditConfigResult = readAuditConfigJsonFile(publisher.auditConfigFile());
             this.auditConfig = unwrap(auditConfigResult);
 
-            var totalMvrs = 0;
+            this.totalMvrs = 0;
             java.util.Map<Integer, ContestUnderAudit> contests = new TreeMap<>(); // sorted
             for (int roundIdx = 1; roundIdx <= publisher.rounds(); roundIdx++) {
                 //println("Round $roundIdx ------------------------------------")
@@ -117,6 +126,11 @@ public class AuditTable extends JPanel {
 
 
     //////////////////////////////////////////////////////////////////
+    ///
+    void showInfo(Formatter f) {
+        f.format("%s%n", this.auditConfig);
+        f.format(" total Mvrs = %d%n", this.totalMvrs);
+    }
 
     void setSelectedContest(ContestBean contestBean) {
         java.util.List<AssertionBean> beanList = new ArrayList<>();

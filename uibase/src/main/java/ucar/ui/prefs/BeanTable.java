@@ -14,10 +14,8 @@ import ucar.ui.table.HidableTableColumnModel;
 import ucar.ui.table.TableAligner;
 import ucar.ui.table.TableAppearanceAction;
 import ucar.ui.table.UndoableRowSorter;
-import ucar.ui.widget.IndependentWindow;
-import ucar.ui.widget.MultilineTooltip;
+import ucar.ui.widget.*;
 import ucar.ui.widget.PopupMenu;
-import ucar.ui.widget.TextHistoryPane;
 import ucar.util.prefs.PreferencesExt;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -30,6 +28,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+
+import static ucar.ui.widget.FontUtil.getStandardFontSize;
 
 /**
  * A JTable that uses JavaBeans to store the data.
@@ -254,16 +254,10 @@ public class BeanTable<T> extends JPanel {
 
   }
 
-  /**
-   * Add listener: ListSelectionEvent sent when a new row is selected
-   */
   public void addListSelectionListener(ListSelectionListener l) {
     listenerList.add(javax.swing.event.ListSelectionListener.class, l);
   }
 
-  /**
-   * Remove listener
-   */
   public void removeListSelectionListener(ListSelectionListener l) {
     listenerList.remove(javax.swing.event.ListSelectionListener.class, l);
   }
@@ -300,8 +294,6 @@ public class BeanTable<T> extends JPanel {
 
   /**
    * Get the currently selected bean, or null if none selected.
-   *
-   * @return the currently selected bean, or null if none selected
    */
   @Nullable
   public T getSelectedBean() {
@@ -404,8 +396,10 @@ public class BeanTable<T> extends JPanel {
     return jtable;
   }
 
-  public void setFontSize(int size) {
-    jtable.setFont(jtable.getFont().deriveFont((float) size));
+  public void setFontSize(float size) {
+    jtable.setFont(jtable.getFont().deriveFont(size));
+    jtable.setRowHeight((int) size+4);
+    refresh();
   }
 
   /**

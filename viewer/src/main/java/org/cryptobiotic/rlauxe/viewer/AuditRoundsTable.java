@@ -39,7 +39,7 @@ public class AuditRoundsTable extends JPanel {
     private String auditRecordLocation = "none";
     private AuditConfig auditConfig;
 
-    public AuditRoundsTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow) {
+    public AuditRoundsTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
 
         auditRoundTable = new BeanTable<>(AuditStateBean.class, (PreferencesExt) prefs.node("auditStateTable"), false,
@@ -79,6 +79,7 @@ public class AuditRoundsTable extends JPanel {
                 "AssertionRound", "AuditRoundResult", null);
         assertionRoundTable.addPopupOption("Show AuditRoundResult", assertionRoundTable.makeShowAction(infoTA, infoWindow,
                 bean -> bean.toString()));
+        setFontSize(fontSize);
 
         // layout of tables
         split1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, auditRoundTable, contestTable);
@@ -89,6 +90,13 @@ public class AuditRoundsTable extends JPanel {
         split3.setDividerLocation(prefs.getInt("splitPos3", 200));
         setLayout(new BorderLayout());
         add(split3, BorderLayout.CENTER);
+    }
+
+    public void setFontSize(float size) {
+        auditRoundTable.setFontSize(size);
+        contestTable.setFontSize(size);
+        assertionTable.setFontSize(size);
+        assertionRoundTable.setFontSize(size);
     }
 
     void setSelected(String wantRecordDir) {

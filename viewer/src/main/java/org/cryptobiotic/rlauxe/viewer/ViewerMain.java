@@ -7,24 +7,26 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import ucar.ui.prefs.ComboBox;
 import ucar.ui.prefs.Debug;
-import ucar.ui.widget.BAMutil;
-import ucar.ui.widget.FileManager;
-import ucar.ui.widget.IndependentWindow;
-import ucar.ui.widget.TextHistoryPane;
+import ucar.ui.widget.*;
 import ucar.util.prefs.PreferencesExt;
 import ucar.util.prefs.XMLStore;
 
 import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.Formatter;
+import java.util.HashSet;
+
+import static ucar.ui.widget.FontUtil.getStandardFontSize;
 
 /** ElectionRecord Viewer main program. */
 public class ViewerMain extends JPanel {
   public static final String FRAME_SIZE = "FrameSize";
+  public static final String FONT_SIZE = "FontSize";
 
   private static JFrame frame;
   private static PreferencesExt prefs;
@@ -33,6 +35,7 @@ public class ViewerMain extends JPanel {
   private static boolean done;
 
   private final JPanel buttPanel = new JPanel();
+  private final FontUtil.StandardFont fontu;
 
   TextHistoryPane infoTA;
   IndependentWindow infoWindow;
@@ -48,11 +51,11 @@ public class ViewerMain extends JPanel {
   private final AuditTable auditPanel;
   private final AuditRoundsTable auditRoundsPanel;
 
-  public ViewerMain(PreferencesExt prefs) {
+  public ViewerMain(PreferencesExt prefs, float fontSize) {
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow);
-    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow);
+    auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
+    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize);
 
     tabbedPane.addTab("Audit", auditPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
@@ -81,6 +84,9 @@ public class ViewerMain extends JPanel {
       if (tab == 0) auditPanel.setSelected(this.auditRecordDir);
       if (tab == 1) auditRoundsPanel.setSelected(this.auditRecordDir);
     });
+
+    ///////////////////////////////////////////////////////////
+    // ButtPanel
     AbstractAction fileAction = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -95,6 +101,8 @@ public class ViewerMain extends JPanel {
 
     // Popup info window
     this.infoTA = new TextHistoryPane(true);
+    infoTA.setFontSize(fontSize);
+
     this.infoWindow = new IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), new JScrollPane(infoTA));
     Rectangle bounds = (Rectangle) prefs.getBean(ViewerMain.FRAME_SIZE, new Rectangle(200, 50, 500, 700));
     this.infoWindow.setBounds(bounds);
@@ -102,12 +110,32 @@ public class ViewerMain extends JPanel {
       public void actionPerformed(ActionEvent e) {
         Formatter f = new Formatter();
         showInfo(f);
+        infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
         infoTA.setText(f.toString());
         infoWindow.show();
       }
     };
     BAMutil.setActionProperties(infoAction, "Information", "info on Election Record", false, 'I', -1);
     BAMutil.addActionToContainer(buttPanel, infoAction);
+
+    fontu = FontUtil.getStandardFont((int) fontSize);
+    AbstractAction incrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts(fontu.incrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(incrFontAction, "FontIncr", "Increase Font Size", false, '+', -1);
+    BAMutil.addActionToContainer(buttPanel, incrFontAction);
+
+    AbstractAction decrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts(fontu.decrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(decrFontAction, "FontDecr", "Decrease Font Size", false, '-', -1);
+    BAMutil.addActionToContainer(buttPanel, decrFontAction);
+
+    ////////////////////////////////////////////////////////////////
 
     this.topPanel = new JPanel(new BorderLayout());
     this.topPanel.add(new JLabel("Audit Record Directory:"), BorderLayout.WEST);
@@ -119,6 +147,17 @@ public class ViewerMain extends JPanel {
   }
 
   void showInfo(Formatter f) {
+    auditPanel.showInfo(f);
+  }
+
+  // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
+  // derives a new font with the target point size, , and then puts that key and new font in UIManager.
+  // Afterwards, the code calls SwingUtilities.updateComponentTreeUI() on the frame, and then packs the frame.
+  // I believe you need to update the UIManager with a FontUIResource, not just a Font.
+  void resizeFonts(float fontSize) {
+    auditPanel.setFontSize(fontSize);
+    auditRoundsPanel.setFontSize(fontSize);
+    infoTA.setFontSize(fontSize);
   }
 
   public void exit() {
@@ -131,10 +170,11 @@ public class ViewerMain extends JPanel {
     if (infoWindow != null) {
       prefs.putBeanObject(ViewerMain.FRAME_SIZE, infoWindow.getBounds());
     }
-    prefs.putBeanObject("InfoWindowBounds", infoWindow.getBounds());
+    // prefs.putBeanObject("InfoWindowBounds", infoWindow.getBounds());
 
     Rectangle bounds = frame.getBounds();
     prefs.putBeanObject(FRAME_SIZE, bounds);
+    prefs.putBean(FONT_SIZE, fontu.getFontSize());
     try {
       store.save();
     } catch (IOException ioe) {
@@ -146,6 +186,32 @@ public class ViewerMain extends JPanel {
   }
 
   ///////////////////////\///////////////////////
+
+  static void showFonts(Formatter f) {
+    UIDefaults uid = UIManager.getLookAndFeelDefaults();
+    var copyKeys = new HashSet<Object>(uid.keySet());
+    for (Object key : copyKeys) { // concurrent modification
+      var what = uid.get(key);
+      if (what instanceof FontUIResource) {
+        f.format("key=%s class=%s what=%s class=%s%n", key, key.getClass(), what, what.getClass());
+      }
+    }
+  }
+
+  // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
+  // derives a new font with the target point size, , and then puts that key and new font in UIManager.
+  // Afterwards, the code calls SwingUtilities.updateComponentTreeUI() on the frame, and then packs the frame.
+  // I believe you need to update the UIManager with a FontUIResource, not just a Font.
+  static void resizeDefaultFonts(float fontSize) {
+    UIDefaults uid = UIManager.getLookAndFeelDefaults();
+    var copyKeys = new HashSet<Object>(uid.keySet());
+    for (Object key : copyKeys) { // concurrent modification
+      var what = uid.get(key);
+      if (what instanceof FontUIResource) {
+        uid.put(key, new FontUIResource(((FontUIResource) what).deriveFont(fontSize)));
+      }
+    }
+  }
 
   public static void main(String[] args) {
 
@@ -159,10 +225,14 @@ public class ViewerMain extends JPanel {
       System.out.println("XMLStore Creation failed " + e);
     }
 
-    // put UI in a JFrame
-    JFrame.setDefaultLookAndFeelDecorated(true);
+    var fontSize = (Float) prefs.getBean(ViewerMain.FONT_SIZE, 12.0f); // getFloat() ??
+    ucar.ui.widget.FontUtil.init();
+    resizeDefaultFonts(fontSize);
+
+      // put UI in a JFrame
+    // JFrame.setDefaultLookAndFeelDecorated(true);
     frame = new JFrame("Rlauxe Viewer");
-    ui = new ViewerMain(prefs);
+    ui = new ViewerMain(prefs, fontSize);
 
     frame.setIconImage(BAMutil.getImage("rlauxe-logo.png"));
     frame.addWindowListener(new WindowAdapter() {
