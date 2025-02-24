@@ -4,6 +4,7 @@
  */
 package ucar.ui.widget;
 
+import javax.swing.*;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -21,7 +22,7 @@ import java.awt.Toolkit;
  * @author John Caron
  */
 public class FontUtil {
-  private static final boolean debug = false;
+  private static final boolean debug = true;
 
   private static final int MAX_FONTS = 15;
   private static final int fontType = Font.PLAIN;
@@ -34,7 +35,7 @@ public class FontUtil {
 
   private static boolean isInit;
 
-  private static void init() {
+  public static void init() {
     if (isInit)
       return;
     initFontFamily("SansSerif", stdFont, stdMetrics);
@@ -51,6 +52,15 @@ public class FontUtil {
       if (debug)
         System.out.println("TextSymbol font " + fonts[i] + " " + fontSize + " " + fontMetrics[i].getAscent());
     }
+  }
+
+  private static float defaultFontSize = 12.0f;
+  public static float getStandardFontSize() {
+    if (defaultFontSize == 0.0) {
+      var font = UIManager.getLookAndFeelDefaults().getFont("defaultFont");
+      if (font != null) defaultFontSize = font.getSize2D();
+    }
+    return defaultFontSize;
   }
 
   // gets largest font smaller than pixel_height
@@ -82,8 +92,8 @@ public class FontUtil {
       return fonts[currFontNo];
     }
 
-    public int getFontHeight() {
-      return height;
+    public float getFontSize() {
+      return getFont().getSize2D();
     }
 
     /** increment the font size one "increment" */

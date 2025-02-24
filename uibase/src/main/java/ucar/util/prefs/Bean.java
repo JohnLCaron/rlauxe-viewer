@@ -14,7 +14,6 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 class Bean {
-
   private final Object o; // the wrapped object
   private BeanParser p; // the bean parser (shared for all beans of same class)
 
@@ -28,12 +27,22 @@ class Bean {
       throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     String className = atts.getValue("class");
     Class<?> clazz = Class.forName(className);
-    try {
-      o = clazz.getDeclaredConstructor().newInstance();
-      p = BeanParser.getParser(clazz);
-      p.readProperties(o, atts);
-    } catch (InvocationTargetException | NoSuchMethodException e) {
-      throw new RuntimeException(e);
+    if (clazz == Float.class) {
+      o = Float.valueOf(atts.getValue("value"));
+    } else if (clazz == Double.class) {
+      o = Double.valueOf(atts.getValue("value"));
+    } else if (clazz == Integer.class) {
+      o = Integer.valueOf(atts.getValue("value"));
+    } else if (clazz == Long.class) {
+    o = Long.valueOf(atts.getValue("value"));
+    } else {
+      try {
+        o = clazz.getDeclaredConstructor().newInstance();
+        p = BeanParser.getParser(clazz);
+        p.readProperties(o, atts);
+      } catch (InvocationTargetException | NoSuchMethodException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -167,6 +176,9 @@ class Bean {
         } catch (InvocationTargetException | IllegalAccessException e) {
           e.printStackTrace();
         }
+      }
+      if (properties.values().isEmpty()) {
+        out.print("value ='" + bean + "' ");
       }
     }
 
