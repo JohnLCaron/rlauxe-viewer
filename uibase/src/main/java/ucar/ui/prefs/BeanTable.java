@@ -29,15 +29,14 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 
-import static ucar.ui.widget.FontUtil.getStandardFontSize;
-
 /**
  * A JTable that uses JavaBeans to store the data.
  * <p/>
  * The columns of the JTable are the Properties of the Javabean, found through introspection.
  * <p/>
- * The properties may be editable if they have type primitive or String. and you list
- * the editable properties in a static method editableProperties() in the bean, eg :
+ * The properties may be editable if they have type primitive or String, and you list
+ * the editable properties in a static method editableProperties() in the bean.
+ * You must also have a setXXX() method on the Bean.
  * 
  * <pre>
  * static public String editableProperties() {
@@ -45,8 +44,7 @@ import static ucar.ui.widget.FontUtil.getStandardFontSize;
  * }
  * </pre>
  * 
- * or as an instance method with a no parameter constructor
- * 
+ * or as an instance method with a no parameter constructor:
  * <pre>
  * MyClass() {}
  * 
@@ -56,15 +54,13 @@ import static ucar.ui.widget.FontUtil.getStandardFontSize;
  * </pre>
  * <p/>
  * You may hide properties by listing them in a static method hiddenProperties() in the bean, eg :
- * 
  * <pre>
  * static public String hiddenProperties() {
  *   return "hideThisProperty DDDirectory";
  * }
  * </pre>
  * 
- * * or as an instance method with a no parameter constructor
- * 
+ * or as an instance method with a no parameter constructor, then you need to add innerbean in the constructor.
  * <pre>
  * MyClass() {}
  * 
@@ -91,6 +87,7 @@ public class BeanTable<T> extends JPanel {
 
   protected ArrayList<T> beans;
   protected TableBeanModel model;
+  JCheckBox boolCellEditor;
 
   protected boolean debug, debugStore, debugBean, debugSelected;
 
@@ -121,6 +118,8 @@ public class BeanTable<T> extends JPanel {
     this.beanClass = bc;
     this.store = pstore;
     this.innerbean = bean;
+    this.boolCellEditor = new JCheckBox();
+    this.boolCellEditor.setIcon(new SimpleCheckboxStyle(24));
 
     beans = (store != null) ? (ArrayList<T>) store.getBean("beanList", new ArrayList()) : new ArrayList<>();
     model = new TableBeanModel(beanClass);
@@ -170,20 +169,21 @@ public class BeanTable<T> extends JPanel {
     jtable = new JTable(model, tcm);
     jtable.setRowSorter(new UndoableRowSorter<>(model));
 
-    // jtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); default = multiple
-    jtable.setDefaultRenderer(java.util.Date.class, new DateRenderer());
+
 
     ToolTipManager.sharedInstance().registerComponent(jtable);
 
     restoreState();
 
-    // editor/renderers
-    jtable.setDefaultEditor(String.class, new DefaultCellEditor(new JTextField()));
-    jtable.setDefaultEditor(Boolean.class, new DefaultCellEditor(new JCheckBox()));
+    // editor/renderers;
+    jtable.setDefaultRenderer(java.util.Date.class, new DateRenderer());
+    jtable.setDefaultRenderer(Boolean.class, new BooleanRenderer());
 
+    jtable.setDefaultEditor(String.class, new DefaultCellEditor(new JTextField()));
+    jtable.setDefaultEditor(Boolean.class, new DefaultCellEditor(boolCellEditor));
 
     // Fixes this bug: http://stackoverflow.com/questions/6601994/jtable-boolean-cell-type-background
-    ((JComponent) jtable.getDefaultRenderer(Boolean.class)).setOpaque(true);
+    // ((JComponent) jtable.getDefaultRenderer(Boolean.class)).setOpaque(true);
 
     // Left-align every cell, including header cells.
     TableAligner aligner = new TableAligner(jtable, SwingConstants.LEADING);
@@ -586,9 +586,6 @@ public class BeanTable<T> extends JPanel {
     }
   }
 
-  /**
-   * Renderer for Date type
-   */
   static class DateRenderer extends DefaultTableCellRenderer {
     private final java.text.SimpleDateFormat newForm, oldForm;
     private final Date cutoff;
@@ -617,16 +614,29 @@ public class BeanTable<T> extends JPanel {
     }
   }
 
+  static class BooleanRenderer extends DefaultTableCellRenderer {
+    BooleanRenderer() {}
+
+    public void setValue(Object value) {
+      if (value == null)
+        setText("");
+      else {
+        Boolean bvalue = (Boolean) value;
+        if (bvalue) setText("true"); else setText("false");
+      }
+    }
+  }
+
   /**
    * Does the reflection on the bean objects
    */
   protected class TableBeanModel extends AbstractTableModel {
     protected List<PropertyDescriptor> properties = new ArrayList<>();
+    private Method canedit;
 
     protected TableBeanModel() {}
 
     protected TableBeanModel(Class<?> beanClass) {
-
       // get bean info
       BeanInfo info;
       try {
@@ -698,6 +708,21 @@ public class BeanTable<T> extends JPanel {
             } else {
               System.out.println("BeanTable: Bad hiddenProperties ");
               ee.printStackTrace();
+            }
+          }
+        }
+      }
+
+      // see if canedit method exists
+      if (innerbean != null) {
+        for (MethodDescriptor md : mds) {
+          Method m = md.getMethod();
+          if (m.getName().equals("canedit")) {
+            try {
+              boolean wtf = (Boolean) m.invoke(innerbean, (Object[]) null); // see if method retuen boolean
+              this.canedit = m;
+            } catch (Exception e2) {
+              e2.printStackTrace();
             }
           }
         }
@@ -797,10 +822,22 @@ public class BeanTable<T> extends JPanel {
 
     public boolean isCellEditable(int row, int col) {
       PropertyDescriptor pd = properties.get(col);
-      if (!pd.isPreferred())
+      if (!pd.isPreferred() || !isRowEditable(row))
         return false;
       Class<?> type = pd.getPropertyType();
       return type.isPrimitive() || (type == String.class);
+    }
+
+    public boolean isRowEditable(int row) {
+      if (this.canedit == null) return true;
+      Object bean = beans.get(row);
+      try {
+        boolean ok = (Boolean) this.canedit.invoke(bean, (Object[]) null); // can canedit method
+        return ok;
+      } catch (Exception e2) {
+        e2.printStackTrace();
+      }
+      return false;
     }
 
     public void setValueAt(Object value, int row, int col) {
@@ -911,6 +948,58 @@ public class BeanTable<T> extends JPanel {
           properties.add(pd);
         }
       }
+    }
+  }
+
+  // https://stackoverflow.com/questions/22691353/scale-a-jcheckbox-box
+  class SimpleCheckboxStyle implements Icon {
+
+    int fontsize = 16;
+
+    public SimpleCheckboxStyle (int fontsize){
+      this.fontsize = fontsize;
+    }
+
+    protected int getDimension() {
+      return fontsize;
+    }
+
+    public void paintIcon(Component component, Graphics g, int x, int y) {
+      ButtonModel buttonModel = ((AbstractButton) component).getModel();
+
+      Dimension componentSize = component.getSize();
+      int y_offset = (int) (component.getSize().getHeight() / 2) - (int) (getDimension() / 2);
+      int x_offset = 2; // this is wrong
+
+      if (buttonModel.isSelected()) {
+        g.setColor(new Color(0, 60, 120));
+      } else if (buttonModel.isRollover()) {
+        g.setColor(Color.BLACK);
+      } else {
+        g.setColor(Color.DARK_GRAY);
+      }
+      g.fillRect(x_offset, y_offset, fontsize, fontsize);
+      if (buttonModel.isPressed()) {
+        g.setColor(Color.GRAY);
+      } else if (buttonModel.isRollover()) {
+        g.setColor(new Color(240, 240, 250));
+      } else {
+        g.setColor(Color.WHITE);
+      }
+      g.fillRect(1 + x_offset, y_offset + 1, fontsize - 2, fontsize - 2);
+      if (buttonModel.isSelected()) {
+        int r_x = 1;
+        g.setColor(Color.GRAY);
+        g.fillRect(x_offset + r_x + 3, y_offset + 3 + r_x, fontsize - (7 + r_x), fontsize - (7 + r_x));
+      }
+    }
+
+    public int getIconWidth() {
+      return getDimension();
+    }
+
+    public int getIconHeight() {
+      return getDimension();
     }
   }
 }

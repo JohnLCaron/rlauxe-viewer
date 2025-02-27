@@ -22,7 +22,7 @@ import java.awt.Toolkit;
  * @author John Caron
  */
 public class FontUtil {
-  private static final boolean debug = true;
+  private static final boolean debug = false;
 
   private static final int MAX_FONTS = 15;
   private static final int fontType = Font.PLAIN;
@@ -63,29 +63,27 @@ public class FontUtil {
     return defaultFontSize;
   }
 
-  // gets largest font smaller than pixel_height
-  public static FontUtil.StandardFont getStandardFont(int pixel_height) {
+  public static FontUtil.StandardFont getStandardFont(float size) {
     init();
-    return new StandardFont(stdFont, stdMetrics, pixel_height);
+    return new StandardFont(stdFont, size);
   }
 
-  // gets largest font smaller than pixel_height
-  public static FontUtil.StandardFont getMonoFont(int pixel_height) {
+  public static FontUtil.StandardFont getMonoFont(float size) {
     init();
-    return new StandardFont(monoFont, monoMetrics, pixel_height);
+    return new StandardFont(monoFont, size);
   }
 
   public static class StandardFont {
     private int currFontNo;
-    private int height;
+    // private int height;
     private final Font[] fonts;
-    private final FontMetrics[] fontMetrics;
+    // private final FontMetrics[] fontMetrics;
 
-    StandardFont(Font[] fonts, FontMetrics[] fontMetrics, int pixel_height) {
+    StandardFont(Font[] fonts, float size) {
       this.fonts = fonts;
-      this.fontMetrics = fontMetrics;
-      currFontNo = findClosest(pixel_height);
-      height = fontMetrics[currFontNo].getAscent();
+      // this.fontMetrics = fontMetrics;
+      currFontNo = findClosest(size);
+      // height = fontMetrics[currFontNo].getAscent();
     }
 
     public Font getFont() {
@@ -100,7 +98,7 @@ public class FontUtil {
     public Font incrFontSize() {
       if (currFontNo < MAX_FONTS - 1) {
         currFontNo++;
-        this.height = fontMetrics[currFontNo].getAscent();
+        //this.height = fontMetrics[currFontNo].getAscent();
       }
       return getFont();
     }
@@ -109,22 +107,27 @@ public class FontUtil {
     public Font decrFontSize() {
       if (currFontNo > 0) {
         currFontNo--;
-        this.height = fontMetrics[currFontNo].getAscent();
+        //this.height = fontMetrics[currFontNo].getAscent();
       }
       return getFont();
     }
 
-    public Dimension getBoundingBox(String s) {
+    /* public Dimension getBoundingBox(String s) {
       return new Dimension(fontMetrics[currFontNo].stringWidth(s), height);
-    }
+    } */
 
-    // gets largest font smaller than pixel_height
-    private int findClosest(int pixel_height) {
-      for (int i = 0; i < MAX_FONTS - 1; i++) {
-        if (fontMetrics[i + 1].getAscent() > pixel_height)
-          return i;
+    // finds font closest to size
+    private int findClosest(float size) {
+      var minDistance = Float.MAX_VALUE;
+      for (int i = 0; i < fonts.length; i++) {
+        minDistance = Math.min(minDistance, Math.abs(size - fonts[i].getSize2D()));
       }
-      return MAX_FONTS - 1;
+      for (int i = 0; i < fonts.length; i++) {
+        if (Math.abs(size - fonts[i].getSize2D()) == minDistance) {
+         return i;
+        }
+      }
+      return 0;
     }
 
   } // inner class StandardFont
