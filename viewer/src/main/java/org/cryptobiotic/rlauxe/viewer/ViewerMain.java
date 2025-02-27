@@ -21,11 +21,10 @@ import java.io.IOException;
 import java.util.Formatter;
 import java.util.HashSet;
 
-import static ucar.ui.widget.FontUtil.getStandardFontSize;
-
 /** ElectionRecord Viewer main program. */
 public class ViewerMain extends JPanel {
   public static final String FRAME_SIZE = "FrameSize";
+  public static final String INFO_BOUNDS = "InfoBounds";
   public static final String FONT_SIZE = "FontSize";
 
   private static JFrame frame;
@@ -52,6 +51,60 @@ public class ViewerMain extends JPanel {
   private final AuditRoundsTable auditRoundsPanel;
 
   public ViewerMain(PreferencesExt prefs, float fontSize) {
+    //// layout buttons, left to right
+
+    // file chooser
+    AbstractAction fileAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        String dirName = fileChooser.chooseDirectory("");
+        if (dirName != null) {
+          auditRecordDirCB.setSelectedItem(dirName);
+        }
+      }
+    };
+    BAMutil.setActionProperties(fileAction, "FileChooser", "open Local dataset...", false, 'L', -1);
+    BAMutil.addActionToContainer(buttPanel, fileAction);
+
+    // Popup info window
+    this.infoTA = new TextHistoryPane(true);
+    infoTA.setFontSize(fontSize);
+
+    this.infoWindow = new IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), new JScrollPane(infoTA));
+    Rectangle bounds = (Rectangle) prefs.getBean(ViewerMain.INFO_BOUNDS, new Rectangle(200, 50, 500, 700));
+    this.infoWindow.setBounds(bounds);
+    AbstractAction infoAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        Formatter f = new Formatter();
+        showInfo(f);
+        infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
+        infoTA.setText(f.toString());
+        infoWindow.show();
+      }
+    };
+    BAMutil.setActionProperties(infoAction, "Information", "info on Election Record", false, 'I', -1);
+    BAMutil.addActionToContainer(buttPanel, infoAction);
+
+    // font resizing
+    fontu = FontUtil.getStandardFont(fontSize);
+    System.out.printf("fontSize = %s fontu = %s %n", fontSize, fontu.getFontSize());
+    AbstractAction incrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts(fontu.incrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(incrFontAction, "FontIncr", "Increase Font Size", false, '+', -1);
+    BAMutil.addActionToContainer(buttPanel, incrFontAction);
+
+    AbstractAction decrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts(fontu.decrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(decrFontAction, "FontDecr", "Decrease Font Size", false, '-', -1);
+    BAMutil.addActionToContainer(buttPanel, decrFontAction);
+
+    ////////////////////////////////////////////
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
@@ -85,60 +138,11 @@ public class ViewerMain extends JPanel {
       if (tab == 1) auditRoundsPanel.setSelected(this.auditRecordDir);
     });
 
-    ///////////////////////////////////////////////////////////
-    // ButtPanel
-    AbstractAction fileAction = new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String dirName = fileChooser.chooseDirectory("");
-        if (dirName != null) {
-          auditRecordDirCB.setSelectedItem(dirName);
-        }
-      }
-    };
-    BAMutil.setActionProperties(fileAction, "FileChooser", "open Local dataset...", false, 'L', -1);
-    BAMutil.addActionToContainer(buttPanel, fileAction);
-
-    // Popup info window
-    this.infoTA = new TextHistoryPane(true);
-    infoTA.setFontSize(fontSize);
-
-    this.infoWindow = new IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), new JScrollPane(infoTA));
-    Rectangle bounds = (Rectangle) prefs.getBean(ViewerMain.FRAME_SIZE, new Rectangle(200, 50, 500, 700));
-    this.infoWindow.setBounds(bounds);
-    AbstractAction infoAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        Formatter f = new Formatter();
-        showInfo(f);
-        infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
-        infoTA.setText(f.toString());
-        infoWindow.show();
-      }
-    };
-    BAMutil.setActionProperties(infoAction, "Information", "info on Election Record", false, 'I', -1);
-    BAMutil.addActionToContainer(buttPanel, infoAction);
-
-    fontu = FontUtil.getStandardFont((int) fontSize);
-    AbstractAction incrFontAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.incrFontSize().getSize2D());
-      }
-    };
-    BAMutil.setActionProperties(incrFontAction, "FontIncr", "Increase Font Size", false, '+', -1);
-    BAMutil.addActionToContainer(buttPanel, incrFontAction);
-
-    AbstractAction decrFontAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.decrFontSize().getSize2D());
-      }
-    };
-    BAMutil.setActionProperties(decrFontAction, "FontDecr", "Decrease Font Size", false, '-', -1);
-    BAMutil.addActionToContainer(buttPanel, decrFontAction);
-
     ////////////////////////////////////////////////////////////////
+    // layout
 
     this.topPanel = new JPanel(new BorderLayout());
-    this.topPanel.add(new JLabel("Audit Record Directory:"), BorderLayout.WEST);
+    this.topPanel.add(new JLabel("Audit Record Directory: "), BorderLayout.WEST);
     this.topPanel.add(auditRecordDirCB, BorderLayout.CENTER);
     this.topPanel.add(buttPanel, BorderLayout.EAST);
     setLayout(new BorderLayout());
@@ -168,7 +172,7 @@ public class ViewerMain extends JPanel {
     auditRecordDirCB.save();
 
     if (infoWindow != null) {
-      prefs.putBeanObject(ViewerMain.FRAME_SIZE, infoWindow.getBounds());
+      prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
     }
     // prefs.putBeanObject("InfoWindowBounds", infoWindow.getBounds());
 
