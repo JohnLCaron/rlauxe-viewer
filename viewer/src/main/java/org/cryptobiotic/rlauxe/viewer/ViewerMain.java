@@ -151,7 +151,7 @@ public class ViewerMain extends JPanel {
   }
 
   void showInfo(Formatter f) {
-    auditPanel.showInfo(f);
+    auditRoundsPanel.showInfo(f);
   }
 
   // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,

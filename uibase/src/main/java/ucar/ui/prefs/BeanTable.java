@@ -169,8 +169,6 @@ public class BeanTable<T> extends JPanel {
     jtable = new JTable(model, tcm);
     jtable.setRowSorter(new UndoableRowSorter<>(model));
 
-
-
     ToolTipManager.sharedInstance().registerComponent(jtable);
 
     restoreState();
@@ -627,9 +625,7 @@ public class BeanTable<T> extends JPanel {
     }
   }
 
-  /**
-   * Does the reflection on the bean objects
-   */
+  /** Does the reflection on the bean objects */
   protected class TableBeanModel extends AbstractTableModel {
     protected List<PropertyDescriptor> properties = new ArrayList<>();
     private Method canedit;
@@ -951,6 +947,7 @@ public class BeanTable<T> extends JPanel {
     }
   }
 
+  // TODO doesnt really work
   // https://stackoverflow.com/questions/22691353/scale-a-jcheckbox-box
   class SimpleCheckboxStyle implements Icon {
 
