@@ -5,13 +5,12 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
+import org.cryptobiotic.rlauxe.audit.AuditRecord;
 import org.cryptobiotic.rlauxe.core.Assertion;
-import org.cryptobiotic.rlauxe.core.AuditRoundResult;
+import org.cryptobiotic.rlauxe.workflow.*;
 import org.cryptobiotic.rlauxe.core.Contest;
 import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
 import org.cryptobiotic.rlauxe.persist.json.Publisher;
-import org.cryptobiotic.rlauxe.workflow.AuditConfig;
-import org.cryptobiotic.rlauxe.workflow.AuditState;
 import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
@@ -19,14 +18,11 @@ import ucar.util.prefs.PreferencesExt;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Formatter;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.List;
 
-import static com.github.michaelbull.result.UnwrapKt.unwrap;
-import static org.cryptobiotic.rlauxe.persist.json.AuditConfigJsonKt.readAuditConfigJsonFile;
-import static org.cryptobiotic.rlauxe.persist.json.AuditStateJsonKt.readAuditStateJsonFile;
+import static java.lang.Math.max;
+import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
 
 public class AuditTable extends JPanel {
     private final PreferencesExt prefs;
@@ -38,8 +34,13 @@ public class AuditTable extends JPanel {
     private final JSplitPane split2, split3;
 
     private String auditRecordLocation = "none";
+    private AuditRecord auditRecord;
     private AuditConfig auditConfig;
+    private AuditState lastAuditState;
+    private List<BallotOrCvr> cvrs;
+
     private int totalMvrs = 0;
+    private int totalBallots = 0;
 
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -67,7 +68,7 @@ public class AuditTable extends JPanel {
                 bean -> bean.toString()));
 
         assertionRoundTable = new BeanTable<>(AssertionRoundBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
-                "AssertionRound", "AuditRoundResult", null);
+                "AuditRounds", "AuditRoundResult", null);
         assertionRoundTable.addPopupOption("Show AuditRoundResult", assertionRoundTable.makeShowAction(infoTA, infoWindow,
                 bean -> bean.toString()));
         setFontSize(fontSize);
@@ -88,34 +89,40 @@ public class AuditTable extends JPanel {
     }
 
     void setSelected(String wantRecordDir) {
-        if (!Objects.equals(wantRecordDir, auditRecordLocation)) {
             setAuditRecord(wantRecordDir);
-        }
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
         this.auditRecordLocation = auditRecordLocation;
-        try {
-            var publisher = new Publisher(auditRecordLocation);
-            var auditConfigResult = readAuditConfigJsonFile(publisher.auditConfigFile());
-            this.auditConfig = unwrap(auditConfigResult);
+        this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        this.totalMvrs = 0;
 
-            this.totalMvrs = 0;
+        try {
+            this.auditConfig = auditRecord.getAuditConfig();
+
             java.util.Map<Integer, ContestUnderAudit> contests = new TreeMap<>(); // sorted
-            for (int roundIdx = 1; roundIdx <= publisher.rounds(); roundIdx++) {
-                //println("Round $roundIdx ------------------------------------")
-                AuditState state = unwrap(readAuditStateJsonFile(publisher.auditRoundFile(roundIdx)));
-                totalMvrs += state.getNewMvrs();
-                for (var contest : state.getContests()) {
+            for (var round : auditRecord.getRounds()) {
+                for (var contest : round.getState().getContests()) {
                     contests.put(contest.getId(), contest); // get the last time it appears in a round
                 }
-
+                this.totalMvrs += round.getNewSamples().size();
             }
             java.util.List<ContestBean> beanList = new ArrayList<>();
             for (var contest : contests.values()) {
                 beanList.add(new ContestBean(contest));
             }
             contestTable.setBeans(beanList);
+
+            // select contest with smallest margin
+            ContestBean minByMargin = beanList
+                    .stream()
+                    .min(Comparator.comparing(ContestBean::getReportedMargin))
+                    .orElseThrow(NoSuchElementException::new);
+            contestTable.setSelectedBean(minByMargin);
+
+            this.lastAuditState = auditRecord.getRounds().getLast().getState();
+            this.cvrs = new ArrayList<>(this.auditRecord.getCvrs());
+            this.totalBallots = cvrs.size();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -124,13 +131,51 @@ public class AuditTable extends JPanel {
         return true;
     }
 
+    /* boolean setAuditRecord(String auditRecordLocation) {
+        this.auditRecordLocation = auditRecordLocation;
+        try {
+            var publisher = new Publisher(auditRecordLocation);
 
-    //////////////////////////////////////////////////////////////////
-    ///
-    void showInfo(Formatter f) {
-        f.format("%s%n", this.auditConfig);
-        f.format(" total Mvrs = %d%n", this.totalMvrs);
-    }
+            var auditConfigResult = readAuditConfigJsonFile(publisher.auditConfigFile());
+            this.auditConfig = unwrap(auditConfigResult);
+
+            if (auditConfig.getAuditType() == AuditType.CLCA) {
+                var cvrs = unwrap(readCvrsJsonFile(publisher.cvrsFile()));
+                this.totalBallots = cvrs.size();
+            } else {
+                var manifest = unwrap(readBallotManifestJsonFile(publisher.ballotManifestFile()));
+                this.totalBallots = manifest.getBallots().size();
+            }
+
+            this.totalMvrs = 0;
+            java.util.Map<Integer, ContestUnderAudit> contests = new TreeMap<>(); // sorted
+            for (int roundIdx = 1; roundIdx <= publisher.rounds(); roundIdx++) {
+                //println("Round $roundIdx ------------------------------------")
+                this.lastAuditState = unwrap(readAuditStateJsonFile(publisher.auditRoundFile(roundIdx)));
+                totalMvrs += this.lastAuditState.getNewMvrs();
+                for (var contest : this.lastAuditState .getContests()) {
+                    contests.put(contest.getId(), contest); // get the last time it appears in a round
+                }
+            }
+            java.util.List<ContestBean> beanList = new ArrayList<>();
+            for (var contest : contests.values()) {
+                beanList.add(new ContestBean(contest));
+            }
+            contestTable.setBeans(beanList);
+
+            // select contest with smallest margin
+            ContestBean minByMargin = beanList
+                    .stream()
+                    .min(Comparator.comparing(ContestBean::getReportedMargin))
+                    .orElseThrow(NoSuchElementException::new);
+            contestTable.setSelectedBean(minByMargin);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
+        return true;
+    } */
 
     void setSelectedContest(ContestBean contestBean) {
         java.util.List<AssertionBean> beanList = new ArrayList<>();
@@ -138,7 +183,13 @@ public class AuditTable extends JPanel {
             beanList.add(new AssertionBean(a));
         }
         assertionTable.setBeans(beanList);
-        assertionRoundTable.setBeans(new ArrayList<>());
+
+        // select assertion with smallest margin
+        AssertionBean minByMargin = beanList
+                .stream()
+                .min(Comparator.comparing(AssertionBean::getReportedMargin))
+                .orElseThrow(NoSuchElementException::new);
+        assertionTable.setSelectedBean(minByMargin);
     }
 
     void setSelectedAssertion(AssertionBean assertionBean) {
@@ -158,25 +209,6 @@ public class AuditTable extends JPanel {
         prefs.putInt("splitPos3", split3.getDividerLocation());
     }
 
-    // open class ContestUnderAudit(
-    //    val contest: ContestIF,
-    //    val isComparison: Boolean = true, // TODO change to AuditType?
-    //    val hasStyle: Boolean = true,
-    //) {
-    //    val id = contest.info.id
-    //    val name = contest.info.name
-    //    val choiceFunction = contest.info.choiceFunction
-    //    val ncandidates = contest.info.candidateIds.size
-    //    val Nc = contest.Nc
-    //    val Np = contest.Np
-    //
-    //    var pollingAssertions: List<Assertion> = emptyList()
-    //    var clcaAssertions: List<ClcaAssertion> = emptyList()
-    //
-    //    var estSampleSize = 0 // Estimate of the sample size required to confirm the contest
-    //    var estSampleSizeNoStyles = 0 // number of total samples estimated needed, uniformPolling (Polling, no style only)
-    //    var done = false
-    //    var status = TestH0Status.InProgress // or its own enum ??
     public class ContestBean {
         ContestUnderAudit contestUA;
 
@@ -199,7 +231,7 @@ public class AuditTable extends JPanel {
             return contestUA.getChoiceFunction().toString();
         }
 
-        public Integer getNCandidate() {
+        public Integer getNCand() {
             return contestUA.getNcandidates();
         }
 
@@ -211,12 +243,12 @@ public class AuditTable extends JPanel {
             return contestUA.getNp();
         }
 
-        public Integer getEstSampleSize() {
-            return contestUA.getEstSampleSize();
+        public Integer getEstMvrs() {
+            return contestUA.getEstMvrs();
         }
 
-        public boolean isDone() {
-            return contestUA.getDone();
+        public boolean isSuccess() {
+            return contestUA.getStatus().getSuccess();
         }
 
         public String getStatus() {
@@ -231,7 +263,7 @@ public class AuditTable extends JPanel {
             }
         }
 
-        public double getMinMargin() {
+        public double getReportedMargin() {
             var minAssertion = contestUA.minAssertion();
             if (minAssertion == null) {
                 return 0.0;
@@ -239,22 +271,17 @@ public class AuditTable extends JPanel {
                 return minAssertion.getAssorter().reportedMargin();
             }
         }
+
+        public Integer getCompleted() {
+            if (!contestUA.getStatus().getComplete()) return 0;
+            int round = 0;
+            for (Assertion assertion : contestUA.assertions()) {
+                round = max(round, assertion.getRound());
+            }
+            return round;
+        }
     }
 
-    // open class Assertion(
-    //    val contest: ContestIF,
-    //    val assorter: AssorterFunction,
-    //) {
-    //    val winner = assorter.winner()
-    //    val loser = assorter.loser()
-    //
-    //    // these values are set during estimateSampleSizes()
-    //    var estSampleSize = 0   // estimated sample size for current round
-    //
-    //    // these values are set during runAudit()
-    //    val roundResults = mutableListOf<AuditRoundResult>()
-    //    var status = TestH0Status.InProgress
-    //    var round = 0           // round when set to proved or disproved
     public class AssertionBean {
         Assertion assertion;
 
@@ -273,7 +300,7 @@ public class AuditTable extends JPanel {
             return assertion.getEstSampleSize();
         }
 
-        public Integer getRound() {
+        public Integer getCompleted() {
             return assertion.getRound();
         }
 
@@ -281,21 +308,11 @@ public class AuditTable extends JPanel {
             return assertion.getStatus().toString();
         }
 
-        public double getMinMargin() {
+        public double getReportedMargin() {
            return assertion.getAssorter().reportedMargin();
         }
     }
 
-    // data class AuditRoundResult(
-    //    val roundIdx: Int,
-    //    val estSampleSize: Int,   // estimated sample size
-    //    val maxBallotsUsed: Int,  // maximum ballot index (for multicontest audits)
-    //    val pvalue: Double,       // last pvalue when testH0 terminates
-    //    val samplesNeeded: Int,   // first sample when pvalue < riskLimit
-    //    val samplesUsed: Int,     // sample count when testH0 terminates
-    //    val status: TestH0Status, // testH0 status
-    //    val errorRates: ClcaErrorRates? = null, // measured error rates (clca only)
-    //)
     public class AssertionRoundBean {
         AuditRoundResult auditRound;
 
@@ -314,34 +331,56 @@ public class AuditTable extends JPanel {
             return auditRound.getEstSampleSize();
         }
 
-        public Integer getMaxBallotsUsed() {
+        /* public Integer getMaxBallotsUsed() {
             return auditRound.getMaxBallotsUsed();
-        }
+        } */
 
         public Double getPValue() {
             return auditRound.getPvalue();
         }
 
-        public Integer getSamplesNeeded() {
+        /* public Integer getSamplesNeeded() {
             return auditRound.getSamplesNeeded();
-        }
+        } */
 
         public Integer getSamplesUsed() {
             return auditRound.getSamplesUsed();
+        }
+
+        public Integer getSamplesExtra() {
+            return (auditRound.getEstSampleSize() - auditRound.getSamplesUsed());
         }
 
         public String getStatus() {
             return auditRound.getStatus().toString();
         }
 
-        public String getErrorRates() {
-            var er =  auditRound.getErrorRates();
+        public Double getMeasuredMargin() {
+            return mean2margin(auditRound.getMeasuredMean());
+        }
+
+        /*
+
+
+        public String getMeasuredErrors() {
+            var er =  auditRound.getMeasuredRates();
             if (er == null) {
                 return "N/A";
             } else {
                 return er.toString();
             }
         }
+
+        public String getAprioriErrors() {
+            var er =  auditRound.getStartingRates();
+            if (er == null) {
+                return "N/A";
+            } else {
+                return er.toString();
+            }
+        }
+
+         */
     }
 
 }
