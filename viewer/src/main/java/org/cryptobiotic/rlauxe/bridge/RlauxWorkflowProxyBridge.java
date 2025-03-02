@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.cryptobiotic.rlauxe.estimate.ConsistentSamplingKt.createSampleIndices;
 
-//     public abstract fun auditConfig(): org.cryptobiotic.rlauxe.workflow.AuditConfig
+//    public abstract fun auditConfig(): org.cryptobiotic.rlauxe.workflow.AuditConfig
 //    public abstract fun getContests(): kotlin.collections.List<org.cryptobiotic.rlauxe.core.ContestUnderAudit>
 //    public abstract fun getBallotsOrCvrs(): kotlin.collections.List<org.cryptobiotic.rlauxe.workflow.BallotOrCvr>
 public class RlauxWorkflowProxyBridge implements RlauxWorkflowProxy {
@@ -29,8 +29,8 @@ public class RlauxWorkflowProxyBridge implements RlauxWorkflowProxy {
     }
 
     // fun createSampleIndices(workflow: RlauxWorkflowProxy, roundIdx: Int, quiet: Boolean): List<Int> {
-    public List<Integer> createSampleIndicesBridge(int roundIdx) {
-        return createSampleIndices(this, roundIdx, false);
+    public List<Integer> createSampleIndicesBridge(int roundIdx, Integer wantedNewMvrs) {
+        return createSampleIndices(this, roundIdx, wantedNewMvrs, false);
     }
 
     @Override

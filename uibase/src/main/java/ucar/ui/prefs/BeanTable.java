@@ -89,7 +89,8 @@ public class BeanTable<T> extends JPanel {
   protected TableBeanModel model;
   JCheckBox boolCellEditor;
 
-  protected boolean debug, debugStore, debugBean, debugSelected;
+  protected boolean debug, debugSelected, debugBean;
+  protected boolean debugEditing = true;
 
   public BeanTable(Class<T> bc, PreferencesExt pstore, boolean canAddDelete) {
     this(bc, pstore, canAddDelete, null, null, null);
@@ -659,14 +660,14 @@ public class BeanTable<T> extends JPanel {
         if (m != null && m.getName().equals("editableProperties")) {
           try {
             editableProperties = (String) m.invoke(null, (Object[]) null); // try static
-            if (debugBean)
+            if (debugEditing)
               System.out.println(" static editableProperties: " + editableProperties);
           } catch (Exception ee) {
 
             if (innerbean != null) {
               try {
                 editableProperties = (String) m.invoke(innerbean, (Object[]) null); // try non static
-                if (debugBean)
+                if (debugEditing)
                   System.out.println(" editableProperties: " + editableProperties);
               } catch (Exception e2) {
                 e2.printStackTrace();
@@ -717,6 +718,7 @@ public class BeanTable<T> extends JPanel {
             try {
               boolean wtf = (Boolean) m.invoke(innerbean, (Object[]) null); // see if method retuen boolean
               this.canedit = m;
+              if (debugEditing) System.out.printf("BeanTable canedit: %s ", innerbean.getClass().getName());
             } catch (Exception e2) {
               e2.printStackTrace();
             }
@@ -821,7 +823,9 @@ public class BeanTable<T> extends JPanel {
       if (!pd.isPreferred() || !isRowEditable(row))
         return false;
       Class<?> type = pd.getPropertyType();
-      return type.isPrimitive() || (type == String.class);
+      var result = type.isPrimitive() || (type == String.class);
+      if (debugEditing) System.out.println("isCellEditable " + row + " " + col + " == " + result);
+      return result;
     }
 
     public boolean isRowEditable(int row) {
@@ -829,6 +833,7 @@ public class BeanTable<T> extends JPanel {
       Object bean = beans.get(row);
       try {
         boolean ok = (Boolean) this.canedit.invoke(bean, (Object[]) null); // can canedit method
+        if (debugEditing) System.out.println("isRowEditable " + row + " == " + ok);
         return ok;
       } catch (Exception e2) {
         e2.printStackTrace();

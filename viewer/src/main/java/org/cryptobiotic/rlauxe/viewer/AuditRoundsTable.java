@@ -54,7 +54,7 @@ public class AuditRoundsTable extends JPanel {
         this.prefs = prefs;
 
         auditStateTable = new BeanTable<>(AuditStateBean.class, (PreferencesExt) prefs.node("auditStateTable"), false,
-                "Audit Rounds", "AuditState", null);
+                "Audit Rounds", "AuditState", new AuditStateBean());
         auditStateTable.addListSelectionListener(e -> {
             AuditStateBean state = auditStateTable.getSelectedBean();
             if (state != null) {
@@ -257,15 +257,16 @@ public class AuditRoundsTable extends JPanel {
 
     void includeChanged() {
         if (auditStateTable.getBeans().isEmpty()) return;
+        AuditStateBean lastBean = auditStateTable.getBeans().getLast();
+        int wantedNewMvrs = lastBean.wantedNewMvrs;
 
         RlauxWorkflowProxyBridge bridge = new RlauxWorkflowProxyBridge(
                 this.auditConfig,
                 this.lastAuditState.getContests(),
                 this.cvrs);
-        this.sampleIndices = bridge.createSampleIndicesBridge(this.lastAuditState.getRoundIdx());
-        System.out.printf("indices = %d%n", this.sampleIndices.size());
+        this.sampleIndices = bridge.createSampleIndicesBridge( this.lastAuditState.getRoundIdx(), wantedNewMvrs );
+        System.out.printf("createSampleIndicesBridge returned = %d indices%n", this.sampleIndices.size());
 
-        AuditStateBean lastBean = auditStateTable.getBeans().getLast();
         AuditRound lastRound = lastBean.round;
         lastRound.resetSamples(sampleIndices, this.auditRecord.getCvrs());
         lastBean.setNmvrs(this.sampleIndices.size());
@@ -274,16 +275,26 @@ public class AuditRoundsTable extends JPanel {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    public static class AuditStateBean {
+    public class AuditStateBean {
         AuditRound round;
         AuditState state;
         int nmvrs;
+        int wantedNewMvrs;
 
         public AuditStateBean() {}
         AuditStateBean(AuditRound round) {
             this.round = round;
             this.state = round.getState();
             this.nmvrs = state.getNmvrs();
+            this.wantedNewMvrs = -1;
+        }
+
+        // editable properties
+        static public String editableProperties() { return "wantedNewMvrs"; }
+
+        public boolean canedit() {
+            return (lastAuditState != null) && (state != null ) &&
+                    (state.getRoundIdx() == lastAuditState.getRoundIdx());
         }
 
         public Integer getRound() {
@@ -301,6 +312,14 @@ public class AuditRoundsTable extends JPanel {
 
         public Integer getNewMvrs() {
             return round.getNewSamples().size();
+        }
+
+        public int getWantedNewMvrs() { return wantedNewMvrs; }
+        public void setWantedNewMvrs( int wantedNewMvrs) {
+            if (this.wantedNewMvrs != wantedNewMvrs) {
+                this.wantedNewMvrs = wantedNewMvrs;
+                includeChanged(); // queued event might be better
+            }
         }
 
         public Integer getMaxBallotsUsed() {
