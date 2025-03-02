@@ -393,7 +393,11 @@ public class AuditRoundsTable extends JPanel {
             if (minAssertion != null && (minAssertion.getEstRoundResults().size() >= auditRound)) {
                 var er = minAssertion.getEstRoundResults().get(auditRound-1);
                 var dist = er.getEstimatedDistribution();
-                if (getActualNewNmvrs() < 0) return 0; else return probability(dist, getActualNewNmvrs());
+                if (getActualNewNmvrs() < 0) return 0; else {
+                    var actualNM = getActualNewNmvrs();
+                    var prob = probability(dist, getActualNewNmvrs());
+                    return probability(dist, getActualNewNmvrs());
+                }
             }
             return contestUA.getEstMvrs();
         }
