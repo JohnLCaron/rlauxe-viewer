@@ -87,7 +87,6 @@ public class ViewerMain extends JPanel {
 
     // font resizing
     fontu = FontUtil.getStandardFont(fontSize);
-    System.out.printf("fontSize = %s fontu = %s %n", fontSize, fontu.getFontSize());
     AbstractAction incrFontAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         resizeFonts(fontu.incrFontSize().getSize2D());

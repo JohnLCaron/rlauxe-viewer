@@ -7,10 +7,9 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditRecord;
 import org.cryptobiotic.rlauxe.core.Assertion;
+import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
 import org.cryptobiotic.rlauxe.workflow.*;
 import org.cryptobiotic.rlauxe.core.Contest;
-import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
-import org.cryptobiotic.rlauxe.persist.json.Publisher;
 import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
@@ -29,14 +28,14 @@ public class AuditTable extends JPanel {
 
     private final BeanTable<ContestBean> contestTable;
     private final BeanTable<AssertionBean> assertionTable;
-    private final BeanTable<AssertionRoundBean> assertionRoundTable;
+    private final BeanTable<AuditRoundBean> auditRoundTable;
 
     private final JSplitPane split2, split3;
 
     private String auditRecordLocation = "none";
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
-    private AuditState lastAuditState;
+    private AuditRound lastAuditState;
     private List<BallotOrCvr> cvrs;
 
     private int totalMvrs = 0;
@@ -46,14 +45,14 @@ public class AuditTable extends JPanel {
         this.prefs = prefs;
 
         contestTable = new BeanTable<>(ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false,
-                "Contests", "ContestUnderAudit", null);
+                "Contests", "ContestRound", null);
         contestTable.addListSelectionListener(e -> {
             ContestBean contest = contestTable.getSelectedBean();
             if (contest != null) {
                 setSelectedContest(contest);
             }
         });
-        contestTable.addPopupOption("Show ContestUnderAudit", contestTable.makeShowAction(infoTA, infoWindow,
+        contestTable.addPopupOption("Show ContestRound", contestTable.makeShowAction(infoTA, infoWindow,
                 bean -> bean.toString()));
 
         assertionTable = new BeanTable<>(AssertionBean.class, (PreferencesExt) prefs.node("assertionTable"), false,
@@ -67,16 +66,16 @@ public class AuditTable extends JPanel {
         assertionTable.addPopupOption("Show Assertion", assertionTable.makeShowAction(infoTA, infoWindow,
                 bean -> bean.toString()));
 
-        assertionRoundTable = new BeanTable<>(AssertionRoundBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
+        auditRoundTable = new BeanTable<>(AuditRoundBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
                 "AuditRounds", "AuditRoundResult", null);
-        assertionRoundTable.addPopupOption("Show AuditRoundResult", assertionRoundTable.makeShowAction(infoTA, infoWindow,
+        auditRoundTable.addPopupOption("Show AuditRoundResult", auditRoundTable.makeShowAction(infoTA, infoWindow,
                 bean -> bean.toString()));
         setFontSize(fontSize);
 
         // layout of tables
         split2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, assertionTable);
         split2.setDividerLocation(prefs.getInt("splitPos2", 200));
-        split3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split2, assertionRoundTable);
+        split3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split2, auditRoundTable);
         split3.setDividerLocation(prefs.getInt("splitPos3", 200));
         setLayout(new BorderLayout());
         add(split3, BorderLayout.CENTER);
@@ -85,7 +84,7 @@ public class AuditTable extends JPanel {
     public void setFontSize(float size) {
         contestTable.setFontSize(size);
         assertionTable.setFontSize(size);
-        assertionRoundTable.setFontSize(size);
+        auditRoundTable.setFontSize(size);
     }
 
     void setSelected(String wantRecordDir) {
@@ -100,9 +99,9 @@ public class AuditTable extends JPanel {
         try {
             this.auditConfig = auditRecord.getAuditConfig();
 
-            java.util.Map<Integer, ContestUnderAudit> contests = new TreeMap<>(); // sorted
+            java.util.Map<Integer, ContestRound> contests = new TreeMap<>(); // sorted
             for (var round : auditRecord.getRounds()) {
-                for (var contest : round.getState().getContests()) {
+                for (var contest : round.getContests()) {
                     contests.put(contest.getId(), contest); // get the last time it appears in a round
                 }
                 this.totalMvrs += round.getNewSamples().size();
@@ -120,7 +119,7 @@ public class AuditTable extends JPanel {
                     .orElseThrow(NoSuchElementException::new);
             contestTable.setSelectedBean(minByMargin);
 
-            this.lastAuditState = auditRecord.getRounds().getLast().getState();
+            this.lastAuditState = auditRecord.getRounds().getLast();
             this.cvrs = new ArrayList<>(this.auditRecord.getCvrs());
             this.totalBallots = cvrs.size();
 
@@ -131,56 +130,10 @@ public class AuditTable extends JPanel {
         return true;
     }
 
-    /* boolean setAuditRecord(String auditRecordLocation) {
-        this.auditRecordLocation = auditRecordLocation;
-        try {
-            var publisher = new Publisher(auditRecordLocation);
-
-            var auditConfigResult = readAuditConfigJsonFile(publisher.auditConfigFile());
-            this.auditConfig = unwrap(auditConfigResult);
-
-            if (auditConfig.getAuditType() == AuditType.CLCA) {
-                var cvrs = unwrap(readCvrsJsonFile(publisher.cvrsFile()));
-                this.totalBallots = cvrs.size();
-            } else {
-                var manifest = unwrap(readBallotManifestJsonFile(publisher.ballotManifestFile()));
-                this.totalBallots = manifest.getBallots().size();
-            }
-
-            this.totalMvrs = 0;
-            java.util.Map<Integer, ContestUnderAudit> contests = new TreeMap<>(); // sorted
-            for (int roundIdx = 1; roundIdx <= publisher.rounds(); roundIdx++) {
-                //println("Round $roundIdx ------------------------------------")
-                this.lastAuditState = unwrap(readAuditStateJsonFile(publisher.auditRoundFile(roundIdx)));
-                totalMvrs += this.lastAuditState.getNewMvrs();
-                for (var contest : this.lastAuditState .getContests()) {
-                    contests.put(contest.getId(), contest); // get the last time it appears in a round
-                }
-            }
-            java.util.List<ContestBean> beanList = new ArrayList<>();
-            for (var contest : contests.values()) {
-                beanList.add(new ContestBean(contest));
-            }
-            contestTable.setBeans(beanList);
-
-            // select contest with smallest margin
-            ContestBean minByMargin = beanList
-                    .stream()
-                    .min(Comparator.comparing(ContestBean::getReportedMargin))
-                    .orElseThrow(NoSuchElementException::new);
-            contestTable.setSelectedBean(minByMargin);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, e.getMessage());
-        }
-        return true;
-    } */
-
     void setSelectedContest(ContestBean contestBean) {
         java.util.List<AssertionBean> beanList = new ArrayList<>();
-        for (Assertion a : contestBean.contestUA.assertions()) {
-            beanList.add(new AssertionBean(a));
+        for (AssertionRound a : contestBean.contestRound.getAssertions()) {
+            beanList.add(new AssertionBean(contestBean.contestRound, a));
         }
         assertionTable.setBeans(beanList);
 
@@ -193,30 +146,54 @@ public class AuditTable extends JPanel {
     }
 
     void setSelectedAssertion(AssertionBean assertionBean) {
+        java.util.List<AuditRoundBean> auditList = new ArrayList<>();
+
+        int maxRound = assertionBean.assertionRound.getRoundIdx();
+        for (AuditRound auditRound : auditRecord.getRounds()) {
+            if (auditRound.getRoundIdx() > maxRound) break;
+
+            for (ContestRound contestRound : auditRound.getContests()) {
+                if (contestRound.getContestUA().equals(assertionBean.contestRound.getContestUA())) {
+                    for (AssertionRound assertionRound : contestRound.getAssertions()) {
+                        if (assertionRound.getAssertion().equals(assertionBean.assertionRound.getAssertion())) {
+                            if (assertionRound.getAuditResult() != null)
+                                auditList.add(new AuditRoundBean(assertionRound.getAuditResult()));
+                        }
+                    }
+                }
+            }
+        }
+        auditRoundTable.setBeans(auditList);
+    }
+
+    /*
+    void setSelectedAssertion(AssertionBean assertionBean) {
         java.util.List<AssertionRoundBean> beanList = new ArrayList<>();
-        for (AuditRoundResult a : assertionBean.assertion.getRoundResults()) {
+        for (AuditRoundResult a : assertionBean.assertionRound.getRoundResults()) {
             beanList.add(new AssertionRoundBean(a));
         }
         assertionRoundTable.setBeans(beanList);
-    }
+    } */
 
     void save() {
         contestTable.saveState(false);
         assertionTable.saveState(false);
-        assertionRoundTable.saveState(false);
+        auditRoundTable.saveState(false);
 
         prefs.putInt("splitPos2", split2.getDividerLocation());
         prefs.putInt("splitPos3", split3.getDividerLocation());
     }
 
     public class ContestBean {
+        ContestRound contestRound;
         ContestUnderAudit contestUA;
 
         public ContestBean() {
         }
 
-        ContestBean(ContestUnderAudit contest) {
-            this.contestUA = contest;
+        ContestBean(ContestRound contestRound) {
+            this.contestRound = contestRound;
+            this.contestUA = contestRound.getContestUA();
         }
 
         public String getName() {
@@ -244,15 +221,15 @@ public class AuditTable extends JPanel {
         }
 
         public Integer getEstMvrs() {
-            return contestUA.getEstMvrs();
+            return contestRound.getEstMvrs();
         }
 
         public boolean isSuccess() {
-            return contestUA.getStatus().getSuccess();
+            return contestRound.getStatus().getSuccess();
         }
 
         public String getStatus() {
-            return contestUA.getStatus().toString();
+            return contestRound.getStatus().toString();
         }
 
         public String getVotes() {
@@ -273,9 +250,9 @@ public class AuditTable extends JPanel {
         }
 
         public Integer getCompleted() {
-            if (!contestUA.getStatus().getComplete()) return 0;
+            if (!contestRound.getStatus().getComplete()) return 0;
             int round = 0;
-            for (Assertion assertion : contestUA.assertions()) {
+            for (AssertionRound assertion : contestRound.getAssertions()) {
                 round = max(round, assertion.getRound());
             }
             return round;
@@ -283,13 +260,17 @@ public class AuditTable extends JPanel {
     }
 
     public class AssertionBean {
+        ContestRound contestRound;
+        AssertionRound assertionRound;
         Assertion assertion;
 
         public AssertionBean() {
         }
 
-        AssertionBean(Assertion assertion) {
-            this.assertion = assertion;
+        AssertionBean(ContestRound contestRound, AssertionRound assertionRound) {
+            this.contestRound = contestRound;
+            this.assertionRound = assertionRound;
+            this.assertion = assertionRound.getAssertion();
         }
 
         public String getDesc() {
@@ -297,15 +278,15 @@ public class AuditTable extends JPanel {
         }
 
         public Integer getEstSampleSize() {
-            return assertion.getEstSampleSize();
+            return assertionRound.getEstSampleSize();
         }
 
         public Integer getCompleted() {
-            return assertion.getRound();
+            return assertionRound.getRound();
         }
 
         public String getStatus() {
-            return assertion.getStatus().toString();
+            return assertionRound.getStatus().toString();
         }
 
         public double getReportedMargin() {
@@ -313,13 +294,13 @@ public class AuditTable extends JPanel {
         }
     }
 
-    public class AssertionRoundBean {
+    public class AuditRoundBean {
         AuditRoundResult auditRound;
 
-        public AssertionRoundBean() {
+        public AuditRoundBean() {
         }
 
-        AssertionRoundBean(AuditRoundResult auditRound) {
+        AuditRoundBean(AuditRoundResult auditRound) {
             this.auditRound = auditRound;
         }
 
