@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
 import org.cryptobiotic.rlauxe.workflow.AuditConfig;
+import org.cryptobiotic.rlauxe.workflow.AuditRound;
 import org.cryptobiotic.rlauxe.workflow.BallotOrCvr;
 import org.cryptobiotic.rlauxe.workflow.RlauxWorkflowProxy;
 
@@ -28,9 +29,9 @@ public class RlauxWorkflowProxyBridge implements RlauxWorkflowProxy {
         this.ballotsOrCvrs = ballotsOrCvrs;
     }
 
-    // fun createSampleIndices(workflow: RlauxWorkflowProxy, roundIdx: Int, quiet: Boolean): List<Int> {
-    public List<Integer> createSampleIndicesBridge(int roundIdx, Integer wantedNewMvrs) {
-        return createSampleIndices(this, roundIdx, wantedNewMvrs, false);
+    // fun createSampleIndices(workflow: RlauxWorkflowProxy, auditRound: AuditRound, wantNewMvrs: Int, quiet: Boolean): List<Int> {
+    public List<Integer> createSampleIndicesBridge(AuditRound auditRound, Integer wantedNewMvrs) {
+        return createSampleIndices(this, auditRound, wantedNewMvrs, false);
     }
 
     @Override
@@ -39,13 +40,13 @@ public class RlauxWorkflowProxyBridge implements RlauxWorkflowProxy {
     }
 
     @Override
-    public @NotNull List<ContestUnderAudit> getContests() {
-        return contests;
+    public @NotNull List<BallotOrCvr> getBallotsOrCvrs() {
+        return ballotsOrCvrs;
     }
 
     @Override
-    public @NotNull List<BallotOrCvr> getBallotsOrCvrs() {
-        return ballotsOrCvrs;
+    public @NotNull List<ContestUnderAudit> getContests() {
+        return contests;
     }
 }
 

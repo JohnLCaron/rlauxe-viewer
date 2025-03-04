@@ -90,7 +90,7 @@ public class BeanTable<T> extends JPanel {
   JCheckBox boolCellEditor;
 
   protected boolean debug, debugSelected, debugBean;
-  protected boolean debugEditing = true;
+  protected boolean debugEditing = false;
 
   public BeanTable(Class<T> bc, PreferencesExt pstore, boolean canAddDelete) {
     this(bc, pstore, canAddDelete, null, null, null);
