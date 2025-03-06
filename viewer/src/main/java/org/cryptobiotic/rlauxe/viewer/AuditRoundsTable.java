@@ -16,7 +16,8 @@ import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
 import ucar.util.prefs.PreferencesExt;
 
-import org.cryptobiotic.rlauxe.bridge.RlauxWorkflowProxyBridge;
+import org.cryptobiotic.rlauxe.bridge.Naming;
+import org.cryptobiotic.rlauxe.bridge.RlauxWorkflowProxy;
 
 
 import javax.swing.*;
@@ -203,7 +204,7 @@ public class AuditRoundsTable extends JPanel {
         // select contest with smallest margin
         ContestBean minByMargin = beanList
                 .stream()
-                .min(Comparator.comparing(ContestBean::getMinMargin))
+                .min(Comparator.comparing(ContestBean::getMargin))
                 .orElseThrow(NoSuchElementException::new);
         contestTable.setSelectedBean(minByMargin);
     }
@@ -266,7 +267,7 @@ public class AuditRoundsTable extends JPanel {
         if (nrounds == 0) return;
         Set<Integer> previousSamples = org.cryptobiotic.rlauxe.workflow.AuditRoundKt.previousSamples(auditRecord.getRounds(), nrounds);
 
-        RlauxWorkflowProxyBridge bridge = new RlauxWorkflowProxyBridge(
+        RlauxWorkflowProxy bridge = new RlauxWorkflowProxy(
                 this.auditConfig,
                 this.cvrs);
 
@@ -311,15 +312,15 @@ public class AuditRoundsTable extends JPanel {
             return round.getNewmvrs();
         }
 
-        public int getWantedNewMvrs() { return round.getAuditorSetNewMvrs(); }
-        public void setWantedNewMvrs( int wantedNewMvrs) {
+        public int getWantNewMvrs() { return round.getAuditorSetNewMvrs(); }
+        public void setWantNewMvrs( int wantedNewMvrs) {
             if (round.getAuditorSetNewMvrs() != wantedNewMvrs) {
                 round.setAuditorSetNewMvrs(wantedNewMvrs);
                 includeChanged();
             }
         }
 
-        public Integer getBallotsUsed() {
+        public Integer getMaxBallots() {
             return round.maxBallotsUsed();
         }
 
@@ -400,11 +401,11 @@ public class AuditRoundsTable extends JPanel {
             return contestUA.getId();
         }
 
-        public String getChoiceFunction() {
+        public String getType() {
             return contestUA.getChoiceFunction().toString();
         }
 
-        public Integer getNCandidate() {
+        public Integer getNCand() {
             return contestUA.getNcandidates();
         }
 
@@ -412,14 +413,14 @@ public class AuditRoundsTable extends JPanel {
             return contestUA.getNc();
         }
 
-        public Integer getNp() {
+        public Integer getPhantoms() {
             return contestUA.getNp();
         }
 
-        public Integer getEstSampleSize() {return contestRound.getEstSampleSize();}
-        public Integer getEstNewSampleSize() {return contestRound.getEstNewSamples();}
+        public Integer getEstMvrs() {return contestRound.getEstSampleSize();}
+        public Integer getEstNewMvrs() {return contestRound.getEstNewSamples();}
         public Integer getActualMvrs() {return contestRound.getActualMvrs(); }
-        public Integer getActualNewNmvrs() { return contestRound.getActualNewMvrs(); }
+        public Integer getActualNewMvrs() { return contestRound.getActualNewMvrs(); }
 
         public boolean isSuccess() {
             return contestRound.getStatus().getSuccess();
@@ -433,17 +434,17 @@ public class AuditRoundsTable extends JPanel {
             if (minAssertion != null && (minAssertion.getEstimationResult() != null)) {
                 var er = minAssertion.getEstimationResult();
                 var dist = er.getEstimatedDistribution();
-                if (getActualNewNmvrs() < 0) return 0; else {
-                    var actualNM = getActualNewNmvrs();
-                    var prob = probability(dist, getActualNewNmvrs());
-                    return probability(dist, getActualNewNmvrs());
+                if (getActualNewMvrs() < 0) return 0; else {
+                    var actualNM = getActualNewMvrs();
+                    var prob = probability(dist, getActualNewMvrs());
+                    return probability(dist, getActualNewMvrs());
                 }
             }
             return 0;
         }
 
         public String getStatus() {
-            return contestRound.getStatus().toString();
+            return Naming.status(contestRound.getStatus());
         }
 
         public String getVotes() {
@@ -454,7 +455,7 @@ public class AuditRoundsTable extends JPanel {
             }
         }
 
-        public double getMinMargin() {
+        public double getMargin() {
             var minAssertion = contestUA.minAssertion();
             if (minAssertion == null) {
                 return 0.0;
@@ -484,7 +485,7 @@ public class AuditRoundsTable extends JPanel {
             sb.append("estNewSampleSize = %d%n".formatted(contestRound.getEstNewSamples()));
             sb.append("actualMvrs = %d%n".formatted(contestRound.getActualMvrs()));
             sb.append("actualNewMvrs = %d%n".formatted(contestRound.getActualNewMvrs()));
-            sb.append("status = %s%n".formatted(contestRound.getStatus().toString()));
+            sb.append("status = %s%n".formatted(Naming.status(contestRound.getStatus())));
             sb.append("included = %s%n".formatted(contestRound.getIncluded()));
             sb.append("done = %s%n".formatted(contestRound.getDone()));
             sb.append("\ncontest = %s%n".formatted(contestUA.toString()));
@@ -536,15 +537,15 @@ public class AuditRoundsTable extends JPanel {
             return assertion.getAssorter().desc();
         }
 
-        public Integer getEstSampleSize() {return assertionRound.getEstSampleSize();}
-        public Integer getEstNewSampleSize() {return assertionRound.getEstNewSampleSize();}
+        public Integer getEstMvrs() {return assertionRound.getEstSampleSize();}
+        public Integer getEstNewMvrs() {return assertionRound.getEstNewSampleSize();}
 
         public Integer getCompleted() {
             return assertionRound.getRound();
         }
 
         public String getStatus() {
-            return assertionRound.getStatus().toString();
+            return Naming.status(assertionRound.getStatus());
         }
 
         public double getMargin() {
@@ -582,102 +583,13 @@ public class AuditRoundsTable extends JPanel {
             sb.append("roundIdx = %d%n".formatted(assertionRound.getRoundIdx()));
             sb.append("estSampleSize = %d%n".formatted(assertionRound.getEstSampleSize()));
             sb.append("estNewSampleSize = %d%n".formatted(assertionRound.getEstNewSampleSize()));
-            sb.append("status = %s%n".formatted(assertionRound.getStatus().toString()));
+            sb.append("status = %s%n".formatted(Naming.status(assertionRound.getStatus())));
             sb.append("round = %d%n".formatted(assertionRound.getRound()));
             sb.append("\nassertion = %s%n".formatted(assertionRound.getAssertion().show()));
             sb.append("\nassorter = %s%n".formatted(assertionRound.getAssertion().getAssorter().toString()));
             if (assertionRound.getPrevAuditResult() != null) sb.append("\nprevAuditResult = %s%n".formatted(assertionRound.getPrevAuditResult().toString()));
             if (assertionRound.getEstimationResult() != null) sb.append("\nestimationResult = %s%n".formatted(assertionRound.getEstimationResult().toString()));
             if (assertionRound.getAuditResult() != null) sb.append("\nauditResult = %s%n".formatted(assertionRound.getAuditResult().toString()));
-            return sb.toString();
-        }
-    }
-
-    // data class AuditRoundResult(
-    //    val roundIdx: Int,
-    //    val estSampleSize: Int,   // estimated sample size
-    //    val maxBallotIndexUsed: Int,  // maximum ballot index (for multicontest audits)
-    //    val pvalue: Double,       // last pvalue when testH0 terminates
-    //    val samplesNeeded: Int,   // first sample when pvalue < riskLimit
-    //    val samplesUsed: Int,     // sample count when testH0 terminates
-    //    val status: TestH0Status, // testH0 status
-    //    val measuredMean: Double, // measured population mean
-    //    val startingRates: ClcaErrorRates? = null, // apriori error rates (clca only)
-    //    val measuredRates: ClcaErrorRates? = null, // measured error rates (clca only)
-    //) {
-    public class AuditRoundResultBean {
-        AuditRoundResult auditRound;
-
-        public AuditRoundResultBean() {
-        }
-
-        AuditRoundResultBean(AuditRoundResult auditRound) {
-            this.auditRound = auditRound;
-        }
-
-        public Integer getRound() {
-            return auditRound.getRoundIdx();
-        }
-
-        public Integer getEstSampleSize() {
-            return auditRound.getEstSampleSize();
-        }
-
-        public Integer getBallotsUsed() {
-            return auditRound.getMaxBallotIndexUsed();
-        }
-
-        public Double getPValue() {
-            return auditRound.getPvalue();
-        }
-
-        public Integer getSamplesUsed() {
-            return auditRound.getSamplesUsed();
-        }
-
-        public Integer getSamplesExtra() {
-            return (auditRound.getEstSampleSize() - auditRound.getSamplesUsed());
-        }
-
-        public String getStatus() {
-            return auditRound.getStatus().toString();
-        }
-
-        public Double getMeasuredMargin() {
-            return mean2margin(auditRound.getMeasuredMean());
-        }
-
-        public String getMeasuredErrors() {
-            var er =  auditRound.getMeasuredRates();
-            if (er == null) {
-                return "N/A";
-            } else {
-                return er.toString();
-            }
-        }
-
-        public String getAprioriErrors() {
-            var er =  auditRound.getStartingRates();
-            if (er == null) {
-                return "N/A";
-            } else {
-                return er.toString();
-            }
-        }
-
-        public String show() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("roundIdx = %d%n".formatted(auditRound.getRoundIdx()));
-            sb.append("measuredMean = %f%n".formatted(auditRound.getMeasuredMean()));
-            sb.append("measuredMargin = %f%n".formatted(mean2margin(auditRound.getMeasuredMean())));
-            sb.append("estSampleSize = %d%n".formatted(auditRound.getEstSampleSize()));
-            sb.append("samplesUsed = %d%n".formatted(auditRound.getSamplesUsed()));
-            sb.append("samplesExtra = %d%n".formatted(auditRound.getEstSampleSize() - auditRound.getSamplesUsed()));
-            sb.append("pvalue = %f%n".formatted(auditRound.getPvalue()));
-            sb.append("status = %s%n".formatted(auditRound.getStatus().toString()));
-            if (auditRound.getMeasuredRates() != null) sb.append("measuredErrors = %s%n".formatted(auditRound.getMeasuredRates().toString()));
-            if (auditRound.getStartingRates() != null) sb.append("aprioriErrors = %s%n".formatted(auditRound.getStartingRates().toString()));
-            sb.append("maxBallotsUsed = %d%n".formatted(auditRound.getMaxBallotIndexUsed()));
             return sb.toString();
         }
     }
@@ -743,4 +655,92 @@ public class AuditRoundsTable extends JPanel {
         }
     }
 
+    // data class AuditRoundResult(
+    //    val roundIdx: Int,
+    //    val estSampleSize: Int,   // estimated sample size
+    //    val maxBallotIndexUsed: Int,  // maximum ballot index (for multicontest audits)
+    //    val pvalue: Double,       // last pvalue when testH0 terminates
+    //    val samplesNeeded: Int,   // first sample when pvalue < riskLimit
+    //    val samplesUsed: Int,     // sample count when testH0 terminates
+    //    val status: TestH0Status, // testH0 status
+    //    val measuredMean: Double, // measured population mean
+    //    val startingRates: ClcaErrorRates? = null, // apriori error rates (clca only)
+    //    val measuredRates: ClcaErrorRates? = null, // measured error rates (clca only)
+    //) {
+    public class AuditRoundResultBean {
+        AuditRoundResult auditRound;
+
+        public AuditRoundResultBean() {
+        }
+
+        AuditRoundResultBean(AuditRoundResult auditRound) {
+            this.auditRound = auditRound;
+        }
+
+        public Integer getRound() {
+            return auditRound.getRoundIdx();
+        }
+
+        public Integer getMvrs() {
+            return auditRound.getNmvrs();
+        }
+
+        public Integer getMaxBallots() {
+            return auditRound.getMaxBallotIndexUsed();
+        }
+
+        public Double getPValue() {
+            return auditRound.getPvalue();
+        }
+
+        public Integer getMvrsUsed() {
+            return auditRound.getSamplesUsed();
+        }
+
+        public Integer getMvrsExtra() {
+            return ( Math.max(0, auditRound.getNmvrs() - auditRound.getSamplesUsed()));
+        }
+
+        public String getStatus() {
+            return Naming.status(auditRound.getStatus());
+        }
+
+        public Double getMeasuredMargin() {
+            return mean2margin(auditRound.getMeasuredMean());
+        }
+
+        public String getMeasuredErrors() {
+            var er =  auditRound.getMeasuredRates();
+            if (er == null) {
+                return "N/A";
+            } else {
+                return er.toString();
+            }
+        }
+
+        public String getEstErrors() {
+            var er =  auditRound.getStartingRates();
+            if (er == null) {
+                return "N/A";
+            } else {
+                return er.toString();
+            }
+        }
+
+        public String show() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("roundIdx = %d%n".formatted(auditRound.getRoundIdx()));
+            sb.append("measuredMean = %f%n".formatted(auditRound.getMeasuredMean()));
+            sb.append("measuredMargin = %f%n".formatted(mean2margin(auditRound.getMeasuredMean())));
+            sb.append("estSampleSize = %d%n".formatted(auditRound.getNmvrs()));
+            sb.append("samplesUsed = %d%n".formatted(auditRound.getSamplesUsed()));
+            sb.append("samplesExtra = %d%n".formatted(getMvrsExtra()));
+            sb.append("pvalue = %f%n".formatted(auditRound.getPvalue()));
+            sb.append("status = %s%n".formatted(Naming.status(auditRound.getStatus())));
+            if (auditRound.getMeasuredRates() != null) sb.append("measuredErrors = %s%n".formatted(auditRound.getMeasuredRates().toString()));
+            if (auditRound.getStartingRates() != null) sb.append("aprioriErrors = %s%n".formatted(auditRound.getStartingRates().toString()));
+            sb.append("maxBallotsUsed = %d%n".formatted(auditRound.getMaxBallotIndexUsed()));
+            return sb.toString();
+        }
+    }
 }
