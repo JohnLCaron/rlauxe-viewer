@@ -38,9 +38,6 @@ public class AuditTable extends JPanel {
     private AuditRound lastAuditState;
     private List<BallotOrCvr> cvrs;
 
-    private int totalMvrs = 0;
-    private int totalBallots = 0;
-
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
 
@@ -88,13 +85,12 @@ public class AuditTable extends JPanel {
     }
 
     void setSelected(String wantRecordDir) {
-            setAuditRecord(wantRecordDir);
+        setAuditRecord(wantRecordDir);
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
-        this.totalMvrs = 0;
 
         try {
             this.auditConfig = auditRecord.getAuditConfig();
@@ -104,7 +100,6 @@ public class AuditTable extends JPanel {
                 for (var contest : round.getContests()) {
                     contests.put(contest.getId(), contest); // get the last time it appears in a round
                 }
-                this.totalMvrs += round.getNewSamples().size();
             }
             java.util.List<ContestBean> beanList = new ArrayList<>();
             for (var contest : contests.values()) {
@@ -121,7 +116,6 @@ public class AuditTable extends JPanel {
 
             this.lastAuditState = auditRecord.getRounds().getLast();
             this.cvrs = new ArrayList<>(this.auditRecord.getCvrs());
-            this.totalBallots = cvrs.size();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -220,8 +214,8 @@ public class AuditTable extends JPanel {
             return contestUA.getNp();
         }
 
-        public Integer getEstMvrs() {
-            return contestRound.getEstMvrs();
+        public Integer getEstSampleSize() {
+            return contestRound.getEstSampleSize();
         }
 
         public boolean isSuccess() {

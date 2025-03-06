@@ -33,7 +33,8 @@ public class ViewerMain extends JPanel {
   private static ViewerMain ui;
   private static boolean done;
 
-  private final JPanel buttPanel = new JPanel();
+  private final JPanel leftPanel = new JPanel();
+  private final JPanel rightPanel = new JPanel();
   private final FontUtil.StandardFont fontu;
 
   TextHistoryPane infoTA;
@@ -51,21 +52,6 @@ public class ViewerMain extends JPanel {
   private final AuditRoundsTable auditRoundsPanel;
 
   public ViewerMain(PreferencesExt prefs, float fontSize) {
-    //// layout buttons, left to right
-
-    // file chooser
-    AbstractAction fileAction = new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String dirName = fileChooser.chooseDirectory("");
-        if (dirName != null) {
-          auditRecordDirCB.setSelectedItem(dirName);
-        }
-      }
-    };
-    BAMutil.setActionProperties(fileAction, "FileChooser", "open Local dataset...", false, 'L', -1);
-    BAMutil.addActionToContainer(buttPanel, fileAction);
-
     // Popup info window
     this.infoTA = new TextHistoryPane(true);
     infoTA.setFontSize(fontSize);
@@ -73,35 +59,6 @@ public class ViewerMain extends JPanel {
     this.infoWindow = new IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), new JScrollPane(infoTA));
     Rectangle bounds = (Rectangle) prefs.getBean(ViewerMain.INFO_BOUNDS, new Rectangle(200, 50, 500, 700));
     this.infoWindow.setBounds(bounds);
-    AbstractAction infoAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        Formatter f = new Formatter();
-        showInfo(f);
-        infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
-        infoTA.setText(f.toString());
-        infoWindow.show();
-      }
-    };
-    BAMutil.setActionProperties(infoAction, "Information", "info on Election Record", false, 'I', -1);
-    BAMutil.addActionToContainer(buttPanel, infoAction);
-
-    // font resizing
-    fontu = FontUtil.getStandardFont(fontSize);
-    AbstractAction incrFontAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.incrFontSize().getSize2D());
-      }
-    };
-    BAMutil.setActionProperties(incrFontAction, "FontIncr", "Increase Font Size", false, '+', -1);
-    BAMutil.addActionToContainer(buttPanel, incrFontAction);
-
-    AbstractAction decrFontAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.decrFontSize().getSize2D());
-      }
-    };
-    BAMutil.setActionProperties(decrFontAction, "FontDecr", "Decrease Font Size", false, '-', -1);
-    BAMutil.addActionToContainer(buttPanel, decrFontAction);
 
     ////////////////////////////////////////////
     // the tabbed panels
@@ -114,6 +71,7 @@ public class ViewerMain extends JPanel {
     tabbedPane.setSelectedIndex(0);
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
+      if (this.auditRecordDir.equals("none")) return;
       if (c instanceof AuditTable) {
         ((AuditTable)c).setSelected(this.auditRecordDir);
       } else if (c instanceof AuditRoundsTable) {
@@ -121,7 +79,91 @@ public class ViewerMain extends JPanel {
       }
     });
 
+    ////// layout, left to right
+
+    //// buttons to the left of auditRecordDir ComboBox
+    AbstractAction refreshAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        auditPanel.setSelected(auditRecordDir);
+        auditRoundsPanel.setSelected(auditRecordDir);
+      }
+    };
+    BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-', -1);
+    BAMutil.addActionToContainer(leftPanel, refreshAction);
+
     // choose the audit record
+    AbstractAction fileAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        String dirName = fileChooser.chooseDirectory("");
+        if (dirName != null) {
+          auditRecordDirCB.setSelectedItem(dirName);
+        }
+      }
+    };
+    BAMutil.setActionProperties(fileAction, "Open-File-Folder-icon.png", "Directory chooser...", false, 'L', -1);
+    BAMutil.addActionToContainer(leftPanel, fileAction);
+    this.leftPanel.add(new JLabel("Audit Record Directory: "), BorderLayout.WEST);
+
+    //// buttons to the right of the file chooser
+
+    AbstractAction startAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+      }
+    };
+    BAMutil.setActionProperties(startAction, "sunrise-icon.png", "Start New Audit Record", false, 'S', -1);
+    BAMutil.addActionToContainer(rightPanel, startAction);
+
+    AbstractAction runAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        org.cryptobiotic.rlauxe.cli.RunRlaRoundKt.runRound(auditRecordDir, auditRecordDir + "/private/testMvrs.json");
+        auditPanel.setSelected(auditRecordDir);
+        auditRoundsPanel.setSelected(auditRecordDir);
+      }
+    };
+    BAMutil.setActionProperties(runAction, "run-round-icon.png", "Run Audit Round", false, 'R', -1);
+    BAMutil.addActionToContainer(rightPanel, runAction);
+
+    AbstractAction verifyAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+      }
+    };
+    // Verify-icon.png
+    BAMutil.setActionProperties(verifyAction, "Verify-icon.png", "Verify Audit Record", false, 'V', -1);
+    BAMutil.addActionToContainer(rightPanel, verifyAction);
+
+    AbstractAction infoAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        Formatter f = new Formatter();
+        showInfo(f);
+        infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
+        infoTA.setText(f.toString());
+        infoWindow.show();
+      }
+    };
+    BAMutil.setActionProperties(infoAction, "Info-icon.png", "info on Election Record", false, 'I', -1);
+    BAMutil.addActionToContainer(rightPanel, infoAction);
+
+    // font resizing
+    fontu = FontUtil.getStandardFont(fontSize);
+    AbstractAction incrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts(fontu.incrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(incrFontAction, "format-font-size-increase-icon.png", "Increase Font Size", false, '+', -1);
+    BAMutil.addActionToContainer(rightPanel, incrFontAction);
+
+    AbstractAction decrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts(fontu.decrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(decrFontAction, "format-font-size-decrease-icon.png", "Decrease Font Size", false, '-', -1);
+    BAMutil.addActionToContainer(rightPanel, decrFontAction);
+
+    ////////////////////////////////////////////
+
     this.fileChooser = new FileManager(frame, null, null, (PreferencesExt) prefs.node("FileManager"));
     this.auditRecordDirCB = new ComboBox<>((PreferencesExt) prefs.node("auditRecordDirCB"));
     this.auditRecordDirCB.addChangeListener(e -> {
@@ -132,18 +174,18 @@ public class ViewerMain extends JPanel {
       this.eventOk = false;
       this.auditRecordDirCB.addItem(this.auditRecordDir);
       this.eventOk = true;
-      int tab = tabbedPane.getSelectedIndex();
-      if (tab == 0) auditPanel.setSelected(this.auditRecordDir);
-      if (tab == 1) auditRoundsPanel.setSelected(this.auditRecordDir);
+      auditPanel.setSelected(auditRecordDir);
+      auditRoundsPanel.setSelected(auditRecordDir);
     });
 
     ////////////////////////////////////////////////////////////////
-    // layout
-
+    // top layout
     this.topPanel = new JPanel(new BorderLayout());
-    this.topPanel.add(new JLabel("Audit Record Directory: "), BorderLayout.WEST);
+    this.topPanel.add(leftPanel, BorderLayout.WEST);
     this.topPanel.add(auditRecordDirCB, BorderLayout.CENTER);
-    this.topPanel.add(buttPanel, BorderLayout.EAST);
+    this.topPanel.add(rightPanel, BorderLayout.EAST);
+
+    // main layout
     setLayout(new BorderLayout());
     add(topPanel, BorderLayout.NORTH);
     add(tabbedPane, BorderLayout.CENTER);
