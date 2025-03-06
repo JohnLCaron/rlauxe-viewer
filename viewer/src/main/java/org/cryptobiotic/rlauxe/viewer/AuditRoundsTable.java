@@ -273,8 +273,8 @@ public class AuditRoundsTable extends JPanel {
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
 
-        System.out.printf("call createSampleIndices auditorSetNewMvrs = %d previousSamples = %d %n",
-                this.lastAuditRound.getAuditorSetNewMvrs(), previousSamples.size());
+        System.out.printf("call createSampleIndices auditorWantNewMvrs = %d previousSamples = %d %n",
+                this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size());
         this.sampleIndices = bridge.createSampleIndices( this.lastAuditRound, previousSamples);
         System.out.printf("  returned = %d indices newmvrs=%d %n", this.sampleIndices.size(), this.lastAuditRound.getNewmvrs());
 
@@ -292,7 +292,7 @@ public class AuditRoundsTable extends JPanel {
         }
 
         // editable properties
-        static public String editableProperties() { return "wantedNewMvrs"; }
+        static public String editableProperties() { return "wantNewMvrs"; }
 
         public boolean canedit() {
             return (lastAuditRound != null) && (round != null ) &&
@@ -312,10 +312,10 @@ public class AuditRoundsTable extends JPanel {
             return round.getNewmvrs();
         }
 
-        public int getWantNewMvrs() { return round.getAuditorSetNewMvrs(); }
+        public int getWantNewMvrs() { return round.getAuditorWantNewMvrs(); }
         public void setWantNewMvrs( int wantedNewMvrs) {
-            if (round.getAuditorSetNewMvrs() != wantedNewMvrs) {
-                round.setAuditorSetNewMvrs(wantedNewMvrs);
+            if (round.getAuditorWantNewMvrs() != wantedNewMvrs) {
+                round.setAuditorWantNewMvrs(wantedNewMvrs);
                 includeChanged();
             }
         }
@@ -348,7 +348,7 @@ public class AuditRoundsTable extends JPanel {
             sb.append("sampledIndices size = %d%n".formatted(round.getSampledIndices().size()));
             sb.append("nmvrs = %d%n".formatted(round.getNmvrs()));
             sb.append("newmvrs = %d%n".formatted(round.getNewmvrs()));
-            sb.append("auditorSetNewMvrs = %d%n".formatted(round.getAuditorSetNewMvrs()));
+            sb.append("auditorWantNewMvrs = %d%n".formatted(round.getAuditorWantNewMvrs()));
             sb.append("auditWasDone = %s%n".formatted(round.getAuditWasDone()));
             sb.append("auditIsComplete = %s%n".formatted(round.getAuditIsComplete()));
             return sb.toString();
@@ -370,11 +370,19 @@ public class AuditRoundsTable extends JPanel {
         }
 
         // editable properties
-        static public String editableProperties() { return "include done"; }
+        static public String editableProperties() { return "wantNewMvrs include done"; }
         public boolean canedit() {
             return (lastAuditRound != null)
                     && (!lastAuditRound.getAuditWasDone())
                     && (auditRound == lastAuditRound.getRoundIdx());
+        }
+
+        public int getWantNewMvrs() { return contestRound.getAuditorWantNewMvrs(); }
+        public void setWantNewMvrs( int wantedNewMvrs) {
+            if (contestRound.getAuditorWantNewMvrs() != wantedNewMvrs) {
+                contestRound.setAuditorWantNewMvrs(wantedNewMvrs);
+                includeChanged();
+            }
         }
 
         public boolean isInclude() { return contestRound.getIncluded(); }
@@ -668,49 +676,49 @@ public class AuditRoundsTable extends JPanel {
     //    val measuredRates: ClcaErrorRates? = null, // measured error rates (clca only)
     //) {
     public class AuditRoundResultBean {
-        AuditRoundResult auditRound;
+        AuditRoundResult auditResultRound;
 
         public AuditRoundResultBean() {
         }
 
         AuditRoundResultBean(AuditRoundResult auditRound) {
-            this.auditRound = auditRound;
+            this.auditResultRound = auditRound;
         }
 
         public Integer getRound() {
-            return auditRound.getRoundIdx();
+            return auditResultRound.getRoundIdx();
         }
 
         public Integer getMvrs() {
-            return auditRound.getNmvrs();
+            return auditResultRound.getNmvrs();
         }
 
         public Integer getMaxBallots() {
-            return auditRound.getMaxBallotIndexUsed();
+            return auditResultRound.getMaxBallotIndexUsed();
         }
 
         public Double getPValue() {
-            return auditRound.getPvalue();
+            return auditResultRound.getPvalue();
         }
 
         public Integer getMvrsUsed() {
-            return auditRound.getSamplesUsed();
+            return auditResultRound.getSamplesUsed();
         }
 
         public Integer getMvrsExtra() {
-            return ( Math.max(0, auditRound.getNmvrs() - auditRound.getSamplesUsed()));
+            return ( Math.max(0, auditResultRound.getNmvrs() - auditResultRound.getSamplesUsed()));
         }
 
         public String getStatus() {
-            return Naming.status(auditRound.getStatus());
+            return Naming.status(auditResultRound.getStatus());
         }
 
         public Double getMeasuredMargin() {
-            return mean2margin(auditRound.getMeasuredMean());
+            return mean2margin(auditResultRound.getMeasuredMean());
         }
 
         public String getMeasuredErrors() {
-            var er =  auditRound.getMeasuredRates();
+            var er =  auditResultRound.getMeasuredRates();
             if (er == null) {
                 return "N/A";
             } else {
@@ -719,7 +727,7 @@ public class AuditRoundsTable extends JPanel {
         }
 
         public String getEstErrors() {
-            var er =  auditRound.getStartingRates();
+            var er =  auditResultRound.getStartingRates();
             if (er == null) {
                 return "N/A";
             } else {
@@ -729,17 +737,17 @@ public class AuditRoundsTable extends JPanel {
 
         public String show() {
             StringBuilder sb = new StringBuilder();
-            sb.append("roundIdx = %d%n".formatted(auditRound.getRoundIdx()));
-            sb.append("measuredMean = %f%n".formatted(auditRound.getMeasuredMean()));
-            sb.append("measuredMargin = %f%n".formatted(mean2margin(auditRound.getMeasuredMean())));
-            sb.append("estSampleSize = %d%n".formatted(auditRound.getNmvrs()));
-            sb.append("samplesUsed = %d%n".formatted(auditRound.getSamplesUsed()));
+            sb.append("roundIdx = %d%n".formatted(auditResultRound.getRoundIdx()));
+            sb.append("measuredMean = %f%n".formatted(auditResultRound.getMeasuredMean()));
+            sb.append("measuredMargin = %f%n".formatted(mean2margin(auditResultRound.getMeasuredMean())));
+            sb.append("estSampleSize = %d%n".formatted(auditResultRound.getNmvrs()));
+            sb.append("samplesUsed = %d%n".formatted(auditResultRound.getSamplesUsed()));
             sb.append("samplesExtra = %d%n".formatted(getMvrsExtra()));
-            sb.append("pvalue = %f%n".formatted(auditRound.getPvalue()));
-            sb.append("status = %s%n".formatted(Naming.status(auditRound.getStatus())));
-            if (auditRound.getMeasuredRates() != null) sb.append("measuredErrors = %s%n".formatted(auditRound.getMeasuredRates().toString()));
-            if (auditRound.getStartingRates() != null) sb.append("aprioriErrors = %s%n".formatted(auditRound.getStartingRates().toString()));
-            sb.append("maxBallotsUsed = %d%n".formatted(auditRound.getMaxBallotIndexUsed()));
+            sb.append("pvalue = %f%n".formatted(auditResultRound.getPvalue()));
+            sb.append("status = %s%n".formatted(Naming.status(auditResultRound.getStatus())));
+            if (auditResultRound.getMeasuredRates() != null) sb.append("measuredErrors = %s%n".formatted(auditResultRound.getMeasuredRates().toString()));
+            if (auditResultRound.getStartingRates() != null) sb.append("aprioriErrors = %s%n".formatted(auditResultRound.getStartingRates().toString()));
+            sb.append("maxBallotsUsed = %d%n".formatted(auditResultRound.getMaxBallotIndexUsed()));
             return sb.toString();
         }
     }
