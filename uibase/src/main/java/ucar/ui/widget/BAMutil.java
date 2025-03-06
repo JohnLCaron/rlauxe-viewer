@@ -83,9 +83,11 @@ public class BAMutil {
    * @return the Icon or null if not found
    */
   public static ImageIcon getIcon(String name, boolean errMsg) {
-    ImageIcon ii = Resource.getIcon(defaultResourcePath + name + ".gif", errMsg);
+    ImageIcon ii = Resource.getIcon(defaultResourcePath + name, errMsg);
     if (ii == null)
-      Resource.getIcon(defaultResourcePath + name + ".png", errMsg);
+      ii = Resource.getIcon(defaultResourcePath + name + ".gif", errMsg);
+    if (ii == null)
+      ii = Resource.getIcon(defaultResourcePath + name + ".png", errMsg);
     return ii;
   }
 
@@ -147,8 +149,13 @@ public class BAMutil {
       }
     }
 
-    butt.setMaximumSize(new Dimension(28, 28)); // kludge
-    butt.setPreferredSize(new Dimension(28, 28));
+    if (icon != null) {
+      butt.setMaximumSize(new Dimension(icon.getIconWidth()+4, icon.getIconHeight()+4));
+      butt.setPreferredSize(new Dimension(icon.getIconWidth()+4, icon.getIconHeight()+4));
+    } else {
+        butt.setMaximumSize(new Dimension(28, 28));
+        butt.setPreferredSize(new Dimension(28, 28));
+    }
     butt.setToolTipText(tooltip);
     butt.setFocusPainted(false);
 
@@ -426,7 +433,7 @@ public class BAMutil {
   public static void setActionProperties(AbstractAction act, String icon_name, String action_name, boolean is_toggle,
       int mnemonic, int accel) {
     if (icon_name != null) {
-      act.putValue(Action.SMALL_ICON, getIcon(icon_name, true));
+      act.putValue(Action.SMALL_ICON, getIcon(icon_name, false));
       act.putValue(BAMutil.SELECTED_ICON, getIcon(icon_name + "Sel", false));
     }
     act.putValue(Action.SHORT_DESCRIPTION, action_name);

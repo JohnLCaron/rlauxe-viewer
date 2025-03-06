@@ -11,7 +11,8 @@ java {
 
 dependencies {
     api(project(":uibase"))
-    implementation(files("../libs/rla-0.5.1-uber.jar"))
+    implementation(files("/home/stormy/dev/github/rla/rlauxe/rla/build/libs/rla-0.5.1-uber.jar"))
+    // implementation(files("../libs/rla-0.5.1-uber.jar"))
 
     implementation(libs.guava)
     //implementation(libs.gson)
