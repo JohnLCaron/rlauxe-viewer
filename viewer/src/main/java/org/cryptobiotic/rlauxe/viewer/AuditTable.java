@@ -6,6 +6,7 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditRecord;
+import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
 import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
 import org.cryptobiotic.rlauxe.workflow.*;
@@ -198,7 +199,7 @@ public class AuditTable extends JPanel {
             return contestUA.getId();
         }
 
-        public String getChoiceFunction() {
+        public String getType() {
             return contestUA.getChoiceFunction().toString();
         }
 
@@ -210,12 +211,12 @@ public class AuditTable extends JPanel {
             return contestUA.getNc();
         }
 
-        public Integer getNp() {
+        public Integer getPhantoms() {
             return contestUA.getNp();
         }
 
-        public Integer getEstSampleSize() {
-            return contestRound.getEstSampleSize();
+        public Integer getTotalMvrs() {
+            return contestRound.getActualMvrs();
         }
 
         public boolean isSuccess() {
@@ -223,7 +224,7 @@ public class AuditTable extends JPanel {
         }
 
         public String getStatus() {
-            return contestRound.getStatus().toString();
+            return Naming.status(contestRound.getStatus());
         }
 
         public String getVotes() {
@@ -271,7 +272,7 @@ public class AuditTable extends JPanel {
             return assertion.getAssorter().desc();
         }
 
-        public Integer getEstSampleSize() {
+        public Integer getEstMvrs() {
             return assertionRound.getEstSampleSize();
         }
 
@@ -280,7 +281,7 @@ public class AuditTable extends JPanel {
         }
 
         public String getStatus() {
-            return assertionRound.getStatus().toString();
+            return Naming.status(assertionRound.getStatus());
         }
 
         public double getReportedMargin() {
@@ -302,8 +303,8 @@ public class AuditTable extends JPanel {
             return auditRound.getRoundIdx();
         }
 
-        public Integer getEstSampleSize() {
-            return auditRound.getEstSampleSize();
+        public Integer getMvrs() {
+            return auditRound.getNmvrs();
         }
 
         /* public Integer getMaxBallotsUsed() {
@@ -318,16 +319,16 @@ public class AuditTable extends JPanel {
             return auditRound.getSamplesNeeded();
         } */
 
-        public Integer getSamplesUsed() {
+        public Integer getMvrsUsed() {
             return auditRound.getSamplesUsed();
         }
 
-        public Integer getSamplesExtra() {
-            return (auditRound.getEstSampleSize() - auditRound.getSamplesUsed());
+        public Integer getMvrsExtra() {
+            return (Math.max(0, auditRound.getNmvrs() - auditRound.getSamplesUsed()));
         }
 
         public String getStatus() {
-            return auditRound.getStatus().toString();
+            return Naming.status(auditRound.getStatus());
         }
 
         public Double getMeasuredMargin() {

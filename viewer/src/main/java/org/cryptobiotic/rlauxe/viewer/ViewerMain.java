@@ -125,6 +125,9 @@ public class ViewerMain extends JPanel {
 
     AbstractAction verifyAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
+        var verifier = new org.cryptobiotic.rlauxe.verifier.VerifyAuditRecord(auditRecordDir);
+        infoTA.setText(verifier.verify());
+        infoWindow.show();
       }
     };
     // Verify-icon.png
