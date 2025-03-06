@@ -106,7 +106,6 @@ public class ViewerMain extends JPanel {
     this.leftPanel.add(new JLabel("Audit Record Directory: "), BorderLayout.WEST);
 
     //// buttons to the right of the file chooser
-
     AbstractAction startAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
       }
