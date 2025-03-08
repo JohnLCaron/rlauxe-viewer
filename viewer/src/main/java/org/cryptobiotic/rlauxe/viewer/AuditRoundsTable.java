@@ -196,7 +196,7 @@ public class AuditRoundsTable extends JPanel {
 
     void setSelectedAuditRound(AuditRoundBean auditBean) {
         java.util.List<ContestBean> beanList = new ArrayList<>();
-        for (ContestRound c : auditBean.round.getContests()) {
+        for (ContestRound c : auditBean.round.getContestRounds()) {
             beanList.add(new ContestBean(c, auditBean.getRound()));
         }
         contestTable.setBeans(beanList);
@@ -211,7 +211,7 @@ public class AuditRoundsTable extends JPanel {
 
     void setSelectedContest(ContestBean contestBean) {
         java.util.List<AssertionBean> beanList = new ArrayList<>();
-        for (AssertionRound a : contestBean.contestRound.getAssertions()) {
+        for (AssertionRound a : contestBean.contestRound.getAssertionRounds()) {
             beanList.add(new AssertionBean(contestBean, a));
         }
         assertionTable.setBeans(beanList);
@@ -232,9 +232,9 @@ public class AuditRoundsTable extends JPanel {
         for (AuditRound auditRound : auditRecord.getRounds()) {
             if (auditRound.getRoundIdx() > maxRound) break;
 
-            for (ContestRound contestRound : auditRound.getContests()) {
+            for (ContestRound contestRound : auditRound.getContestRounds()) {
                 if (contestRound.getContestUA().equals(assertionBean.contestBean.contestUA)) {
-                    for (AssertionRound assertionRound : contestRound.getAssertions()) {
+                    for (AssertionRound assertionRound : contestRound.getAssertionRounds()) {
                         if (assertionRound.getAssertion().equals(assertionBean.assertionRound.getAssertion())) {
                             if (assertionRound.getAuditResult() != null)
                                 auditList.add(new AuditRoundResultBean(assertionRound.getAuditResult()));
