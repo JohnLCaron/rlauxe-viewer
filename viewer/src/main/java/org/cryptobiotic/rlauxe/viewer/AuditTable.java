@@ -98,7 +98,7 @@ public class AuditTable extends JPanel {
 
             java.util.Map<Integer, ContestRound> contests = new TreeMap<>(); // sorted
             for (var round : auditRecord.getRounds()) {
-                for (var contest : round.getContests()) {
+                for (var contest : round.getContestRounds()) {
                     contests.put(contest.getId(), contest); // get the last time it appears in a round
                 }
             }
@@ -127,7 +127,7 @@ public class AuditTable extends JPanel {
 
     void setSelectedContest(ContestBean contestBean) {
         java.util.List<AssertionBean> beanList = new ArrayList<>();
-        for (AssertionRound a : contestBean.contestRound.getAssertions()) {
+        for (AssertionRound a : contestBean.contestRound.getAssertionRounds()) {
             beanList.add(new AssertionBean(contestBean.contestRound, a));
         }
         assertionTable.setBeans(beanList);
@@ -147,9 +147,9 @@ public class AuditTable extends JPanel {
         for (AuditRound auditRound : auditRecord.getRounds()) {
             if (auditRound.getRoundIdx() > maxRound) break;
 
-            for (ContestRound contestRound : auditRound.getContests()) {
+            for (ContestRound contestRound : auditRound.getContestRounds()) {
                 if (contestRound.getContestUA().equals(assertionBean.contestRound.getContestUA())) {
-                    for (AssertionRound assertionRound : contestRound.getAssertions()) {
+                    for (AssertionRound assertionRound : contestRound.getAssertionRounds()) {
                         if (assertionRound.getAssertion().equals(assertionBean.assertionRound.getAssertion())) {
                             if (assertionRound.getAuditResult() != null)
                                 auditList.add(new AuditRoundBean(assertionRound.getAuditResult()));
@@ -247,7 +247,7 @@ public class AuditTable extends JPanel {
         public Integer getCompleted() {
             if (!contestRound.getStatus().getComplete()) return 0;
             int round = 0;
-            for (AssertionRound assertion : contestRound.getAssertions()) {
+            for (AssertionRound assertion : contestRound.getAssertionRounds()) {
                 round = max(round, assertion.getRound());
             }
             return round;
