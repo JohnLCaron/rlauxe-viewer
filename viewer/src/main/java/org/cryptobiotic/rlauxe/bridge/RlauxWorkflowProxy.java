@@ -35,7 +35,7 @@ public class RlauxWorkflowProxy implements org.cryptobiotic.rlauxe.workflow.Rlau
     }
 
     @Override
-    public @NotNull List<BallotOrCvr> getBallotsOrCvrs() {
+    public @NotNull List<BallotOrCvr> sortedBallotsOrCvrs() {
         return ballotsOrCvrs;
     }
 
