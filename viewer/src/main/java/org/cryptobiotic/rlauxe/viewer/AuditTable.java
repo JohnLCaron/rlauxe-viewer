@@ -37,7 +37,7 @@ public class AuditTable extends JPanel {
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
     private AuditRound lastAuditState;
-    private List<BallotOrCvr> cvrs;
+    private List<BallotOrCvr> bcua;
 
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -116,7 +116,7 @@ public class AuditTable extends JPanel {
             contestTable.setSelectedBean(minByMargin);
 
             this.lastAuditState = auditRecord.getRounds().getLast();
-            this.cvrs = new ArrayList<>(this.auditRecord.getCvrs());
+            this.bcua = new ArrayList<>(this.auditRecord.getBcUA());
 
         } catch (Exception e) {
             e.printStackTrace();

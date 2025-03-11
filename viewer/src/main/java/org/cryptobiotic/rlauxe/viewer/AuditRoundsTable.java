@@ -46,7 +46,7 @@ public class AuditRoundsTable extends JPanel {
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
     private AuditRound lastAuditRound;
-    private List<BallotOrCvr> cvrs;
+    private List<BallotOrCvr> bcua;
     List<Integer> sampleIndices = new ArrayList<>();
 
     public AuditRoundsTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
@@ -141,7 +141,7 @@ public class AuditRoundsTable extends JPanel {
             }
             auditStateTable.setBeans(beanList);
             this.lastAuditRound = auditRecord.getRounds().getLast();
-            this.cvrs = new ArrayList<>(this.auditRecord.getCvrs());
+            this.bcua = new ArrayList<>(this.auditRecord.getBcUA());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -269,7 +269,7 @@ public class AuditRoundsTable extends JPanel {
 
         RlauxWorkflowProxy bridge = new RlauxWorkflowProxy(
                 this.auditConfig,
-                this.cvrs);
+                this.bcua);
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
 
