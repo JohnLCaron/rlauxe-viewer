@@ -37,7 +37,6 @@ public class AuditTable extends JPanel {
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
     private AuditRound lastAuditState;
-    private List<BallotOrCvr> bcua;
 
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -51,7 +50,7 @@ public class AuditTable extends JPanel {
             }
         });
         contestTable.addPopupOption("Show ContestRound", contestTable.makeShowAction(infoTA, infoWindow,
-                bean -> bean.toString()));
+            bean -> ((ContestBean) bean).show()));
 
         assertionTable = new BeanTable<>(AssertionBean.class, (PreferencesExt) prefs.node("assertionTable"), false,
                 "Assertion", "Assertion", null);
@@ -116,7 +115,6 @@ public class AuditTable extends JPanel {
             contestTable.setSelectedBean(minByMargin);
 
             this.lastAuditState = auditRecord.getRounds().getLast();
-            this.bcua = new ArrayList<>(this.auditRecord.getBcUA());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -215,6 +213,14 @@ public class AuditTable extends JPanel {
             return contestUA.getNp();
         }
 
+        public Integer getUndervotes() {
+            return contestUA.getContest().getUndervotes();
+        }
+
+        public String getWinners() {
+            return contestUA.getContest().getWinners().toString();
+        }
+
         public Integer getTotalMvrs() {
             return contestRound.getActualMvrs();
         }
@@ -251,6 +257,20 @@ public class AuditTable extends JPanel {
                 round = max(round, assertion.getRound());
             }
             return round;
+        }
+
+        public String show() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("roundIdx = %d%n".formatted(contestRound.getRoundIdx()));
+            sb.append("estSampleSize = %d%n".formatted(contestRound.getEstSampleSize()));
+            sb.append("estNewSampleSize = %d%n".formatted(contestRound.getEstNewSamples()));
+            sb.append("actualMvrs = %d%n".formatted(contestRound.getActualMvrs()));
+            sb.append("actualNewMvrs = %d%n".formatted(contestRound.getActualNewMvrs()));
+            sb.append("status = %s%n".formatted(Naming.status(contestRound.getStatus())));
+            sb.append("included = %s%n".formatted(contestRound.getIncluded()));
+            sb.append("done = %s%n".formatted(contestRound.getDone()));
+            sb.append("\ncontest = %s%n".formatted(contestUA.show()));
+            return sb.toString();
         }
     }
 
