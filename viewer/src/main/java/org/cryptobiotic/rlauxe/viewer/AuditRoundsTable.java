@@ -27,8 +27,9 @@ import java.util.*;
 import java.util.List;
 
 import static org.cryptobiotic.rlauxe.persist.json.AuditRoundJsonKt.writeAuditRoundJsonFile;
-import static org.cryptobiotic.rlauxe.persist.json.SampleIndicesJsonKt.writeSampleIndicesJsonFile;
+import static org.cryptobiotic.rlauxe.persist.json.SampleIndicesJsonKt.writeSampleNumbersJsonFile;
 import static org.cryptobiotic.rlauxe.util.QuantileKt.probability;
+import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
 
 public class AuditRoundsTable extends JPanel {
@@ -46,7 +47,7 @@ public class AuditRoundsTable extends JPanel {
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
     private AuditRound lastAuditRound;
-    List<Integer> sampleIndices = new ArrayList<>();
+    List<Long> sampleIndices = new ArrayList<>();
 
     public AuditRoundsTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -140,7 +141,11 @@ public class AuditRoundsTable extends JPanel {
             }
             auditStateTable.setBeans(beanList);
             this.lastAuditRound = auditRecord.getRounds().getLast();
-            // this.bcua = new ArrayList<>(this.auditRecord.getBcUA());
+
+            contestTable.setBeans(new ArrayList());
+            assertionTable.setBeans(new ArrayList());
+            auditRoundTable.setBeans(new ArrayList());
+            estRoundTable.setBeans(new ArrayList());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -159,8 +164,8 @@ public class AuditRoundsTable extends JPanel {
         var publisher = new Publisher(auditRecordLocation);
         writeAuditRoundJsonFile(lastRound, publisher.auditRoundFile(roundIdx));
         System.out.printf("   writeAuditStateJsonFile to %s%n", publisher.auditRoundFile(roundIdx));
-        writeSampleIndicesJsonFile(sampleIndices, publisher.sampleIndicesFile(roundIdx));
-        System.out.printf("   writeSampleIndicesJsonFile to %s%n", publisher.sampleIndicesFile(roundIdx));
+        writeSampleNumbersJsonFile(sampleIndices, publisher.sampleNumbersFile(roundIdx));
+        System.out.printf("   writeSampleIndicesJsonFile to %s%n", publisher.sampleNumbersFile(roundIdx));
     }
 
     //////////////////////////////////////////////////////////////////
@@ -180,7 +185,7 @@ public class AuditRoundsTable extends JPanel {
             if (round.getAuditWasDone()) {
                 int roundIdx = round.getRoundIdx();
                 f.format("%n maxBallotIndexUsed in round %d = %d %n", roundIdx, round.maxBallotsUsed());
-                int nmvrs = round.getSampledIndices().size();
+                int nmvrs = round.getSampleNumbers().size();
                 f.format(" number of Mvrs in round %d = %d %n", roundIdx, nmvrs);
                 int extra = nmvrs - round.maxBallotsUsed();
                 f.format(" extraBallotsUsed = %d %n", extra);
@@ -264,17 +269,17 @@ public class AuditRoundsTable extends JPanel {
     void includeChanged() {
         int nrounds = auditRecord.getRounds().size();
         if (nrounds == 0) return;
-        Set<Integer> previousSamples = org.cryptobiotic.rlauxe.workflow.AuditRoundKt.previousSamples(auditRecord.getRounds(), nrounds);
+        Set<Long> previousSamples = org.cryptobiotic.rlauxe.workflow.AuditRoundKt.previousSamples(auditRecord.getRounds(), nrounds);
 
         RlauxWorkflowProxy bridge = new RlauxWorkflowProxy(
                 this.auditConfig,
-                this.auditRecord.bcUA()); // TODO only read the ones needd
+                this.auditRecord.ballotCards()); // TODO only read the ones needd
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
 
         System.out.printf("call createSampleIndices auditorWantNewMvrs = %d previousSamples = %d %n",
                 this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size());
-        this.sampleIndices = bridge.createSampleIndices( this.lastAuditRound, previousSamples);
+        bridge.createSampleIndices( this.lastAuditRound, previousSamples);
         System.out.printf("  returned = %d indices newmvrs=%d %n", this.sampleIndices.size(), this.lastAuditRound.getNewmvrs());
 
         auditStateTable.refresh();
@@ -344,7 +349,7 @@ public class AuditRoundsTable extends JPanel {
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append("roundIdx = %d%n".formatted(round.getRoundIdx()));
-            sb.append("sampledIndices size = %d%n".formatted(round.getSampledIndices().size()));
+            sb.append("sample size = %d%n".formatted(round.getSampleNumbers().size()));
             sb.append("nmvrs = %d%n".formatted(round.getNmvrs()));
             sb.append("newmvrs = %d%n".formatted(round.getNewmvrs()));
             sb.append("auditorWantNewMvrs = %d%n".formatted(round.getAuditorWantNewMvrs()));
@@ -695,8 +700,8 @@ public class AuditRoundsTable extends JPanel {
             return Naming.status(auditResultRound.getStatus());
         }
 
-        public Double getMeasuredMargin() {
-            return mean2margin(auditResultRound.getMeasuredMean());
+        public String getMeasuredMargin() {
+            return dfn(mean2margin(auditResultRound.getMeasuredMean()), 5);
         }
 
         public String getMeasuredErrors() {
