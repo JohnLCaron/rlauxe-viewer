@@ -6,7 +6,6 @@ import java.util.Set;
 import org.cryptobiotic.rlauxe.estimate.ConsistentSamplingKt;
 import org.cryptobiotic.rlauxe.workflow.AuditConfig;
 import org.cryptobiotic.rlauxe.workflow.AuditRound;
-import org.cryptobiotic.rlauxe.workflow.BallotOrCvr;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -15,18 +14,24 @@ import org.jetbrains.annotations.NotNull;
 //    public abstract fun getBallotsOrCvrs(): kotlin.collections.List<org.cryptobiotic.rlauxe.workflow.BallotOrCvr>
 public class RlauxWorkflowProxy implements org.cryptobiotic.rlauxe.workflow.RlauxWorkflowProxy {
     org.cryptobiotic.rlauxe.workflow.AuditConfig auditConfig;
-    List<org.cryptobiotic.rlauxe.workflow.BallotOrCvr> ballotsOrCvrs;
+    org.cryptobiotic.rlauxe.workflow.BallotCards ballotCards;
 
     public RlauxWorkflowProxy(
             org.cryptobiotic.rlauxe.workflow.AuditConfig auditConfig,
-            List<org.cryptobiotic.rlauxe.workflow.BallotOrCvr> ballotsOrCvrs) {
+            org.cryptobiotic.rlauxe.workflow.BallotCards ballotCards) {
         this.auditConfig = auditConfig;
-        this.ballotsOrCvrs = ballotsOrCvrs;
+        this.ballotCards = ballotCards;
     }
 
+    // fun createSampleIndices(
+    //    workflow: RlauxWorkflowProxy,
+    //    auditRound: AuditRound,
+    //    previousSamples: Set<Long> = emptySet(),
+    //    quiet: Boolean = true
+    //)
     // fun createSampleIndices(workflow: RlauxWorkflowProxy, auditRound: AuditRound, wantNewMvrs: Int, quiet: Boolean): List<Int> {
-    public List<Integer> createSampleIndices(AuditRound auditRound, Set<Integer> previousSamples) {
-        return ConsistentSamplingKt.createSampleIndices(this, auditRound, previousSamples, false);
+    public void createSampleIndices(AuditRound auditRound, Set<Long> previousSamples) {
+        ConsistentSamplingKt.createSampleIndices(this, auditRound, previousSamples, false);
     }
 
     @Override
@@ -35,8 +40,8 @@ public class RlauxWorkflowProxy implements org.cryptobiotic.rlauxe.workflow.Rlau
     }
 
     @Override
-    public @NotNull List<BallotOrCvr> sortedBallotsOrCvrs() {
-        return ballotsOrCvrs;
+    public @NotNull org.cryptobiotic.rlauxe.workflow.BallotCards ballotCards() {
+        return ballotCards;
     }
 
 }

@@ -19,7 +19,6 @@ import ucar.util.prefs.PreferencesExt;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import static java.lang.Math.max;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
@@ -29,7 +28,7 @@ public class AuditTable extends JPanel {
 
     private final BeanTable<ContestBean> contestTable;
     private final BeanTable<AssertionBean> assertionTable;
-    private final BeanTable<AuditRoundBean> auditRoundTable;
+    private final BeanTable<AuditRoundResultBean> auditRoundTable;
 
     private final JSplitPane split2, split3;
 
@@ -63,10 +62,10 @@ public class AuditTable extends JPanel {
         assertionTable.addPopupOption("Show Assertion", assertionTable.makeShowAction(infoTA, infoWindow,
                 bean -> bean.toString()));
 
-        auditRoundTable = new BeanTable<>(AuditRoundBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
+        auditRoundTable = new BeanTable<>(AuditRoundResultBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
                 "AuditRounds", "AuditRoundResult", null);
         auditRoundTable.addPopupOption("Show AuditRoundResult", auditRoundTable.makeShowAction(infoTA, infoWindow,
-                bean -> bean.toString()));
+                bean -> ((AuditRoundResultBean)bean).show()));
         setFontSize(fontSize);
 
         // layout of tables
@@ -139,7 +138,7 @@ public class AuditTable extends JPanel {
     }
 
     void setSelectedAssertion(AssertionBean assertionBean) {
-        java.util.List<AuditRoundBean> auditList = new ArrayList<>();
+        java.util.List<AuditRoundResultBean> auditList = new ArrayList<>();
 
         int maxRound = assertionBean.assertionRound.getRoundIdx();
         for (AuditRound auditRound : auditRecord.getRounds()) {
@@ -150,7 +149,7 @@ public class AuditTable extends JPanel {
                     for (AssertionRound assertionRound : contestRound.getAssertionRounds()) {
                         if (assertionRound.getAssertion().equals(assertionBean.assertionRound.getAssertion())) {
                             if (assertionRound.getAuditResult() != null)
-                                auditList.add(new AuditRoundBean(assertionRound.getAuditResult()));
+                                auditList.add(new AuditRoundResultBean(assertionRound.getAuditResult()));
                         }
                     }
                 }
@@ -307,19 +306,34 @@ public class AuditTable extends JPanel {
         public double getReportedMargin() {
            return assertion.getAssorter().reportedMargin();
         }
+
+        public String show() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("roundIdx = %d%n".formatted(assertionRound.getRoundIdx()));
+            sb.append("estSampleSize = %d%n".formatted(assertionRound.getEstSampleSize()));
+            sb.append("estNewSampleSize = %d%n".formatted(assertionRound.getEstNewSampleSize()));
+            sb.append("status = %s%n".formatted(Naming.status(assertionRound.getStatus())));
+            sb.append("round = %d%n".formatted(assertionRound.getRound()));
+            sb.append("\nassertion = %s%n".formatted(assertionRound.getAssertion().show()));
+            sb.append("\nassorter = %s%n".formatted(assertionRound.getAssertion().getAssorter().toString()));
+            if (assertionRound.getPrevAuditResult() != null) sb.append("\nprevAuditResult = %s%n".formatted(assertionRound.getPrevAuditResult().toString()));
+            if (assertionRound.getEstimationResult() != null) sb.append("\nestimationResult = %s%n".formatted(assertionRound.getEstimationResult().toString()));
+            if (assertionRound.getAuditResult() != null) sb.append("\nauditResult = %s%n".formatted(assertionRound.getAuditResult().toString()));
+            return sb.toString();
+        }
     }
 
-    public class AuditRoundBean {
+    public class AuditRoundResultBean {
         AuditRoundResult auditRound;
 
-        public AuditRoundBean() {
+        public AuditRoundResultBean() {
         }
 
-        AuditRoundBean(AuditRoundResult auditRound) {
+        AuditRoundResultBean(AuditRoundResult auditRound) {
             this.auditRound = auditRound;
         }
 
-        public Integer getRound() {
+        public Integer getRoundIdx() {
             return auditRound.getRoundIdx();
         }
 
@@ -355,28 +369,21 @@ public class AuditTable extends JPanel {
             return mean2margin(auditRound.getMeasuredMean());
         }
 
-        /*
-
-
-        public String getMeasuredErrors() {
-            var er =  auditRound.getMeasuredRates();
-            if (er == null) {
-                return "N/A";
-            } else {
-                return er.toString();
-            }
+        public String show() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("roundIdx = %d%n".formatted(getRoundIdx()));
+            sb.append("measuredMean = %f%n".formatted(auditRound.getMeasuredMean()));
+            sb.append("measuredMargin = %f%n".formatted(mean2margin(auditRound.getMeasuredMean())));
+            sb.append("estSampleSize = %d%n".formatted(auditRound.getNmvrs()));
+            sb.append("samplesUsed = %d%n".formatted(auditRound.getSamplesUsed()));
+            sb.append("samplesExtra = %d%n".formatted(getMvrsExtra()));
+            sb.append("pvalue = %f%n".formatted(auditRound.getPvalue()));
+            sb.append("status = %s%n".formatted(Naming.status(auditRound.getStatus())));
+            if (auditRound.getMeasuredRates() != null) sb.append("measuredErrors = %s%n".formatted(auditRound.getMeasuredRates().toString()));
+            if (auditRound.getStartingRates() != null) sb.append("aprioriErrors = %s%n".formatted(auditRound.getStartingRates().toString()));
+            sb.append("maxBallotsUsed = %d%n".formatted(auditRound.getMaxBallotIndexUsed()));
+            return sb.toString();
         }
-
-        public String getAprioriErrors() {
-            var er =  auditRound.getStartingRates();
-            if (er == null) {
-                return "N/A";
-            } else {
-                return er.toString();
-            }
-        }
-
-         */
     }
 
 }

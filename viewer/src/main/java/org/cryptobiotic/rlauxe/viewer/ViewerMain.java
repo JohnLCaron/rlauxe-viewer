@@ -115,7 +115,7 @@ public class ViewerMain extends JPanel {
 
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        org.cryptobiotic.rlauxe.cli.RunRlaRoundKt.runRound(auditRecordDir, auditRecordDir + "/private/testMvrs.json");
+        org.cryptobiotic.rlauxe.cli.RunRlaRoundFuzzKt.runRound(auditRecordDir, auditRecordDir + "/private/testMvrs.json");
         auditPanel.setSelected(auditRecordDir);
         auditRoundsPanel.setSelected(auditRecordDir);
       }
