@@ -5,11 +5,10 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AuditRecord;
+import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
 import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
-import org.cryptobiotic.rlauxe.workflow.*;
 import org.cryptobiotic.rlauxe.core.Contest;
 import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.IndependentWindow;
@@ -48,7 +47,7 @@ public class AuditTable extends JPanel {
                 setSelectedContest(contest);
             }
         });
-        contestTable.addPopupOption("Show ContestRound", contestTable.makeShowAction(infoTA, infoWindow,
+        contestTable.addPopupOption("Show Contest", contestTable.makeShowAction(infoTA, infoWindow,
             bean -> ((ContestBean) bean).show()));
 
         assertionTable = new BeanTable<>(AssertionBean.class, (PreferencesExt) prefs.node("assertionTable"), false,
@@ -95,25 +94,35 @@ public class AuditTable extends JPanel {
             this.auditConfig = auditRecord.getAuditConfig();
 
             java.util.Map<Integer, ContestRound> contests = new TreeMap<>(); // sorted
+
+            if (auditRecord.getRounds().isEmpty()) {
+                for (var contest : auditRecord.getContests()) {
+                    contests.put(contest.getId(), new ContestRound(contest, new ArrayList<>(), 0));
+                }
+            }
+
             for (var round : auditRecord.getRounds()) {
                 for (var contest : round.getContestRounds()) {
                     contests.put(contest.getId(), contest); // get the last time it appears in a round
                 }
             }
+
             java.util.List<ContestBean> beanList = new ArrayList<>();
             for (var contest : contests.values()) {
                 beanList.add(new ContestBean(contest));
             }
             contestTable.setBeans(beanList);
 
-            // select contest with smallest margin
-            ContestBean minByMargin = beanList
-                    .stream()
-                    .min(Comparator.comparing(ContestBean::getReportedMargin))
-                    .orElseThrow(NoSuchElementException::new);
-            contestTable.setSelectedBean(minByMargin);
+            if (!auditRecord.getRounds().isEmpty()) {
+                // select contest with smallest margin
+                ContestBean minByMargin = beanList
+                        .stream()
+                        .min(Comparator.comparing(ContestBean::getReportedMargin))
+                        .orElseThrow(NoSuchElementException::new);
+                contestTable.setSelectedBean(minByMargin);
 
-            this.lastAuditState = auditRecord.getRounds().getLast();
+                this.lastAuditState = auditRecord.getRounds().getLast();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -128,6 +137,8 @@ public class AuditTable extends JPanel {
             beanList.add(new AssertionBean(contestBean.contestRound, a));
         }
         assertionTable.setBeans(beanList);
+
+        if (beanList.isEmpty()) return;
 
         // select assertion with smallest margin
         AssertionBean minByMargin = beanList

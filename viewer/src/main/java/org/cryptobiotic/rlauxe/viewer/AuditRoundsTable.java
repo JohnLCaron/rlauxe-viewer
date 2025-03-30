@@ -5,12 +5,9 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AuditRecord;
-import org.cryptobiotic.rlauxe.workflow.AuditRound;
-import org.cryptobiotic.rlauxe.workflow.ContestRound;
+import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.core.*;
 import org.cryptobiotic.rlauxe.persist.json.Publisher;
-import org.cryptobiotic.rlauxe.workflow.*;
 import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
@@ -24,10 +21,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
-import java.util.List;
 
+import static org.cryptobiotic.rlauxe.audit.AuditRecordKt.makeMvrManager;
 import static org.cryptobiotic.rlauxe.persist.json.AuditRoundJsonKt.writeAuditRoundJsonFile;
-import static org.cryptobiotic.rlauxe.persist.json.SampleIndicesJsonKt.writeSampleNumbersJsonFile;
+import static org.cryptobiotic.rlauxe.persist.json.SampleNumbersJsonKt.writeSampleNumbersJsonFile;
 import static org.cryptobiotic.rlauxe.util.QuantileKt.probability;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
@@ -46,8 +43,23 @@ public class AuditRoundsTable extends JPanel {
     private String auditRecordLocation = "none";
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
-    private AuditRound lastAuditRound;
-    List<Long> sampleIndices = new ArrayList<>();
+    private AuditRound lastAuditRound; // may be null
+    // List<Long> sampleIndices = new ArrayList<>();
+
+    void turnOffIncluded() {
+        AuditRoundBean lastRoundBean = auditStateTable.getBeans().getLast();
+        if (lastRoundBean != null) {
+            java.util.List<ContestBean> beanList = new ArrayList<>();
+            for (ContestRound c : lastRoundBean.round.getContestRounds()) {
+                c.setIncluded(false);
+                var contestBean = new ContestBean(c, lastRoundBean.getRound());
+                beanList.add(new ContestBean(c, lastRoundBean.getRound()));
+            }
+            contestTable.setBeans(beanList);
+            setSelectedAuditRound(lastRoundBean);
+            contestTable.refresh();
+        }
+    }
 
     public AuditRoundsTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -55,9 +67,9 @@ public class AuditRoundsTable extends JPanel {
         auditStateTable = new BeanTable<>(AuditRoundBean.class, (PreferencesExt) prefs.node("auditStateTable"), false,
                 "Audit Rounds", "AuditRound", new AuditRoundBean());
         auditStateTable.addListSelectionListener(e -> {
-            AuditRoundBean state = auditStateTable.getSelectedBean();
-            if (state != null) {
-                setSelectedAuditRound(state);
+            AuditRoundBean round = auditStateTable.getSelectedBean();
+            if (round != null) {
+                setSelectedAuditRound(round);
             }
         });
         auditStateTable.addPopupOption("Write AuditRound", new AbstractAction() {
@@ -140,7 +152,9 @@ public class AuditRoundsTable extends JPanel {
                 beanList.add(new AuditRoundBean(round));
             }
             auditStateTable.setBeans(beanList);
-            this.lastAuditRound = auditRecord.getRounds().getLast();
+            if (!auditRecord.getRounds().isEmpty()) {
+                this.lastAuditRound = auditRecord.getRounds().getLast();
+            }
 
             contestTable.setBeans(new ArrayList());
             assertionTable.setBeans(new ArrayList());
@@ -155,7 +169,7 @@ public class AuditRoundsTable extends JPanel {
     }
 
     void writeAuditState() {
-        if (sampleIndices.isEmpty()) return;
+        // if (sampleIndices.isEmpty()) return;
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
         AuditRound lastRound = lastBean.round;
@@ -163,9 +177,9 @@ public class AuditRoundsTable extends JPanel {
 
         var publisher = new Publisher(auditRecordLocation);
         writeAuditRoundJsonFile(lastRound, publisher.auditRoundFile(roundIdx));
-        System.out.printf("   writeAuditStateJsonFile to %s%n", publisher.auditRoundFile(roundIdx));
-        writeSampleNumbersJsonFile(sampleIndices, publisher.sampleNumbersFile(roundIdx));
-        System.out.printf("   writeSampleIndicesJsonFile to %s%n", publisher.sampleNumbersFile(roundIdx));
+        System.out.printf("   write auditRoundFile to %s%n", publisher.auditRoundFile(roundIdx));
+        writeSampleNumbersJsonFile(lastRound.getSampleNumbers(), publisher.sampleNumbersFile(roundIdx));
+        System.out.printf("   write sampleNumbersFile to %s%n", publisher.sampleNumbersFile(roundIdx));
     }
 
     //////////////////////////////////////////////////////////////////
@@ -177,7 +191,9 @@ public class AuditRoundsTable extends JPanel {
         f.format("Audit record at %s%n", this.auditRecordLocation);
         f.format("%s%n", this.auditConfig);
         // f.format(" total Ballots = %d%n", totalBallots);
-        f.format(" total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
+        if (this.lastAuditRound != null) {
+            f.format(" total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
+        }
         // f.format(" Mvrs/total = %d %% %n", (int) ((100.0 * this.lastAuditRound.getNmvrs())/Math.max(1,totalBallots)));
 
         int totalExtra = 0;
@@ -205,6 +221,8 @@ public class AuditRoundsTable extends JPanel {
         }
         contestTable.setBeans(beanList);
 
+        if (beanList.isEmpty()) return;
+
         // select contest with smallest margin
         ContestBean minByMargin = beanList
                 .stream()
@@ -219,6 +237,8 @@ public class AuditRoundsTable extends JPanel {
             beanList.add(new AssertionBean(contestBean, a));
         }
         assertionTable.setBeans(beanList);
+
+        if (beanList.isEmpty()) return;
 
         // select assertion with smallest margin
         AssertionBean minByMargin = beanList
@@ -266,21 +286,27 @@ public class AuditRoundsTable extends JPanel {
         prefs.putInt("splitPos4", split4.getDividerLocation());
     }
 
-    void includeChanged() {
+    void resample() {
+        if (this.lastAuditRound == null) {
+            System.out.println("  no audit round");
+            return;
+        }
+
         int nrounds = auditRecord.getRounds().size();
         if (nrounds == 0) return;
-        Set<Long> previousSamples = org.cryptobiotic.rlauxe.workflow.AuditRoundKt.previousSamples(auditRecord.getRounds(), nrounds);
+        Set<Long> previousSamples = org.cryptobiotic.rlauxe.audit.AuditRoundKt.previousSamples(auditRecord.getRounds(), nrounds);
 
         RlauxWorkflowProxy bridge = new RlauxWorkflowProxy(
                 this.auditConfig,
-                this.auditRecord.ballotCards()); // TODO only read the ones needd
+                makeMvrManager(auditRecord.getLocation(), auditRecord.getAuditConfig())
+        );
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
 
-        System.out.printf("call createSampleIndices auditorWantNewMvrs = %d previousSamples = %d %n",
+        System.out.printf("call sample() with auditorWantNewMvrs = %d previousSamples = %d %n",
                 this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size());
-        bridge.createSampleIndices( this.lastAuditRound, previousSamples);
-        System.out.printf("  returned = %d indices newmvrs=%d %n", this.sampleIndices.size(), this.lastAuditRound.getNewmvrs());
+        bridge.sample( this.lastAuditRound, previousSamples);
+        System.out.printf("  sample() = %d mvrs with newmvrs=%d %n", this.lastAuditRound.getSampleNumbers().size(), this.lastAuditRound.getNewmvrs());
 
         auditStateTable.refresh();
         contestTable.refresh();
@@ -320,7 +346,7 @@ public class AuditRoundsTable extends JPanel {
         public void setWantNewMvrs( int wantedNewMvrs) {
             if (round.getAuditorWantNewMvrs() != wantedNewMvrs) {
                 round.setAuditorWantNewMvrs(wantedNewMvrs);
-                includeChanged();
+                // resample();
             }
         }
 
@@ -385,7 +411,7 @@ public class AuditRoundsTable extends JPanel {
         public void setWantNewMvrs( int wantedNewMvrs) {
             if (contestRound.getAuditorWantNewMvrs() != wantedNewMvrs) {
                 contestRound.setAuditorWantNewMvrs(wantedNewMvrs);
-                includeChanged();
+                // resample();
             }
         }
 
@@ -394,7 +420,7 @@ public class AuditRoundsTable extends JPanel {
             boolean oldState = contestRound.getIncluded();
             if (oldState != include) {
                 contestRound.setIncluded(include);
-                includeChanged(); // queued event might be better
+                // resample(); // queued event might be better
             }
             // if (!include) { contestUA.setDone(true); }
         }
