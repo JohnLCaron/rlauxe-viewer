@@ -4,34 +4,33 @@ import java.util.List;
 import java.util.Set;
 
 import org.cryptobiotic.rlauxe.estimate.ConsistentSamplingKt;
-import org.cryptobiotic.rlauxe.workflow.AuditConfig;
-import org.cryptobiotic.rlauxe.workflow.AuditRound;
+import org.cryptobiotic.rlauxe.audit.*;
 
 import org.jetbrains.annotations.NotNull;
 
 //    public abstract fun auditConfig(): org.cryptobiotic.rlauxe.workflow.AuditConfig
 //    public abstract fun getContests(): kotlin.collections.List<org.cryptobiotic.rlauxe.core.ContestUnderAudit>
 //    public abstract fun getBallotsOrCvrs(): kotlin.collections.List<org.cryptobiotic.rlauxe.workflow.BallotOrCvr>
-public class RlauxWorkflowProxy implements org.cryptobiotic.rlauxe.workflow.RlauxWorkflowProxy {
-    org.cryptobiotic.rlauxe.workflow.AuditConfig auditConfig;
-    org.cryptobiotic.rlauxe.workflow.BallotCards ballotCards;
+public class RlauxWorkflowProxy implements RlauxAuditProxy {
+    org.cryptobiotic.rlauxe.audit.AuditConfig auditConfig;
+    org.cryptobiotic.rlauxe.audit.MvrManager mvrManager;
 
     public RlauxWorkflowProxy(
-            org.cryptobiotic.rlauxe.workflow.AuditConfig auditConfig,
-            org.cryptobiotic.rlauxe.workflow.BallotCards ballotCards) {
+            org.cryptobiotic.rlauxe.audit.AuditConfig auditConfig,
+            org.cryptobiotic.rlauxe.audit.MvrManager mvrManager) {
         this.auditConfig = auditConfig;
-        this.ballotCards = ballotCards;
+        this.mvrManager = mvrManager;
     }
 
-    // fun createSampleIndices(
+    // fun sample(
     //    workflow: RlauxWorkflowProxy,
     //    auditRound: AuditRound,
     //    previousSamples: Set<Long> = emptySet(),
     //    quiet: Boolean = true
     //)
-    // fun createSampleIndices(workflow: RlauxWorkflowProxy, auditRound: AuditRound, wantNewMvrs: Int, quiet: Boolean): List<Int> {
-    public void createSampleIndices(AuditRound auditRound, Set<Long> previousSamples) {
-        ConsistentSamplingKt.createSampleIndices(this, auditRound, previousSamples, false);
+    // TODO sampleCheckLimits or sample ??
+    public void sample(AuditRound auditRound, Set<Long> previousSamples) {
+        ConsistentSamplingKt.sampleCheckLimits(this, auditRound, previousSamples, false);
     }
 
     @Override
@@ -40,8 +39,8 @@ public class RlauxWorkflowProxy implements org.cryptobiotic.rlauxe.workflow.Rlau
     }
 
     @Override
-    public @NotNull org.cryptobiotic.rlauxe.workflow.BallotCards ballotCards() {
-        return ballotCards;
+    public @NotNull MvrManager mvrManager() {
+        return mvrManager;
     }
 
 }

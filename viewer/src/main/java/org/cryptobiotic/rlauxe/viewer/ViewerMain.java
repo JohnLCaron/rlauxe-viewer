@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.Formatter;
 import java.util.HashSet;
 
+import static org.cryptobiotic.rlauxe.cli.RunRlaRoundCliKt.runRound;
+
 /** ElectionRecord Viewer main program. */
 public class ViewerMain extends JPanel {
   public static final String FRAME_SIZE = "FrameSize";
@@ -108,20 +110,29 @@ public class ViewerMain extends JPanel {
     //// buttons to the right of the file chooser
     AbstractAction startAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
+        auditRoundsPanel.resample();
       }
     };
-    BAMutil.setActionProperties(startAction, "sunrise-icon.png", "Start New Audit Record", false, 'S', -1);
+    BAMutil.setActionProperties(startAction, "sunrise-icon.png", "Resample", false, 'S', -1);
     BAMutil.addActionToContainer(rightPanel, startAction);
 
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        org.cryptobiotic.rlauxe.cli.RunRlaRoundFuzzKt.runRound(auditRecordDir, auditRecordDir + "/private/testMvrs.json");
+        runRound(auditRecordDir, false);
         auditPanel.setSelected(auditRecordDir);
         auditRoundsPanel.setSelected(auditRecordDir);
       }
     };
     BAMutil.setActionProperties(runAction, "run-round-icon.png", "Run Audit Round", false, 'R', -1);
     BAMutil.addActionToContainer(rightPanel, runAction);
+
+    AbstractAction offAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+         auditRoundsPanel.turnOffIncluded();
+      }
+    };
+    BAMutil.setActionProperties(runAction, "V3.gif", "Turn off include", false, 'R', -1);
+    BAMutil.addActionToContainer(rightPanel, offAction);
 
     AbstractAction verifyAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
