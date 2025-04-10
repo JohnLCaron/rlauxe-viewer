@@ -131,7 +131,7 @@ public class ViewerMain extends JPanel {
          auditRoundsPanel.turnOffIncluded();
       }
     };
-    BAMutil.setActionProperties(runAction, "V3.gif", "Turn off include", false, 'R', -1);
+    BAMutil.setActionProperties(offAction, "Clear.gif", "Turn off include", false, 'R', -1);
     BAMutil.addActionToContainer(rightPanel, offAction);
 
     AbstractAction verifyAction = new AbstractAction() {

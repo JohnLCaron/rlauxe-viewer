@@ -502,20 +502,8 @@ public class AuditRoundsTable extends JPanel {
             }
         }
 
-        public double getRecountPct() {
-            double pct = 1.0;
-
-            var minAssertion = contestUA.minAssertion();
-            if (minAssertion == null) {
-                return pct;
-            }
-            if (contestUA.getContest() instanceof Contest) {
-                var votes = ((Contest)contestUA.getContest()).getVotes();
-                var winner = votes.get(minAssertion.getAssorter().winner());
-                var loser = votes.get(minAssertion.getAssorter().loser());
-                pct = (winner - loser) / ((double) winner);
-            }
-            return pct;
+        public double getRecount() {
+            return contestUA.recountMargin();
         }
 
         // data class ContestRound(val contestUA: ContestUnderAudit, val assertions: List<AssertionRound>, val roundIdx: Int) {
@@ -573,7 +561,7 @@ public class AuditRoundsTable extends JPanel {
         }
 
         public double getRecountPct() {
-            double pct = 1.0;
+            double pct = -1.0;
             if (contestBean.contestUA.getContest() instanceof Contest) {
                 var votes = ((Contest)contestBean.contestUA.getContest()).getVotes();
                 var winner = votes.get(assertion.getAssorter().winner());
