@@ -260,6 +260,10 @@ public class AuditTable extends JPanel {
             }
         }
 
+        public double getRecountMargin() {
+            return contestUA.recountMargin();
+        }
+
         public Integer getCompleted() {
             if (!contestRound.getStatus().getComplete()) return 0;
             int round = 0;
