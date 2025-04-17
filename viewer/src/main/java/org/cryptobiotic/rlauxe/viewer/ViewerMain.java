@@ -118,7 +118,7 @@ public class ViewerMain extends JPanel {
 
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        runRound(auditRecordDir, false);
+        runRound(auditRecordDir, true, false);
         auditPanel.setSelected(auditRecordDir);
         auditRoundsPanel.setSelected(auditRecordDir);
       }

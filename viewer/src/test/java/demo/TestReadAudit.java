@@ -1,6 +1,6 @@
 package demo;
 
-import org.cryptobiotic.rlauxe.persist.json.Publisher;
+import org.cryptobiotic.rlauxe.persist.Publisher;
 
 import static com.github.michaelbull.result.UnwrapKt.unwrap;
 import static org.cryptobiotic.rlauxe.persist.json.AuditConfigJsonKt.readAuditConfigJsonFile;
