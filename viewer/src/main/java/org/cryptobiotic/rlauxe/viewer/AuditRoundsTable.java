@@ -7,7 +7,9 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.core.*;
-import org.cryptobiotic.rlauxe.persist.json.Publisher;
+import org.cryptobiotic.rlauxe.persist.AuditRecord;
+import org.cryptobiotic.rlauxe.persist.MvrManagerTestFromRecord;
+import org.cryptobiotic.rlauxe.persist.Publisher;
 import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
@@ -22,9 +24,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
-import static org.cryptobiotic.rlauxe.audit.AuditRecordKt.makeMvrManager;
 import static org.cryptobiotic.rlauxe.persist.json.AuditRoundJsonKt.writeAuditRoundJsonFile;
-import static org.cryptobiotic.rlauxe.persist.json.SampleNumbersJsonKt.writeSampleNumbersJsonFile;
+import static org.cryptobiotic.rlauxe.persist.json.SamplePrnsJsonKt.writeSamplePrnsJsonFile;
 import static org.cryptobiotic.rlauxe.util.QuantileKt.probability;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
@@ -178,8 +179,8 @@ public class AuditRoundsTable extends JPanel {
         var publisher = new Publisher(auditRecordLocation);
         writeAuditRoundJsonFile(lastRound, publisher.auditRoundFile(roundIdx));
         System.out.printf("   write auditRoundFile to %s%n", publisher.auditRoundFile(roundIdx));
-        writeSampleNumbersJsonFile(lastRound.getSampleNumbers(), publisher.sampleNumbersFile(roundIdx));
-        System.out.printf("   write sampleNumbersFile to %s%n", publisher.sampleNumbersFile(roundIdx));
+        writeSamplePrnsJsonFile(lastRound.getSamplePrns(), publisher.samplePrnsFile(roundIdx));
+        System.out.printf("   write sampleNumbersFile to %s%n", publisher.samplePrnsFile(roundIdx));
     }
 
     //////////////////////////////////////////////////////////////////
@@ -201,7 +202,7 @@ public class AuditRoundsTable extends JPanel {
             if (round.getAuditWasDone()) {
                 int roundIdx = round.getRoundIdx();
                 f.format("%n maxBallotIndexUsed in round %d = %d %n", roundIdx, round.maxBallotsUsed());
-                int nmvrs = round.getSampleNumbers().size();
+                int nmvrs = round.getSamplePrns().size();
                 f.format(" number of Mvrs in round %d = %d %n", roundIdx, nmvrs);
                 int extra = nmvrs - round.maxBallotsUsed();
                 f.format(" extraBallotsUsed = %d %n", extra);
@@ -298,7 +299,7 @@ public class AuditRoundsTable extends JPanel {
 
         RlauxWorkflowProxy bridge = new RlauxWorkflowProxy(
                 this.auditConfig,
-                makeMvrManager(auditRecord.getLocation(), auditRecord.getAuditConfig())
+                new MvrManagerTestFromRecord(auditRecord.getLocation())
         );
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
@@ -306,7 +307,7 @@ public class AuditRoundsTable extends JPanel {
         System.out.printf("call sample() with auditorWantNewMvrs = %d previousSamples = %d %n",
                 this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size());
         bridge.sample( this.lastAuditRound, previousSamples);
-        System.out.printf("  sample() = %d mvrs with newmvrs=%d %n", this.lastAuditRound.getSampleNumbers().size(), this.lastAuditRound.getNewmvrs());
+        System.out.printf("  sample() = %d mvrs with newmvrs=%d %n", this.lastAuditRound.getSamplePrns().size(), this.lastAuditRound.getNewmvrs());
 
         auditStateTable.refresh();
         contestTable.refresh();
@@ -375,7 +376,7 @@ public class AuditRoundsTable extends JPanel {
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append("roundIdx = %d%n".formatted(round.getRoundIdx()));
-            sb.append("sample size = %d%n".formatted(round.getSampleNumbers().size()));
+            sb.append("sample size = %d%n".formatted(round.getSamplePrns().size()));
             sb.append("nmvrs = %d%n".formatted(round.getNmvrs()));
             sb.append("newmvrs = %d%n".formatted(round.getNewmvrs()));
             sb.append("auditorWantNewMvrs = %d%n".formatted(round.getAuditorWantNewMvrs()));
