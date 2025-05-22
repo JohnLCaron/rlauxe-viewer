@@ -1,7 +1,7 @@
 # rlauxe-viewer
 
 WORK IN PROGRESS
-_last update: 02/27/2025_
+_last update: 5/22/2025_
 
 Viewing [rlauxe](https://github.com/JohnLCaron/rlauxe) audit records in a simple desktop UI.
 
