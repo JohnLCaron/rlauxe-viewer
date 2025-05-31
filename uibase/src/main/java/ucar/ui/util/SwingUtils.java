@@ -1,6 +1,5 @@
 package ucar.ui.util;
 
-import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
@@ -213,7 +212,6 @@ public final class SwingUtils {
     return getComponentFromList(clazz, list, property, value);
   }
 
-  @Nullable
   private static <T extends JComponent> T getComponentFromList(Class<T> clazz, List<T> list, String property,
       Object value) throws IllegalArgumentException {
     Method method;

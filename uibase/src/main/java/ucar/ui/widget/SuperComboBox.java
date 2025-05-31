@@ -20,7 +20,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Iterator;
-import javax.annotation.Nullable;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -283,7 +282,6 @@ public class SuperComboBox extends JPanel {
   /**
    * Get the currently selected object. May be null.
    */
-  @Nullable
   public Object getSelectedObject() {
     TableRow selected = getSelectedRow();
     return (selected == null) ? null : selected.getUserObject();

@@ -17,7 +17,6 @@ import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
 import ucar.util.prefs.PreferencesExt;
 
-import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
@@ -321,10 +320,9 @@ public class AuditTable extends JPanel {
             return assertion.getAssorter().reportedMean();
         }
 
-        @Nullable
         public Double getAssortValueFromCvrs() {
             if (assertion instanceof ClcaAssertion) {
-                return ((ClcaAssertion)assertion).getCassorter().getAssortValueFromCvrs();
+                return ((ClcaAssertion)assertion).getCassorter().getAssortAverageFromCvrs();
             }
             return null;
         }

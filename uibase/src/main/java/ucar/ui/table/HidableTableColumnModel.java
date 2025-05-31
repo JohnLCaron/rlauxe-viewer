@@ -1,7 +1,5 @@
 package ucar.ui.table;
 
-import com.google.common.base.Preconditions;
-
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
@@ -194,8 +192,9 @@ public class HidableTableColumnModel extends DefaultTableColumnModel implements 
   @Override
   public void tableChanged(TableModelEvent e) {
     if (e.getFirstRow() == TableModelEvent.HEADER_ROW) { // We only care about TableStructureChanged events.
-      Preconditions.checkArgument(e.getSource() instanceof TableModel,
-          String.format("Why is %s firing a %s?", e.getSource(), e.getClass()));
+      if (!(e.getSource() instanceof TableModel)) {
+          throw new IllegalArgumentException(String.format("Why is %s firing a %s?", e.getSource(), e.getClass()));
+      }
       createColumnsFromModel((TableModel) e.getSource());
     }
   }
