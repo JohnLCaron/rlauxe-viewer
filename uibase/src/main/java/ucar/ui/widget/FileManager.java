@@ -11,7 +11,6 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import javax.annotation.Nullable;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -229,7 +228,6 @@ public class FileManager {
    *
    * @return chosen filename in canonical form, or null if nothing chosen.
    */
-  @Nullable
   public String chooseFilename() {
     if (!readOk)
       return null;

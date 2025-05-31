@@ -10,7 +10,6 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 import ucar.util.prefs.PersistenceManager;
 import ucar.util.prefs.PreferencesExt;
-import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
@@ -238,7 +237,6 @@ public class PrefPanel extends JPanel {
    * @param name of Field
    * @return Field or null if not found
    */
-  @Nullable
   public Field getField(String name) {
     return flds.get(name);
   }
@@ -914,7 +912,6 @@ public class PrefPanel extends JPanel {
   }
 
   // thanks to Heinz M. Kabutz
-  @Nullable
   public static Frame findActiveFrame() {
     Frame[] frames = JFrame.getFrames();
     for (Frame frame : frames) {

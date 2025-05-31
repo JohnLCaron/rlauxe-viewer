@@ -4,8 +4,6 @@
  */
 package ucar.ui.util;
 
-import com.google.auto.value.AutoValue;
-
 /** An object that has a name and a description. */
 public interface NamedObject {
 
@@ -26,16 +24,24 @@ public interface NamedObject {
     return Value.create(value.toString(), desc, value);
   }
 
-  @AutoValue
-  abstract class Value implements NamedObject {
-    public abstract String getName();
+ public record Value(String name, String description, Object value) implements NamedObject {
+   @Override
+   public String getName() {
+     return name;
+   }
 
-    public abstract String getDescription();
+   @Override
+   public String getDescription() {
+     return description;
+   }
 
-    public abstract Object getValue();
+   @Override
+   public Object getValue() {
+     return value;
+   }
 
-    private static NamedObject create(String name, String desc, Object value) {
-      return new AutoValue_NamedObject_Value(name, desc, value);
+   private static NamedObject create(String name, String desc, Object value) {
+      return new Value(name, desc, value);
     }
   }
 

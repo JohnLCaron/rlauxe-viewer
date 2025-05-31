@@ -5,7 +5,6 @@
 
 package ucar.ui.widget;
 
-import com.google.common.base.CharMatcher;
 import java.awt.Component;
 import java.awt.Point;
 import java.util.Formatter;
@@ -44,9 +43,11 @@ public class PopupManager {
     isShowing = true;
     showing = forWho;
 
+    // replace any occurences of /n with <br> TODO
+    // org = String textSubbed = CharMatcher.is('\n').replaceFrom(text, "<br>");
+
     Formatter out = new Formatter();
-    String textSubbed = CharMatcher.is('\n').replaceFrom(text, "<br>");
-    out.format("<html><body>%s</body></html>", textSubbed);
+    out.format("<html><body>%s</body></html>", text);
     info.setText(out.toString());
 
     SwingUtilities.convertPointToScreen(p, owner);

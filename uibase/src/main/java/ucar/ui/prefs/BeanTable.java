@@ -5,9 +5,6 @@
 
 package ucar.ui.prefs;
 
-import javax.annotation.Nullable;
-
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.table.HidableTableColumnModel;
@@ -294,7 +291,6 @@ public class BeanTable<T> extends JPanel {
   /**
    * Get the currently selected bean, or null if none selected.
    */
-  @Nullable
   public T getSelectedBean() {
     int viewRowIndex = jtable.getSelectedRow();
     if (viewRowIndex < 0)
@@ -537,8 +533,6 @@ public class BeanTable<T> extends JPanel {
         column.setPreferredWidth(propCol.getWidth());
 
         tableColumnModel.moveColumn(currentViewIndex, newViewIndex);
-        Preconditions.checkArgument(tableColumnModel.getColumn(newViewIndex) == column,
-            "tableColumn wasn't successfully moved.");
 
         // We must do this last, since moveColumn() only works on visible columns.
         tableColumnModel.setColumnVisible(column, propCol.isVisible());
@@ -684,7 +678,6 @@ public class BeanTable<T> extends JPanel {
       String hiddenProperties = "";
       for (MethodDescriptor md : mds) {
         Method m = md.getMethod();
-        Preconditions.checkNotNull(m);
 
         if (m.getName().equals("hiddenProperties")) {
           try {
@@ -877,7 +870,6 @@ public class BeanTable<T> extends JPanel {
         return c;
     }
 
-    @Nullable
     protected Object zeroValue(Class<?> c) {
       if (c == Boolean.class)
         return Boolean.FALSE;
@@ -898,7 +890,6 @@ public class BeanTable<T> extends JPanel {
     }
 
     // return PropertyDescriptor with this property name, return null if not exists
-    @Nullable
     protected PropertyDescriptor getProperty(String wantName) {
       for (PropertyDescriptor property : properties) {
         if (property.getName().equals(wantName))

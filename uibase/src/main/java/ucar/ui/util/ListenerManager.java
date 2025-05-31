@@ -5,7 +5,6 @@
 package ucar.ui.util;
 
 import org.slf4j.Logger;
-import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.ListIterator;
@@ -54,7 +53,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  lm.sendEvent(event);
  * </pre>
  */
-@ThreadSafe
 public class ListenerManager {
   private static final Logger logger = org.slf4j.LoggerFactory.getLogger(ListenerManager.class);
 

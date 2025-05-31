@@ -10,19 +10,11 @@ java {
 }
 
 dependencies {
-    implementation(libs.autoValueAnnotations)
-    implementation(libs.guava)
     implementation(libs.jdom2)
-    implementation(libs.jgoodies)
-    // implementation(libs.jsr305)
+    implementation(libs.jgoodies)  // in Prefs, hard to get rid of
     implementation(libs.slf4j)
 
-    annotationProcessor(libs.autoValue)
-
-   //  testImplementation(project(":cdm-core"))
-
     testImplementation(libs.junit)
-    // testImplementation(libs.mockitoCore)
     testImplementation(libs.truth)
 }
 
