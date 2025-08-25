@@ -10,6 +10,8 @@ import org.cryptobiotic.rlauxe.core.*;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.MvrManagerTestFromRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
@@ -31,6 +33,8 @@ import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
 
 public class AuditRoundsTable extends JPanel {
+    static private final Logger logger = LoggerFactory.getLogger(AuditRoundsTable.class);
+
     private final PreferencesExt prefs;
 
     private final BeanTable<AuditRoundBean> auditStateTable;
@@ -106,7 +110,7 @@ public class AuditRoundsTable extends JPanel {
                 bean -> ((AssertionBean)bean).show()));
 
         auditRoundTable = new BeanTable<>(AuditRoundResultBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
-                "AuditRounds", "AuditRoundResult", null);
+                "Audit Results", "AuditRoundResult", null);
         auditRoundTable.addPopupOption("Show AuditRoundResult", auditRoundTable.makeShowAction(infoTA, infoWindow,
                 bean -> ((AuditRoundResultBean)bean).show()));
 
@@ -143,6 +147,8 @@ public class AuditRoundsTable extends JPanel {
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
+        logger.debug("AuditRoundsTable setAuditRecord "+ auditRecordLocation);
+
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
 
@@ -178,9 +184,9 @@ public class AuditRoundsTable extends JPanel {
 
         var publisher = new Publisher(auditRecordLocation);
         writeAuditRoundJsonFile(lastRound, publisher.auditRoundFile(roundIdx));
-        System.out.printf("   write auditRoundFile to %s%n", publisher.auditRoundFile(roundIdx));
+        logger.info(String.format("   write auditRoundFile to %s%n", publisher.auditRoundFile(roundIdx)));
         writeSamplePrnsJsonFile(lastRound.getSamplePrns(), publisher.samplePrnsFile(roundIdx));
-        System.out.printf("   write sampleNumbersFile to %s%n", publisher.samplePrnsFile(roundIdx));
+        logger.info(String.format("   write sampleNumbersFile to %s%n", publisher.samplePrnsFile(roundIdx)));
     }
 
     //////////////////////////////////////////////////////////////////
@@ -289,7 +295,7 @@ public class AuditRoundsTable extends JPanel {
 
     void resample() {
         if (this.lastAuditRound == null) {
-            System.out.println("  no audit round");
+            logger.info("there is no audit round to resample");
             return;
         }
 
@@ -304,10 +310,10 @@ public class AuditRoundsTable extends JPanel {
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
 
-        System.out.printf("call sample() with auditorWantNewMvrs = %d previousSamples = %d %n",
-                this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size());
+        logger.info(String.format("call sample() with auditorWantNewMvrs = %d previousSamples = %d %n",
+                this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size()));
         bridge.sample( this.lastAuditRound, previousSamples);
-        System.out.printf("  sample() = %d mvrs with newmvrs=%d %n", this.lastAuditRound.getSamplePrns().size(), this.lastAuditRound.getNewmvrs());
+        logger.info(String.format("  sample() = %d mvrs with newmvrs=%d %n", this.lastAuditRound.getSamplePrns().size(), this.lastAuditRound.getNewmvrs()));
 
         auditStateTable.refresh();
         contestTable.refresh();
@@ -501,6 +507,17 @@ public class AuditRoundsTable extends JPanel {
             } else {
                 return minAssertion.getAssorter().reportedMargin();
             }
+        }
+
+        public int getMvrsUsed() {
+            int maxUsed = 0;
+            for (AssertionRound assertionRound : contestRound.getAssertionRounds()) {
+                AuditRoundResult auditResult = assertionRound.getAuditResult();
+                if (auditResult != null) {
+                    if (auditResult.getSamplesUsed() > maxUsed) maxUsed = auditResult.getSamplesUsed();
+                }
+            }
+            return maxUsed;
         }
 
         public double getRecount() {
