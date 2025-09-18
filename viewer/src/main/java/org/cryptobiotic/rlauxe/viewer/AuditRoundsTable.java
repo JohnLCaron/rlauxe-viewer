@@ -171,6 +171,7 @@ public class AuditRoundsTable extends JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, e.getMessage());
+            logger.error("AuditRoundsTable.setAuditRecord failed", e);
         }
         return true;
     }
@@ -658,6 +659,10 @@ public class AuditRoundsTable extends JPanel {
 
         public String getEstimatedDistribution() {
             return round.getEstimatedDistribution().toString();
+        }
+
+        public Integer getFirstSample() {
+            return round.getFirstSample();
         }
 
         public String getStartingErrors() {

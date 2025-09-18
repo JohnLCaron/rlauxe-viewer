@@ -141,6 +141,7 @@ public class AuditTable extends JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, e.getMessage());
+            logger.error("setAuditRecord failed", e);
         }
 
         return true;
@@ -235,6 +236,10 @@ public class AuditTable extends JPanel {
 
         public Integer getNc() {
             return contestUA.getNc();
+        }
+
+        public Integer getNcast() {
+            return contestUA.getNc() - contestUA.getNp();
         }
 
         public Integer getPhantoms() {

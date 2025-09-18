@@ -252,6 +252,7 @@ public class ViewerMain extends JPanel {
           store.save();
       } catch (IOException ioe) {
           ioe.printStackTrace();
+          logger.error("ViewerMain store.save() failed", ioe);
       }
 
       done = true; // on some systems, still get a window close event
@@ -299,6 +300,7 @@ public class ViewerMain extends JPanel {
       Debug.setStore(prefs.node("Debug"));
     } catch (IOException e) {
       System.out.println("XMLStore Creation failed " + e);
+      logger.error("ViewerMain store.create() failed", e);
     }
 
     var fontSize = (Float) prefs.getBean(ViewerMain.FONT_SIZE, 12.0f); // getFloat() ??
