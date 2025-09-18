@@ -5,6 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
+import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;
 import ucar.ui.prefs.Debug;
 import ucar.ui.widget.*;
@@ -21,11 +22,16 @@ import java.io.IOException;
 import java.util.Formatter;
 import java.util.HashSet;
 
+import org.slf4j.LoggerFactory;
+
+
 import static org.cryptobiotic.rlauxe.cli.RunRlaRoundCliKt.runRound;
 
 /** ElectionRecord Viewer main program. */
 public class ViewerMain extends JPanel {
-  public static final String FRAME_SIZE = "FrameSize";
+    static private final Logger logger = LoggerFactory.getLogger(ViewerMain.class);
+
+    public static final String FRAME_SIZE = "FrameSize";
   public static final String INFO_BOUNDS = "InfoBounds";
   public static final String FONT_SIZE = "FontSize";
 
@@ -52,6 +58,7 @@ public class ViewerMain extends JPanel {
   JTabbedPane tabbedPane;
   private final AuditTable auditPanel;
   private final AuditRoundsTable auditRoundsPanel;
+
 
   public ViewerMain(PreferencesExt prefs, float fontSize) {
     // Popup info window
@@ -99,7 +106,7 @@ public class ViewerMain extends JPanel {
       public void actionPerformed(ActionEvent e) {
         String dirName = fileChooser.chooseDirectory("");
         if (dirName != null) {
-          auditRecordDirCB.setSelectedItem(dirName);
+            auditRecordDirCB.setSelectedItem(dirName);
         }
       }
     };
@@ -118,7 +125,9 @@ public class ViewerMain extends JPanel {
 
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
+        logger.debug("call runRound");
         runRound(auditRecordDir, true, false);
+        logger.debug("return from runRound");
         auditPanel.setSelected(auditRecordDir);
         auditRoundsPanel.setSelected(auditRecordDir);
       }
@@ -202,6 +211,9 @@ public class ViewerMain extends JPanel {
     setLayout(new BorderLayout());
     add(topPanel, BorderLayout.NORTH);
     add(tabbedPane, BorderLayout.CENTER);
+
+    System.out.println("ViewerMain started");
+    logger.debug("ViewerMain started");
   }
 
   void showInfo(Formatter f) {
@@ -213,13 +225,16 @@ public class ViewerMain extends JPanel {
   // Afterwards, the code calls SwingUtilities.updateComponentTreeUI() on the frame, and then packs the frame.
   // I believe you need to update the UIManager with a FontUIResource, not just a Font.
   void resizeFonts(float fontSize) {
-    auditPanel.setFontSize(fontSize);
-    auditRoundsPanel.setFontSize(fontSize);
-    infoTA.setFontSize(fontSize);
+      logger.debug("resizeFonts " + fontSize);
+      auditPanel.setFontSize(fontSize);
+      auditRoundsPanel.setFontSize(fontSize);
+      infoTA.setFontSize(fontSize);
   }
 
   public void exit() {
-    auditPanel.save();
+      logger.debug("exit ");
+
+      auditPanel.save();
     auditRoundsPanel.save();
 
     fileChooser.save();
@@ -230,17 +245,20 @@ public class ViewerMain extends JPanel {
     }
     // prefs.putBeanObject("InfoWindowBounds", infoWindow.getBounds());
 
-    Rectangle bounds = frame.getBounds();
-    prefs.putBeanObject(FRAME_SIZE, bounds);
-    prefs.putBean(FONT_SIZE, fontu.getFontSize());
-    try {
-      store.save();
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
-    }
+      Rectangle bounds = frame.getBounds();
+      prefs.putBeanObject(FRAME_SIZE, bounds);
+      prefs.putBean(FONT_SIZE, fontu.getFontSize());
+      try {
+          store.save();
+      } catch (IOException ioe) {
+          ioe.printStackTrace();
+          logger.error("ViewerMain store.save() failed", ioe);
+      }
 
-    done = true; // on some systems, still get a window close event
-    System.exit(0);
+      done = true; // on some systems, still get a window close event
+      logger.debug("ViewerMain exit");
+
+      System.exit(0);
   }
 
   ///////////////////////\///////////////////////
@@ -272,6 +290,7 @@ public class ViewerMain extends JPanel {
   }
 
   public static void main(String[] args) {
+      logger.debug("Main started");
 
     // prefs storage
     try {
@@ -281,6 +300,7 @@ public class ViewerMain extends JPanel {
       Debug.setStore(prefs.node("Debug"));
     } catch (IOException e) {
       System.out.println("XMLStore Creation failed " + e);
+      logger.error("ViewerMain store.create() failed", e);
     }
 
     var fontSize = (Float) prefs.getBean(ViewerMain.FONT_SIZE, 12.0f); // getFloat() ??

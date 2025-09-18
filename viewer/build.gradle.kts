@@ -11,10 +11,9 @@ java {
 
 dependencies {
     api(project(":uibase"))
-    //                              /home/stormy/dev/github/frontend/rlaux-viewer/libs/rla-0.5.1-uber.jar
-    //                              /home/stormy/dev/github/rla/rlauxe/rla/build/libs/rla-0.5.1.jar
     implementation(files("/home/stormy/dev/github/rla/rlauxe/rla/build/libs/rla-0.5.1-uber.jar"))
-    // implementation(files("../libs/rla-0.5.1-uber.jar"))
+    implementation(libs.slf4j)
+    implementation(libs.logback.classic)
 }
 
 tasks.getByName<Test>("test") {
@@ -26,7 +25,7 @@ tasks.register<Jar>("uberJar") {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
-        attributes("Main-Class" to "org.cryptobiotic.eg.cli.RunShowSystem")
+        attributes("Main-Class" to "org.cryptobiotic.rlauxe.viewer.ViewerMain")
     }
 
     from(sourceSets.main.get().output)
