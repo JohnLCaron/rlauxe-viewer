@@ -525,6 +525,10 @@ public class AuditRoundsTable extends JPanel {
             return contestUA.recountMargin();
         }
 
+        public Integer getCorlaEst() {
+            return contestUA.getContest().info().getMetadata().get("CORLAsample");
+        }
+
         // data class ContestRound(val contestUA: ContestUnderAudit, val assertions: List<AssertionRound>, val roundIdx: Int) {
         //    val id = contestUA.id
         //    val name = contestUA.name
