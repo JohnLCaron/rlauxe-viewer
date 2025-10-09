@@ -25,7 +25,9 @@ import java.awt.*;
 import java.util.*;
 
 import static java.lang.Math.max;
+import static org.cryptobiotic.rlauxe.persist.csv.BallotPoolCsvKt.makeCardPoolsFromAuditRecord;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
+import static org.cryptobiotic.rlauxe.util.UtilsKt.roundToClosest;
 
 public class AuditTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(AuditTable.class);
@@ -206,6 +208,20 @@ public class AuditTable extends JPanel {
         prefs.putInt("splitPos3", split3.getDividerLocation());
     }
 
+    //////////////////////////////////////////////////////////////////
+
+    void showInfo(Formatter f) {
+        if (this.auditRecord == null) { return; }
+        if (this.auditConfig == null) { return; }
+        if (this.auditConfig.getAuditType() != AuditType.ONEAUDIT) { return; }
+
+        var cardPools = makeCardPoolsFromAuditRecord(auditRecord);
+        String poolVotes = cardPools.showPoolVotes(4);
+        f.format("%s", poolVotes);
+    }
+
+    //////////////////////////////////////////////////////////////////
+
     public class ContestBean {
         ContestRound contestRound;
         ContestUnderAudit contestUA;
@@ -240,6 +256,14 @@ public class AuditTable extends JPanel {
 
         public Integer getNcast() {
             return contestUA.getNc() - contestUA.getNp();
+        }
+
+        public Integer getUndervotes() {
+            return contestUA.getContest().Nundervotes();
+        }
+
+        public Integer getUvPct() {
+            return contestUA.getContest().undervotePct();
         }
 
         public Integer getPhantoms() {
@@ -288,6 +312,10 @@ public class AuditTable extends JPanel {
                 round = max(round, assertion.getRound());
             }
             return round;
+        }
+
+        public Integer getPoolPct() {
+            return contestUA.getContest().info().getMetadata().get("PoolPct");
         }
 
         public String show() {
