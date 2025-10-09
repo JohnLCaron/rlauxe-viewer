@@ -145,7 +145,7 @@ public class ViewerMain extends JPanel {
 
     AbstractAction verifyAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        var verifier = new org.cryptobiotic.rlauxe.verifier.VerifyAuditRecord(auditRecordDir);
+        var verifier = new org.cryptobiotic.rlauxe.verifier.VerifyContests(auditRecordDir, true);
         infoTA.setText(verifier.verify());
         infoWindow.show();
       }
@@ -218,6 +218,7 @@ public class ViewerMain extends JPanel {
 
   void showInfo(Formatter f) {
     auditRoundsPanel.showInfo(f);
+    auditPanel.showInfo(f);
   }
 
   // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,

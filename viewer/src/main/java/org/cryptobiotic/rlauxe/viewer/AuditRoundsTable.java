@@ -28,7 +28,7 @@ import java.util.*;
 
 import static org.cryptobiotic.rlauxe.persist.json.AuditRoundJsonKt.writeAuditRoundJsonFile;
 import static org.cryptobiotic.rlauxe.persist.json.SamplePrnsJsonKt.writeSamplePrnsJsonFile;
-import static org.cryptobiotic.rlauxe.util.QuantileKt.probability;
+import static org.cryptobiotic.rlauxe.util.DecilesKt.probability;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
 
@@ -49,7 +49,6 @@ public class AuditRoundsTable extends JPanel {
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
     private AuditRound lastAuditRound; // may be null
-    // List<Long> sampleIndices = new ArrayList<>();
 
     void turnOffIncluded() {
         AuditRoundBean lastRoundBean = auditStateTable.getBeans().getLast();
@@ -217,7 +216,6 @@ public class AuditRoundsTable extends JPanel {
             }
         }
         f.format("total extraBallotsUsed = %d %n", totalExtra);
-
     }
 
     //////////////////////////////////////////////////////////////////
