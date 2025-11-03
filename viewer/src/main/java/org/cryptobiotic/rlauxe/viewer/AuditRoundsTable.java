@@ -8,7 +8,7 @@ package org.cryptobiotic.rlauxe.viewer;
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.core.*;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
-import org.cryptobiotic.rlauxe.persist.MvrManagerTestFromRecord;
+import org.cryptobiotic.rlauxe.workflow.MvrManagerTestFromRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,9 +150,10 @@ public class AuditRoundsTable extends JPanel {
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        if (this.auditRecord == null) return false;
 
         try {
-            this.auditConfig = auditRecord.getAuditConfig();
+            this.auditConfig = auditRecord.getConfig();
             java.util.List<AuditRoundBean> beanList = new ArrayList<>();
             for (var round : auditRecord.getRounds()) {
                 beanList.add(new AuditRoundBean(round));
@@ -162,13 +163,13 @@ public class AuditRoundsTable extends JPanel {
                 this.lastAuditRound = auditRecord.getRounds().getLast();
             }
 
-            contestTable.setBeans(new ArrayList());
-            assertionTable.setBeans(new ArrayList());
-            auditRoundTable.setBeans(new ArrayList());
-            estRoundTable.setBeans(new ArrayList());
+            contestTable.setBeans(new ArrayList<>());
+            assertionTable.setBeans(new ArrayList<>());
+            auditRoundTable.setBeans(new ArrayList<>());
+            estRoundTable.setBeans(new ArrayList<>());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
             JOptionPane.showMessageDialog(null, e.getMessage());
             logger.error("AuditRoundsTable.setAuditRecord failed", e);
         }
@@ -519,8 +520,8 @@ public class AuditRoundsTable extends JPanel {
             return maxUsed;
         }
 
-        public double getRecount() {
-            return contestUA.recountMargin();
+        public double getRecountMargin() {
+            return contestUA.minRecountMargin();
         }
 
         public Integer getCorlaEst() {
@@ -571,25 +572,11 @@ public class AuditRoundsTable extends JPanel {
         }
 
         public String getDesc() {
-            String extra = "";
-            if (contestBean.contestUA.getContest() instanceof Contest) {
-                var votes = ((Contest)contestBean.contestUA.getContest()).getVotes();
-                var winner = assertion.getAssorter().winner();
-                var loser = assertion.getAssorter().loser();
-                extra = String.format(" votes: {%d=%d, %d=%d}", winner, votes.get(winner), loser, votes.get(loser));
-            }
-            return assertion.getAssorter().desc() + extra;
+            return contestBean.contestUA.getContest().showAssertionDifficulty(assertion.getAssorter());
         }
 
-        public double getRecountPct() {
-            double pct = -1.0;
-            if (contestBean.contestUA.getContest() instanceof Contest) {
-                var votes = ((Contest)contestBean.contestUA.getContest()).getVotes();
-                var winner = votes.get(assertion.getAssorter().winner());
-                var loser = votes.get(assertion.getAssorter().loser());
-                pct = (winner - loser) / ((double) winner);
-            }
-            return pct;
+        public double getRecountMargin() {
+            return contestBean.contestUA.getContest().recountMargin(assertion.getAssorter());
         }
 
         public Integer getEstMvrs() {return assertionRound.getEstSampleSize();}
@@ -607,6 +594,14 @@ public class AuditRoundsTable extends JPanel {
             return assertion.getAssorter().reportedMargin();
         }
 
+        public double getRisk() {
+            if (assertionRound.getAuditResult() != null) {
+                return assertionRound.getAuditResult().getPvalue();
+            } else {
+                return Double.NaN;
+            }
+        }
+
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append("roundIdx = %d%n".formatted(assertionRound.getRoundIdx()));
@@ -614,12 +609,12 @@ public class AuditRoundsTable extends JPanel {
             sb.append("estNewSampleSize = %d%n".formatted(assertionRound.getEstNewSampleSize()));
             sb.append("status = %s%n".formatted(Naming.status(assertionRound.getStatus())));
             sb.append("round = %d%n".formatted(assertionRound.getRound()));
-            sb.append("\nassertion = %s%n".formatted(assertionRound.getAssertion().show()));
-            sb.append("\nassorter = %s%n".formatted(assertionRound.getAssertion().getAssorter().toString()));
-            sb.append("\nrecall pct = " + getRecountPct());
-            if (assertionRound.getPrevAuditResult() != null) sb.append("\nprevAuditResult = %s%n".formatted(assertionRound.getPrevAuditResult().toString()));
-            if (assertionRound.getEstimationResult() != null) sb.append("\nestimationResult = %s%n".formatted(assertionRound.getEstimationResult().toString()));
-            if (assertionRound.getAuditResult() != null) sb.append("\nauditResult = %s%n".formatted(assertionRound.getAuditResult().toString()));
+            sb.append("%n assertion = %s".formatted(assertionRound.getAssertion().show()));
+            sb.append("%n assorter = %s".formatted(assertionRound.getAssertion().getAssorter().toString()));
+            sb.append("%n diff: %s".formatted(contestBean.contestUA.getContest().showAssertionDifficulty(assertion.getAssorter())));
+            if (assertionRound.getPrevAuditResult() != null) sb.append("%nprevAuditResult = %s".formatted(assertionRound.getPrevAuditResult().toString()));
+            if (assertionRound.getEstimationResult() != null) sb.append("%nestimationResult = %s".formatted(assertionRound.getEstimationResult().toString()));
+            if (assertionRound.getAuditResult() != null) sb.append("%nauditResult = %s".formatted(assertionRound.getAuditResult().toString()));
             return sb.toString();
         }
     }
