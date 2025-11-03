@@ -8,7 +8,6 @@ package org.cryptobiotic.rlauxe.viewer;
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
-import org.cryptobiotic.rlauxe.core.ClcaAssertion;
 import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.raire.RaireAssertion;
@@ -25,9 +24,7 @@ import java.awt.*;
 import java.util.*;
 
 import static java.lang.Math.max;
-import static org.cryptobiotic.rlauxe.persist.csv.BallotPoolCsvKt.makeCardPoolsFromAuditRecord;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
-import static org.cryptobiotic.rlauxe.util.UtilsKt.roundToClosest;
 
 public class AuditTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(AuditTable.class);
@@ -105,9 +102,10 @@ public class AuditTable extends JPanel {
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        if (this.auditRecord == null) return false;
 
         try {
-            this.auditConfig = auditRecord.getAuditConfig();
+            this.auditConfig = auditRecord.getConfig();
 
             java.util.Map<Integer, ContestRound> contests = new TreeMap<>(); // sorted
 
@@ -210,7 +208,7 @@ public class AuditTable extends JPanel {
 
     //////////////////////////////////////////////////////////////////
 
-    void showInfo(Formatter f) {
+    /* void showInfo(Formatter f) {
         if (this.auditRecord == null) { return; }
         if (this.auditConfig == null) { return; }
         if (this.auditConfig.getAuditType() != AuditType.ONEAUDIT) { return; }
@@ -218,7 +216,7 @@ public class AuditTable extends JPanel {
         var cardPools = makeCardPoolsFromAuditRecord(auditRecord);
         String poolVotes = cardPools.showPoolVotes(4);
         f.format("%s", poolVotes);
-    }
+    } */
 
     //////////////////////////////////////////////////////////////////
 
@@ -253,6 +251,8 @@ public class AuditTable extends JPanel {
         public Integer getNc() {
             return contestUA.getNc();
         }
+
+        public Integer getNb() {return contestUA.getNb();}
 
         public Integer getNcast() {
             return contestUA.getNc() - contestUA.getNp();
@@ -302,7 +302,7 @@ public class AuditTable extends JPanel {
         }
 
         public double getRecountMargin() {
-            return contestUA.recountMargin();
+            return contestUA.minRecountMargin();
         }
 
         public Integer getCompleted() {
@@ -347,7 +347,7 @@ public class AuditTable extends JPanel {
         }
 
         public String getDesc() {
-            return assertion.getAssorter().desc();
+            return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
         }
 
         //public Integer getEstMvrs() {return assertionRound.getEstSampleSize();}
@@ -372,16 +372,14 @@ public class AuditTable extends JPanel {
             return assertion.getAssorter().reportedMean();
         }
 
-        public Double getAssortValueFromCvrs() {
-            if (assertion instanceof ClcaAssertion) {
-                return ((ClcaAssertion)assertion).getCassorter().getAssortAverageFromCvrs();
-            }
-            return null;
+        public double getRecountMargin() {
+            return cua.getContest().recountMargin(assertion.getAssorter());
         }
 
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append(assertion.show());
+            sb.append("\n  diff: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
             return sb.toString();
         }
     }

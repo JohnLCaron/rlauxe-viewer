@@ -24,7 +24,7 @@ public class RlauxWorkflowProxy {
     //)
     // TODO sampleCheckLimits or sample ??
     public void sample(AuditRound auditRound, Set<Long> previousSamples) {
-        ConsistentSamplingKt.sampleCheckLimits(auditConfig, mvrManager, auditRound, previousSamples, false);
+        ConsistentSamplingKt.sampleWithContestCutoff(auditConfig, mvrManager, auditRound, previousSamples, false);
     }
 
 }

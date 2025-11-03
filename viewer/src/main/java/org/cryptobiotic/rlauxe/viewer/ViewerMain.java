@@ -123,6 +123,7 @@ public class ViewerMain extends JPanel {
     BAMutil.setActionProperties(startAction, "sunrise-icon.png", "Resample", false, 'S', -1);
     BAMutil.addActionToContainer(rightPanel, startAction);
 
+    // TODO put into seperate therad
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         logger.debug("call runRound");
@@ -143,10 +144,11 @@ public class ViewerMain extends JPanel {
     BAMutil.setActionProperties(offAction, "Clear.gif", "Turn off include", false, 'R', -1);
     BAMutil.addActionToContainer(rightPanel, offAction);
 
+    // TODO put into seperate therad
     AbstractAction verifyAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        var verifier = new org.cryptobiotic.rlauxe.verifier.VerifyContests(auditRecordDir, true);
-        infoTA.setText(verifier.verify());
+        var verifier = new org.cryptobiotic.rlauxe.verify.VerifyContests(auditRecordDir, true);
+        infoTA.setText(verifier.verify().toString());
         infoWindow.show();
       }
     };
@@ -218,7 +220,7 @@ public class ViewerMain extends JPanel {
 
   void showInfo(Formatter f) {
     auditRoundsPanel.showInfo(f);
-    auditPanel.showInfo(f);
+    // auditPanel.showInfo(f);
   }
 
   // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,

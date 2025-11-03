@@ -11,7 +11,7 @@ java {
 
 dependencies {
     api(project(":uibase"))
-    implementation(files("/home/stormy/dev/github/rla/rlauxe/rla/build/libs/rla-0.6.0-uber.jar"))
+    implementation(files("/home/stormy/dev/github/rla/rlauxe/core/build/libs/core-0.6.0-uber.jar"))
     implementation(libs.slf4j)
     implementation(libs.logback.classic)
 }
