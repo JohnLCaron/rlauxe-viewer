@@ -131,7 +131,7 @@ public class AuditTable extends JPanel {
                 // select contest with smallest margin
                 ContestBean minByMargin = beanList
                         .stream()
-                        .min(Comparator.comparing(ContestBean::getReportedMargin))
+                        .min(Comparator.comparing(ContestBean::getDilutedMargin))
                         .orElseThrow(NoSuchElementException::new);
                 contestTable.setSelectedBean(minByMargin);
 
@@ -160,7 +160,7 @@ public class AuditTable extends JPanel {
         // select assertion with smallest margin
         AssertionBean minByMargin = beanList
                 .stream()
-                .min(Comparator.comparing(AssertionBean::getReportedMargin))
+                .min(Comparator.comparing(AssertionBean::getDilutedMargin))
                 .orElseThrow(NoSuchElementException::new);
         assertionTable.setSelectedBean(minByMargin);
     }
@@ -252,11 +252,7 @@ public class AuditTable extends JPanel {
             return contestUA.getNc();
         }
 
-        public Integer getNb() {return contestUA.getNb();}
-
-        public Integer getNcast() {
-            return contestUA.getNc() - contestUA.getNp();
-        }
+        public Integer getNpop() {return contestUA.getNpop();}
 
         public Integer getUndervotes() {
             return contestUA.getContest().Nundervotes();
@@ -267,7 +263,7 @@ public class AuditTable extends JPanel {
         }
 
         public Integer getPhantoms() {
-            return contestUA.getNp();
+            return contestUA.getNphantoms();
         }
 
         public String getWinners() {
@@ -292,17 +288,14 @@ public class AuditTable extends JPanel {
             return "N/A";
         }
 
-        public double getReportedMargin() {
-            var minAssertion = contestUA.minAssertion();
-            if (minAssertion == null) {
-                return 0.0;
-            } else {
-                return minAssertion.getAssorter().reportedMargin();
-            }
+        public double getDilutedMargin() {
+            Double min = contestUA.minDilutedMargin();
+            return min == null ? 0.0 : min;
         }
 
         public double getRecountMargin() {
-            return contestUA.minRecountMargin();
+            Double min = contestUA.minRecountMargin();
+            return min == null ? 0.0 : min;
         }
 
         public Integer getCompleted() {
@@ -356,8 +349,8 @@ public class AuditTable extends JPanel {
 
         // public String getStatus() {return Naming.status(assertionRound.getStatus());}
 
-        public double getReportedMargin() {
-            return assertion.getAssorter().reportedMargin();
+        public double getDilutedMargin() {
+            return assertion.getAssorter().dilutedMargin();
         }
 
         public double getDifficulty() {
@@ -368,13 +361,18 @@ public class AuditTable extends JPanel {
             return -1;
         }
 
-        public double getReportedMean() {
-            return assertion.getAssorter().reportedMean();
+        public double getDilutedMean() {
+            return assertion.getAssorter().dilutedMean();
         }
 
         public double getRecountMargin() {
             return cua.getContest().recountMargin(assertion.getAssorter());
         }
+
+
+        public double getNoError() {return assertion.getAssorter().noerror(); }
+
+        public double getUpperBound() {return assertion.getAssorter().upperBound(); }
 
         public String show() {
             StringBuilder sb = new StringBuilder();
@@ -388,9 +386,7 @@ public class AuditTable extends JPanel {
     public class AuditRoundResultBean {
         AuditRoundResult auditRound;
 
-        public AuditRoundResultBean() {
-        }
-
+        public AuditRoundResultBean() {}
         AuditRoundResultBean(AuditRoundResult auditRound) {
             this.auditRound = auditRound;
         }
@@ -398,35 +394,21 @@ public class AuditTable extends JPanel {
         public Integer getRoundIdx() {
             return auditRound.getRoundIdx();
         }
-
         public Integer getMvrs() {
             return auditRound.getNmvrs();
         }
-
-        /* public Integer getMaxBallotsUsed() {
-            return auditRound.getMaxBallotsUsed();
-        } */
-
         public Double getPValue() {
             return auditRound.getPvalue();
         }
-
-        /* public Integer getSamplesNeeded() {
-            return auditRound.getSamplesNeeded();
-        } */
-
         public Integer getMvrsUsed() {
             return auditRound.getSamplesUsed();
         }
-
         public Integer getMvrsExtra() {
             return (Math.max(0, auditRound.getNmvrs() - auditRound.getSamplesUsed()));
         }
-
         public String getStatus() {
             return Naming.status(auditRound.getStatus());
         }
-
         public Double getMeasuredMargin() {
             return mean2margin(auditRound.getMeasuredMean());
         }
@@ -441,8 +423,7 @@ public class AuditTable extends JPanel {
             sb.append("samplesExtra = %d%n".formatted(getMvrsExtra()));
             sb.append("pvalue = %f%n".formatted(auditRound.getPvalue()));
             sb.append("status = %s%n".formatted(Naming.status(auditRound.getStatus())));
-            if (auditRound.getMeasuredRates() != null) sb.append("measuredErrors = %s%n".formatted(auditRound.getMeasuredRates().toString()));
-            if (auditRound.getStartingRates() != null) sb.append("aprioriErrors = %s%n".formatted(auditRound.getStartingRates().toString()));
+            sb.append("measuredErrorCounts = %s%n".formatted(auditRound.measuredCounts()));
             sb.append("maxBallotsUsed = %d%n".formatted(auditRound.getMaxBallotIndexUsed()));
             return sb.toString();
         }

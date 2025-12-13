@@ -8,8 +8,8 @@ package org.cryptobiotic.rlauxe.viewer;
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.core.*;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
-import org.cryptobiotic.rlauxe.workflow.MvrManagerTestFromRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
+import org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -108,15 +108,18 @@ public class AuditRoundsTable extends JPanel {
         assertionTable.addPopupOption("Show AssertionRound", assertionTable.makeShowAction(infoTA, infoWindow,
                 bean -> ((AssertionBean)bean).show()));
 
-        auditRoundTable = new BeanTable<>(AuditRoundResultBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
-                "Audit Results", "AuditRoundResult", null);
-        auditRoundTable.addPopupOption("Show AuditRoundResult", auditRoundTable.makeShowAction(infoTA, infoWindow,
-                bean -> ((AuditRoundResultBean)bean).show()));
-
         estRoundTable = new BeanTable<>(EstimationRoundBean.class, (PreferencesExt) prefs.node("estRoundTable"), false,
                 "EstimationRounds", "EstimationRoundResult", null);
         estRoundTable.addPopupOption("Show EstimationRoundResult", estRoundTable.makeShowAction(infoTA, infoWindow,
                 bean -> ((EstimationRoundBean)bean).show()));
+
+        auditRoundTable = new BeanTable<>(AuditRoundResultBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
+                "Audit Results", "AuditRoundResult", null);
+        auditRoundTable.addPopupOption("Show AuditRoundResult", auditRoundTable.makeShowAction(infoTA, infoWindow,
+                bean -> ((AuditRoundResultBean)bean).show()));
+        auditRoundTable.addPopupOption("Show Audit Details", auditRoundTable.makeShowAction(infoTA, infoWindow,
+                bean -> ((AuditRoundResultBean)bean).runAudit()));
+
 
         setFontSize(fontSize);
 
@@ -184,8 +187,8 @@ public class AuditRoundsTable extends JPanel {
         int roundIdx = lastRound.getRoundIdx();
 
         var publisher = new Publisher(auditRecordLocation);
-        writeAuditRoundJsonFile(lastRound, publisher.auditRoundFile(roundIdx));
-        logger.info(String.format("   write auditRoundFile to %s%n", publisher.auditRoundFile(roundIdx)));
+        writeAuditRoundJsonFile(lastRound, publisher.auditStateFile(roundIdx));
+        logger.info(String.format("   write auditRoundFile to %s%n", publisher.auditStateFile(roundIdx)));
         writeSamplePrnsJsonFile(lastRound.getSamplePrns(), publisher.samplePrnsFile(roundIdx));
         logger.info(String.format("   write sampleNumbersFile to %s%n", publisher.samplePrnsFile(roundIdx)));
     }
@@ -268,7 +271,7 @@ public class AuditRoundsTable extends JPanel {
                     for (AssertionRound assertionRound : contestRound.getAssertionRounds()) {
                         if (assertionRound.getAssertion().equals(assertionBean.assertionRound.getAssertion())) {
                             if (assertionRound.getAuditResult() != null)
-                                auditList.add(new AuditRoundResultBean(assertionRound.getAuditResult()));
+                                auditList.add(new AuditRoundResultBean(contestRound, assertionRound));
                             if (assertionRound.getEstimationResult() != null)
                                 estList.add(new EstimationRoundBean(assertionRound.getEstimationResult()));
                         }
@@ -299,14 +302,16 @@ public class AuditRoundsTable extends JPanel {
             return;
         }
 
+        java.util.List<ContestUnderAudit> cuas = new ArrayList<>();
+        for (ContestRound cr : this.lastAuditRound.getContestRounds()) {
+            cuas.add(cr.getContestUA());
+        }
+
         int nrounds = auditRecord.getRounds().size();
         if (nrounds == 0) return;
         Set<Long> previousSamples = org.cryptobiotic.rlauxe.audit.AuditRoundKt.previousSamples(auditRecord.getRounds(), nrounds);
 
-        RlauxWorkflowProxy bridge = new RlauxWorkflowProxy(
-                this.auditConfig,
-                new MvrManagerTestFromRecord(auditRecord.getLocation())
-        );
+        RlauxWorkflowProxy bridge = new RlauxWorkflowProxy(this.auditConfig, new PersistedMvrManagerTest(auditRecord.getLocation(), this.auditConfig, cuas));
 
         AuditRoundBean lastBean = auditStateTable.getBeans().getLast();
 
@@ -357,7 +362,7 @@ public class AuditRoundsTable extends JPanel {
             }
         }
 
-        public Integer getMaxBallots() {
+        public Integer getMaxUsed() {
             return round.maxBallotsUsed();
         }
 
@@ -454,12 +459,12 @@ public class AuditRoundsTable extends JPanel {
             return contestUA.getNcandidates();
         }
 
-        public Integer getNc() {
-            return contestUA.getNc();
+        public Integer getNpop() {
+            return contestUA.getNpop();
         }
 
         public Integer getPhantoms() {
-            return contestUA.getNp();
+            return contestUA.getNphantoms();
         }
 
         public Integer getEstMvrs() {return contestRound.getEstSampleSize();}
@@ -505,7 +510,7 @@ public class AuditRoundsTable extends JPanel {
             if (minAssertion == null) {
                 return 0.0;
             } else {
-                return minAssertion.getAssorter().reportedMargin();
+                return minAssertion.getAssorter().dilutedMargin();
             }
         }
 
@@ -579,6 +584,9 @@ public class AuditRoundsTable extends JPanel {
             return contestBean.contestUA.getContest().recountMargin(assertion.getAssorter());
         }
 
+        public double getNoError() {return assertion.getAssorter().noerror(); }
+
+
         public Integer getEstMvrs() {return assertionRound.getEstSampleSize();}
         public Integer getEstNewMvrs() {return assertionRound.getEstNewSampleSize();}
 
@@ -591,7 +599,7 @@ public class AuditRoundsTable extends JPanel {
         }
 
         public double getMargin() {
-            return assertion.getAssorter().reportedMargin();
+            return assertion.getAssorter().dilutedMargin();
         }
 
         public double getRisk() {
@@ -662,13 +670,8 @@ public class AuditRoundsTable extends JPanel {
             return round.getFirstSample();
         }
 
-        public String getStartingErrors() {
-            var er =  round.getStartingRates();
-            if (er == null) {
-                return "N/A";
-            } else {
-                return er.toString();
-            }
+        public String getStartingRates() {
+            return round.startingRates();
         }
 
         public String show() {
@@ -697,13 +700,17 @@ public class AuditRoundsTable extends JPanel {
     //    val measuredRates: ClcaErrorRates? = null, // measured error rates (clca only)
     //) {
     public class AuditRoundResultBean {
+        ContestRound contestRound;
+        AssertionRound assertionRound;
         AuditRoundResult auditResultRound;
 
         public AuditRoundResultBean() {
         }
 
-        AuditRoundResultBean(AuditRoundResult auditRound) {
-            this.auditResultRound = auditRound;
+        AuditRoundResultBean(ContestRound contestRound, AssertionRound assertionRound) {
+            this.contestRound = contestRound;
+            this.assertionRound = assertionRound;
+            this.auditResultRound = assertionRound.getAuditResult();
         }
 
         public Integer getRound() {
@@ -727,7 +734,7 @@ public class AuditRoundsTable extends JPanel {
         }
 
         public Integer getMvrsExtra() {
-            return ( Math.max(0, auditResultRound.getNmvrs() - auditResultRound.getSamplesUsed()));
+            return (Math.max(0, auditResultRound.getNmvrs() - auditResultRound.getSamplesUsed()));
         }
 
         public String getStatus() {
@@ -738,22 +745,15 @@ public class AuditRoundsTable extends JPanel {
             return dfn(mean2margin(auditResultRound.getMeasuredMean()), 5);
         }
 
-        public String getMeasuredErrors() {
-            var er =  auditResultRound.getMeasuredRates();
-            if (er == null) {
+        public String getClcaErrorRate() {
+            if (auditResultRound.getMeasuredCounts() != null)
+                return Double.toString(auditResultRound.getMeasuredCounts().clcaErrorRate());
+            else
                 return "N/A";
-            } else {
-                return er.toString();
-            }
         }
 
-        public String getEstErrors() {
-            var er =  auditResultRound.getStartingRates();
-            if (er == null) {
-                return "N/A";
-            } else {
-                return er.toString();
-            }
+        public String getStartingRates() {
+            return auditResultRound.startingRates();
         }
 
         public String show() {
@@ -766,10 +766,21 @@ public class AuditRoundsTable extends JPanel {
             sb.append("samplesExtra = %d%n".formatted(getMvrsExtra()));
             sb.append("pvalue = %f%n".formatted(auditResultRound.getPvalue()));
             sb.append("status = %s%n".formatted(Naming.status(auditResultRound.getStatus())));
-            if (auditResultRound.getMeasuredRates() != null) sb.append("measuredErrors = %s%n".formatted(auditResultRound.getMeasuredRates().toString()));
-            if (auditResultRound.getStartingRates() != null) sb.append("aprioriErrors = %s%n".formatted(auditResultRound.getStartingRates().toString()));
+            sb.append("startingRates = %s%n".formatted(auditResultRound.startingRates()));
+            if (auditResultRound.getMeasuredCounts() != null) {
+                sb.append("measuredErrorCounts = %s%n".formatted(auditResultRound.getMeasuredCounts().getErrorCounts()));
+            }
+            sb.append("measuredCounts = %s%n".formatted(auditResultRound.measuredCounts()));
             sb.append("maxBallotsUsed = %d%n".formatted(auditResultRound.getMaxBallotIndexUsed()));
             return sb.toString();
+        }
+
+        public String runAudit() {
+            StringBuilder sb = new StringBuilder();
+            String result = RlauxWorkflowProxy.runRoundAgain(auditRecordLocation, contestRound, assertionRound, auditResultRound);
+                sb.append(show());
+                sb.append(result);
+                return sb.toString();
         }
     }
 }

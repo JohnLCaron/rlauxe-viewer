@@ -24,8 +24,7 @@ import java.util.HashSet;
 
 import org.slf4j.LoggerFactory;
 
-
-import static org.cryptobiotic.rlauxe.cli.RunRlaRoundCliKt.runRound;
+import static org.cryptobiotic.rlauxe.audit.RunAuditKt.runRound;
 
 /** ElectionRecord Viewer main program. */
 public class ViewerMain extends JPanel {
@@ -123,7 +122,7 @@ public class ViewerMain extends JPanel {
     BAMutil.setActionProperties(startAction, "sunrise-icon.png", "Resample", false, 'S', -1);
     BAMutil.addActionToContainer(rightPanel, startAction);
 
-    // TODO put into seperate therad
+    // TODO put into seperate thread
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         logger.debug("call runRound");
