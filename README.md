@@ -42,6 +42,14 @@ to bring up the Directory Chooser,
 then navigate to the directory where the Audit Record is stored (note that for the test cases, its always a subdirectory
 named "audit" of the test case name).
 
+what about
+
+![image](uibase/src/main/resources/resources/ui/icons/Open-File-Folder-icon.png)
+
+or then again 
+
+<img src="uibase/src/main/resources/resources/ui/icons/Open-File-Folder-icon.png" alt="DirectoryChooserIcon"/>
+
 ![image](docs/images/DirectoryChooser.png)
 
 The **Audit** tab will be populated from the chosen audit record
