@@ -36,35 +36,27 @@ In the editor, there should be a clickable green button on class ViewerMain:
 
 ![image](docs/images/ViewerMain.png).
 
-After the application starts, use the Directory Chooser button 
-<img src="docs/images/DirectoryChooserIcon.png" alt="DirectoryChooserIcon" width="25"/>
+After the application starts, use the Directory Chooser button
+![image](uibase/src/main/resources/resources/ui/icons/Open-File-Folder-icon.png)
 to bring up the Directory Chooser,
 then navigate to the directory where the Audit Record is stored (note that for the test cases, its always a subdirectory
 named "audit" of the test case name).
 
-what about
-
-![image](uibase/src/main/resources/resources/ui/icons/Open-File-Folder-icon.png)
-
-or then again 
-
-<img src="uibase/src/main/resources/resources/ui/icons/Open-File-Folder-icon.png" alt="DirectoryChooserIcon"/>
-
 ![image](docs/images/DirectoryChooser.png)
 
-The **Audit** tab will be populated from the chosen audit record
+The **Audit** tab will be populated from the chosen audit record:
 
 ![image](docs/images/AuditPanel.png)
 
 Select the Contest in the top table, right click and choose **Show Contest**. The Detail window shows more information about that Contest.
-For Dhondt, it summarizes the scoring rounds and winning parties, as well as the parties who didnt clear the threshold (with an asterisk).
+For Dhondt, it summarizes the scoring rounds and winning parties, as well as the parties who didnt clear the threshold (with an asterisk):
 
 ![image](docs/images/ShowContest.png)
 
 ### Setting UI choices
 
 The first time you start up, you can change the window size, the table sizes, the order and size of the table headings, etc.
-When you exit, your choices will be saved for the next time you start the application (in ~/.rlauxe/RlauxeViewer.xml).
+When you exit, your choices will be saved  (in ~/.rlauxe/RlauxeViewer.xml) for the next time you start the application.
 
 
 ## Showing the results of an audit
@@ -77,7 +69,8 @@ In this case, the audit completed successfully in a single round. The **Assertio
 audit. By clicking on the **noError** header, the assertions are sorted by the assertion's noerror field.
 
 The **EstimationRounds** table shows the estimated distribution of samples needed for the selected assertion. 
-If one looks at the AuditConfig fields:
+If one looks at the AuditConfig fields by clicking on the info button 
+![image](uibase/src/main/resources/resources/ui/icons/Info-icon.png):
 
 ![image](docs/images/AuditConfig.png)
 
@@ -89,7 +82,7 @@ The **Audit Results** table shows what happened in the "real" audit for the sele
 In this example, our estimate was 667 samples, but only 556 were needed.
 
 If you right click on the Audit Result line, and choose **Show Audit Details**, the detail window reruns the audit and shows the
-actual audit sample values, betting value, pvalue, mvr and cvr. The fields are
+actual audit sample values, betting value, pvalue, mvr and cvr. The fields are:
 
   * j  : sample number
   * xj : assort value
@@ -103,7 +96,7 @@ actual audit sample values, betting value, pvalue, mvr and cvr. The fields are
 
 ![image](docs/images/AuditDetail.png)
 
-In this example, the votes always match, so the assort value always equals noerror. Mj is slow varying so tj is approximately constant.
+In this example, the votes always match, so the assort value always equals noerror. mj is slow varying, so tj is approximately constant, and
 
 ````
 1/risk = Prod (tj) 
