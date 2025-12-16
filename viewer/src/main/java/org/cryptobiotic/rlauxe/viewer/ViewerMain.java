@@ -28,9 +28,9 @@ import static org.cryptobiotic.rlauxe.audit.RunAuditKt.runRound;
 
 /** ElectionRecord Viewer main program. */
 public class ViewerMain extends JPanel {
-    static private final Logger logger = LoggerFactory.getLogger(ViewerMain.class);
+  static private final Logger logger = LoggerFactory.getLogger(ViewerMain.class);
 
-    public static final String FRAME_SIZE = "FrameSize";
+  public static final String FRAME_SIZE = "FrameSize";
   public static final String INFO_BOUNDS = "InfoBounds";
   public static final String FONT_SIZE = "FontSize";
 
@@ -57,6 +57,8 @@ public class ViewerMain extends JPanel {
   JTabbedPane tabbedPane;
   private final AuditTable auditPanel;
   private final AuditRoundsTable auditRoundsPanel;
+  private final PoolTable poolPanel;
+  private final CardTable cardPanel;
 
 
   public ViewerMain(PreferencesExt prefs, float fontSize) {
@@ -73,17 +75,26 @@ public class ViewerMain extends JPanel {
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
     auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize);
+    poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+    cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
 
     tabbedPane.addTab("Audit", auditPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+    tabbedPane.addTab("Populations", poolPanel);
+    tabbedPane.addTab("Cards", cardPanel);
     tabbedPane.setSelectedIndex(0);
+
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
       if (this.auditRecordDir.equals("none")) return;
       if (c instanceof AuditTable) {
         ((AuditTable)c).setSelected(this.auditRecordDir);
       } else if (c instanceof AuditRoundsTable) {
-        ((AuditRoundsTable)c).setSelected(this.auditRecordDir);
+          ((AuditRoundsTable)c).setSelected(this.auditRecordDir);
+      } else if (c instanceof PoolTable) {
+          ((PoolTable)c).setSelected(this.auditRecordDir);
+      }  else if (c instanceof CardTable) {
+          ((CardTable)c).setSelected(this.auditRecordDir);
       }
     });
 
@@ -94,6 +105,8 @@ public class ViewerMain extends JPanel {
       public void actionPerformed(ActionEvent e) {
         auditPanel.setSelected(auditRecordDir);
         auditRoundsPanel.setSelected(auditRecordDir);
+        poolPanel.setSelected(auditRecordDir);
+        cardPanel.setSelected(auditRecordDir);
       }
     };
     BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-', -1);
@@ -143,7 +156,7 @@ public class ViewerMain extends JPanel {
     BAMutil.setActionProperties(offAction, "Clear.gif", "Turn off include", false, 'R', -1);
     BAMutil.addActionToContainer(rightPanel, offAction);
 
-    // TODO put into seperate therad
+    // TODO put into seperate thread
     AbstractAction verifyAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         var verifier = new org.cryptobiotic.rlauxe.verify.VerifyContests(auditRecordDir, true);
@@ -199,6 +212,8 @@ public class ViewerMain extends JPanel {
       this.eventOk = true;
       auditPanel.setSelected(auditRecordDir);
       auditRoundsPanel.setSelected(auditRecordDir);
+      poolPanel.setSelected(auditRecordDir);
+      cardPanel.setSelected(auditRecordDir);
     });
 
     ////////////////////////////////////////////////////////////////
@@ -230,37 +245,41 @@ public class ViewerMain extends JPanel {
       logger.debug("resizeFonts " + fontSize);
       auditPanel.setFontSize(fontSize);
       auditRoundsPanel.setFontSize(fontSize);
+      poolPanel.setFontSize(fontSize);
+      cardPanel.setFontSize(fontSize);
       infoTA.setFontSize(fontSize);
   }
 
   public void exit() {
-      logger.debug("exit ");
+    logger.debug("exit ");
 
-      auditPanel.save();
+    auditPanel.save();
     auditRoundsPanel.save();
+    poolPanel.save();
+    cardPanel.save();
 
     fileChooser.save();
     auditRecordDirCB.save();
 
     if (infoWindow != null) {
-      prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
+        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
     }
     // prefs.putBeanObject("InfoWindowBounds", infoWindow.getBounds());
 
-      Rectangle bounds = frame.getBounds();
-      prefs.putBeanObject(FRAME_SIZE, bounds);
-      prefs.putBean(FONT_SIZE, fontu.getFontSize());
-      try {
-          store.save();
-      } catch (IOException ioe) {
-          ioe.printStackTrace();
-          logger.error("ViewerMain store.save() failed", ioe);
-      }
+    Rectangle bounds = frame.getBounds();
+    prefs.putBeanObject(FRAME_SIZE, bounds);
+    prefs.putBean(FONT_SIZE, fontu.getFontSize());
+    try {
+      store.save();
+    } catch (IOException ioe) {
+      ioe.printStackTrace();
+      logger.error("ViewerMain store.save() failed", ioe);
+    }
 
-      done = true; // on some systems, still get a window close event
-      logger.debug("ViewerMain exit");
+    done = true; // on some systems, still get a window close event
+    logger.debug("ViewerMain exit");
 
-      System.exit(0);
+    System.exit(0);
   }
 
   ///////////////////////\///////////////////////

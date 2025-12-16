@@ -302,7 +302,7 @@ public class AuditTable extends JPanel {
             if (!contestRound.getStatus().getComplete()) return 0;
             int round = 0;
             for (AssertionRound assertion : contestRound.getAssertionRounds()) {
-                round = max(round, assertion.getRound());
+                round = max(round, assertion.getRoundProved());
             }
             return round;
         }

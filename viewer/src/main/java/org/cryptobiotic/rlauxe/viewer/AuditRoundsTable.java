@@ -591,7 +591,7 @@ public class AuditRoundsTable extends JPanel {
         public Integer getEstNewMvrs() {return assertionRound.getEstNewSampleSize();}
 
         public Integer getCompleted() {
-            return assertionRound.getRound();
+            return assertionRound.getRoundProved();
         }
 
         public String getStatus() {
@@ -616,7 +616,7 @@ public class AuditRoundsTable extends JPanel {
             sb.append("estSampleSize = %d%n".formatted(assertionRound.getEstSampleSize()));
             sb.append("estNewSampleSize = %d%n".formatted(assertionRound.getEstNewSampleSize()));
             sb.append("status = %s%n".formatted(Naming.status(assertionRound.getStatus())));
-            sb.append("round = %d%n".formatted(assertionRound.getRound()));
+            sb.append("round = %d%n".formatted(assertionRound.getRoundProved()));
             sb.append("%n assertion = %s".formatted(assertionRound.getAssertion().show()));
             sb.append("%n assorter = %s".formatted(assertionRound.getAssertion().getAssorter().toString()));
             sb.append("%n diff: %s".formatted(contestBean.contestUA.getContest().showAssertionDifficulty(assertion.getAssorter())));
