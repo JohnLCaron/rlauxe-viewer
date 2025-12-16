@@ -3,6 +3,14 @@
 WORK IN PROGRESS
 _last update: 12/13/2025_
 
+<!-- TOC -->
+* [rlauxe-viewer](#rlauxe-viewer)
+  * [Building Rlauxe-viewer](#building-rlauxe-viewer)
+  * [Starting Rlauxe-viewer](#starting-rlauxe-viewer)
+    * [Setting UI choices](#setting-ui-choices)
+  * [Showing the results of an audit](#showing-the-results-of-an-audit)
+<!-- TOC -->
+
 ## Building Rlauxe-viewer
 
 Download the repo:
@@ -19,7 +27,7 @@ cd rlauxe-viewer
 
 ## Starting Rlauxe-viewer
 
-From gradle:
+From shell:
 
 ````
 cd devhome/rlauxe-viewer

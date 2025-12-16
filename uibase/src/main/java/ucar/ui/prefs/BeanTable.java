@@ -288,6 +288,18 @@ public class BeanTable<T> extends JPanel {
     };
   }
 
+    public Action makeShowAction(TextHistoryPane infoTA, Function<Object, String> show) {
+        return new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                Object bean = getSelectedBean();
+                if (bean != null) {
+                    infoTA.setText(show.apply(bean));
+                    infoTA.gotoTop();
+                }
+            }
+        };
+    }
+
   /**
    * Get the currently selected bean, or null if none selected.
    */
