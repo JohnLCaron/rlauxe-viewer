@@ -189,7 +189,7 @@ public class CardTable extends JPanel {
         }
         public Boolean getPhantom() { return card.getPhantom(); }
         public String getContests() {
-            int[] ids = card.getPossibleContests();
+            int[] ids = card.contests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
