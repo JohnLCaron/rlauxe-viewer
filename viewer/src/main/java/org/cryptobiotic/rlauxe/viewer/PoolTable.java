@@ -91,7 +91,7 @@ public class PoolTable extends JPanel {
             }
 
             Publisher publisher = new Publisher(auditRecordLocation);
-            CardManifest cardManifest = readCardManifest(publisher, infos);
+            CardManifest cardManifest = readCardManifest(publisher);
 
             java.util.List<PoolBean> beanList = new ArrayList<>();
             for (var pop : cardManifest.getPopulations()) {
@@ -154,7 +154,7 @@ public class PoolTable extends JPanel {
         }
 
         public boolean getExactContests() {
-            return pop.exactContests();
+            return pop.hasSingleCardStyle();
         }
 
         public Integer getNcards() {

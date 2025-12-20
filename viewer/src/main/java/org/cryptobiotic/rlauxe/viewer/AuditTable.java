@@ -340,6 +340,9 @@ public class AuditTable extends JPanel {
         }
 
         public String getDesc() {
+            return assertion.getAssorter().hashcodeDesc();
+        }
+        public String getDifficultyDesc() {
             return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
         }
 
