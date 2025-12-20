@@ -98,7 +98,7 @@ public class CardTable extends JPanel {
             }
 
             Publisher publisher = new Publisher(auditRecordLocation);
-            this.cardManifest = readCardManifest(publisher, infos);
+            this.cardManifest = readCardManifest(publisher);
 
             Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
             for (PopulationIF pool : cardManifest.getPopulations()) {
@@ -204,7 +204,23 @@ public class CardTable extends JPanel {
         }
         public String getVotes() {
             var votes = card.getVotes();
-            return (votes == null) ? "N/A" : votes.toString();
+            if (votes == null) return "N/A";
+            StringBuilder sb = new StringBuilder();
+            for (int contestId : votes.keySet()) {
+                sb.append("%d:".formatted(contestId));
+                var cands = votes.get(contestId);
+                if (cands.length == 1) sb.append("%d, ".formatted(cands[0]));
+                else {
+                    sb.append("[");
+                    for (int idx=0; idx<cands.length; idx++) {
+                        int cand = cands[idx];
+                        if (idx > 0)  sb.append(", ");
+                        sb.append("%d".formatted(cand));
+                    }
+                    sb.append("],");
+                }
+            }
+            return sb.toString();
         }
 
         public String show() {
