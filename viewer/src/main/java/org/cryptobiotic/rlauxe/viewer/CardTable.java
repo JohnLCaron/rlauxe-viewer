@@ -188,19 +188,25 @@ public class CardTable extends JPanel {
             return card.getPrn();
         }
         public Boolean getPhantom() { return card.getPhantom(); }
-        public String getContests() {
+        /* public String getContests() {
             int[] ids = card.contests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
             }
             return sb.toString();
-        }
+        } */
         public Integer getPoolId() { return card.getPoolId(); }
         public String getCardStyle() { return card.getCardStyle(); }
         public String getPopulation() {
             var pop = card.getPopulation();
-            return (pop == null) ? "N/A" : pop.toString();
+            if (pop == null) return "";
+            int[] ids = pop.contests();
+            StringBuilder sb = new StringBuilder();
+            for (int id : ids) {
+                sb.append("%d,".formatted(id));
+            }
+            return sb.toString();
         }
         public String getVotes() {
             var votes = card.getVotes();
@@ -209,8 +215,9 @@ public class CardTable extends JPanel {
             for (int contestId : votes.keySet()) {
                 sb.append("%d:".formatted(contestId));
                 var cands = votes.get(contestId);
+                if (cands.length == 0) sb.append(" ,");
                 if (cands.length == 1) sb.append("%d, ".formatted(cands[0]));
-                else {
+                else if (cands.length > 1) {
                     sb.append("[");
                     for (int idx=0; idx<cands.length; idx++) {
                         int cand = cands[idx];
@@ -227,17 +234,20 @@ public class CardTable extends JPanel {
             StringBuilder sb = new StringBuilder();
             sb.append(card.toString());
 
-            var cardStyle = card.getCardStyle();
-            if (cardStyle != null) {
-                var pool = findPool(cardStyle);
-                if (pool != null) {
-                    OneAuditPoolIF oapool = null;
-                    if (pool instanceof OneAuditPoolIF) oapool = (OneAuditPoolIF) pool;
-                    if (oapool != null) {
-                        sb.append(oapool.show());
-                    } else {
-                        sb.append(pool.toString());
-                    }
+            var pop = card.getPopulation();
+            if (pop == null) {
+                var cardStyle = card.getCardStyle();
+                if (cardStyle != null) {
+                    pop = findPool(cardStyle);
+                }
+            }
+            if (pop != null) {
+                OneAuditPoolIF oapool = null;
+                if (pop instanceof OneAuditPoolIF) oapool = (OneAuditPoolIF) pop;
+                if (oapool != null) {
+                    sb.append(oapool.show());
+                } else {
+                    sb.append(pop.toString());
                 }
             }
             return sb.toString();
