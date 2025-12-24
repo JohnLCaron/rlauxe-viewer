@@ -88,7 +88,7 @@ public class ViewerMain extends JPanel {
       Component c = tabbedPane.getSelectedComponent();
       if (this.auditRecordDir.equals("none")) return;
       if (c instanceof AuditTable) {
-        ((AuditTable)c).setSelected(this.auditRecordDir);
+        ((AuditTable)c).setAuditRecordLocation(this.auditRecordDir);
       } else if (c instanceof AuditRoundsTable) {
           ((AuditRoundsTable)c).setSelected(this.auditRecordDir);
       } else if (c instanceof PoolTable) {
@@ -103,7 +103,7 @@ public class ViewerMain extends JPanel {
     //// buttons to the left of auditRecordDir ComboBox
     AbstractAction refreshAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        auditPanel.setSelected(auditRecordDir);
+        auditPanel.setAuditRecordLocation(auditRecordDir);
         auditRoundsPanel.setSelected(auditRecordDir);
         poolPanel.setSelected(auditRecordDir);
         cardPanel.setSelected(auditRecordDir);
@@ -139,9 +139,9 @@ public class ViewerMain extends JPanel {
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         logger.debug("call runRound");
-        runRound(auditRecordDir);
+        runRound(auditRecordDir, null);
         logger.debug("return from runRound");
-        auditPanel.setSelected(auditRecordDir);
+        auditPanel.setAuditRecordLocation(auditRecordDir);
         auditRoundsPanel.setSelected(auditRecordDir);
       }
     };
@@ -210,7 +210,7 @@ public class ViewerMain extends JPanel {
       this.eventOk = false;
       this.auditRecordDirCB.addItem(this.auditRecordDir);
       this.eventOk = true;
-      auditPanel.setSelected(auditRecordDir);
+      auditPanel.setAuditRecordLocation(auditRecordDir);
       auditRoundsPanel.setSelected(auditRecordDir);
       poolPanel.setSelected(auditRecordDir);
       cardPanel.setSelected(auditRecordDir);

@@ -8,7 +8,7 @@ package org.cryptobiotic.rlauxe.viewer;
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
-import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
+import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.raire.RaireAssertion;
 import org.cryptobiotic.rlauxe.raire.RaireAssorter;
@@ -23,9 +23,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-import static java.lang.Math.max;
-import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
-
 public class AuditTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(AuditTable.class);
 
@@ -33,14 +30,12 @@ public class AuditTable extends JPanel {
 
     private final BeanTable<ContestBean> contestTable;
     private final BeanTable<AssertionBean> assertionTable;
-    private final BeanTable<AuditRoundResultBean> auditRoundTable;
 
-    private final JSplitPane split2, split3;
+    private final JSplitPane split2;
 
     private String auditRecordLocation = "none";
     private AuditRecord auditRecord;
     private AuditConfig auditConfig;
-    private AuditRound lastAuditState;
 
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -58,19 +53,10 @@ public class AuditTable extends JPanel {
 
         assertionTable = new BeanTable<>(AssertionBean.class, (PreferencesExt) prefs.node("assertionTable"), false,
                 "Assertion", "Assertion", null);
-        assertionTable.addListSelectionListener(e -> {
-            AssertionBean assertion = assertionTable.getSelectedBean();
-            if (assertion != null) {
-                // setSelectedAssertion(assertion);
-            }
-        });
+
         assertionTable.addPopupOption("Show Assertion", assertionTable.makeShowAction(infoTA, infoWindow,
                 bean -> ((AssertionBean) bean).show()));
 
-        auditRoundTable = new BeanTable<>(AuditRoundResultBean.class, (PreferencesExt) prefs.node("assertionRoundTable"), false,
-                "AuditRounds", "AuditRoundResult", null);
-        auditRoundTable.addPopupOption("Show AuditRoundResult", auditRoundTable.makeShowAction(infoTA, infoWindow,
-                bean -> ((AuditRoundResultBean)bean).show()));
         setFontSize(fontSize);
 
         // layout of tables
@@ -78,8 +64,6 @@ public class AuditTable extends JPanel {
         split2.setDividerLocation(prefs.getInt("splitPos2", 200));
 
         // auditRoundTable not used for now
-        split3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split2, auditRoundTable);
-        split3.setDividerLocation(prefs.getInt("splitPos3", 200));
 
         setLayout(new BorderLayout());
         add(split2, BorderLayout.CENTER);
@@ -90,14 +74,11 @@ public class AuditTable extends JPanel {
     public void setFontSize(float size) {
         contestTable.setFontSize(size);
         assertionTable.setFontSize(size);
-        auditRoundTable.setFontSize(size);
     }
 
-    void setSelected(String wantRecordDir) {
-        setAuditRecord(wantRecordDir);
-    }
+    boolean setAuditRecordLocation(String auditRecordLocation) {
+        this.auditRecordLocation = auditRecordLocation;
 
-    boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
@@ -107,35 +88,30 @@ public class AuditTable extends JPanel {
         try {
             this.auditConfig = auditRecord.getConfig();
 
-            java.util.Map<Integer, ContestRound> contests = new TreeMap<>(); // sorted
-
-            if (auditRecord.getRounds().isEmpty()) {
-                for (var contest : auditRecord.getContests()) {
-                    contests.put(contest.getId(), new ContestRound(contest, new ArrayList<>(), 0));
-                }
-            }
-
-            for (var round : auditRecord.getRounds()) {
-                for (var contest : round.getContestRounds()) {
-                    contests.put(contest.getId(), contest); // get the last time it appears in a round
-                }
-            }
-
+            var contestMap = new HashMap<Integer, ContestBean>();
             java.util.List<ContestBean> beanList = new ArrayList<>();
-            for (var contest : contests.values()) {
-                beanList.add(new ContestBean(contest));
+            for (var contest : auditRecord.getContests()) {
+                var bean = new ContestBean(contest);
+                beanList.add(bean);
+                contestMap.put(contest.getId(), bean);
             }
             contestTable.setBeans(beanList);
 
-            if (!auditRecord.getRounds().isEmpty()) {
-                // select contest with smallest margin
-                ContestBean minByMargin = beanList
-                        .stream()
-                        .min(Comparator.comparing(ContestBean::getDilutedMargin))
-                        .orElseThrow(NoSuchElementException::new);
-                contestTable.setSelectedBean(minByMargin);
+            // put last round for each contest
+            for (var round : auditRecord.getRounds()) {
+                for (var contestRound : round.getContestRounds()) {
+                    var bean = contestMap.get(contestRound.getId());
+                    bean.lastRound = contestRound;
+                }
+            }
 
-                this.lastAuditState = auditRecord.getRounds().getLast();
+            if (!auditRecord.getRounds().isEmpty()) {
+                // select inProgress contest with smallest margin
+                Optional<ContestBean> minByMargin = beanList
+                        .stream()
+                        .filter(bean ->bean.getStatus().equals("InProgress"))
+                        .min(Comparator.comparing(ContestBean::getDilutedMargin));
+                minByMargin.ifPresent(contestTable::setSelectedBean);
             }
 
         } catch (Exception e) {
@@ -148,7 +124,7 @@ public class AuditTable extends JPanel {
     }
 
     void setSelectedContest(ContestBean contestBean) {
-        ContestUnderAudit cua = contestBean.contestUA;
+        ContestWithAssertions cua = contestBean.contestUA;
         java.util.List<AssertionBean> beanList = new ArrayList<>();
         for (Assertion a : cua.assertions()) {
             beanList.add(new AssertionBean(cua, a));
@@ -165,45 +141,11 @@ public class AuditTable extends JPanel {
         assertionTable.setSelectedBean(minByMargin);
     }
 
-    /*
-    void setSelectedAssertion(AssertionBean assertionBean) {
-        java.util.List<AuditRoundResultBean> auditList = new ArrayList<>();
-
-        int maxRound = assertionBean.assertionRound.getRoundIdx();
-        for (AuditRound auditRound : auditRecord.getRounds()) {
-            if (auditRound.getRoundIdx() > maxRound) break;
-
-            for (ContestRound contestRound : auditRound.getContestRounds()) {
-                if (contestRound.getContestUA().equals(assertionBean.contestRound.getContestUA())) {
-                    for (AssertionRound assertionRound : contestRound.getAssertionRounds()) {
-                        if (assertionRound.getAssertion().equals(assertionBean.assertionRound.getAssertion())) {
-                            if (assertionRound.getAuditResult() != null)
-                                auditList.add(new AuditRoundResultBean(assertionRound.getAuditResult()));
-                        }
-                    }
-                }
-            }
-        }
-        auditRoundTable.setBeans(auditList);
-    }
-
-
-    void setSelectedAssertion(AssertionBean assertionBean) {
-        java.util.List<AuditRoundResultBean> beanList = new ArrayList<>();
-        for (AuditRoundResult a : assertionBean.assertionRound.getRoundResults()) {
-            beanList.add(new AssertionRoundBean(a));
-        }
-        auditRoundTable.setBeans(beanList);
-    }
-    */
-
     void save() {
         contestTable.saveState(false);
         assertionTable.saveState(false);
-        auditRoundTable.saveState(false);
 
         prefs.putInt("splitPos2", split2.getDividerLocation());
-        prefs.putInt("splitPos3", split3.getDividerLocation());
     }
 
     //////////////////////////////////////////////////////////////////
@@ -221,15 +163,14 @@ public class AuditTable extends JPanel {
     //////////////////////////////////////////////////////////////////
 
     public class ContestBean {
-        ContestRound contestRound;
-        ContestUnderAudit contestUA;
+        ContestRound lastRound = null;
+        ContestWithAssertions contestUA;
 
         public ContestBean() {
         }
 
-        ContestBean(ContestRound contestRound) {
-            this.contestRound = contestRound;
-            this.contestUA = contestRound.getContestUA();
+        ContestBean(ContestWithAssertions contestUA) {
+            this.contestUA = contestUA;
         }
 
         public String getName() {
@@ -270,18 +211,6 @@ public class AuditTable extends JPanel {
             return contestUA.getContest().winners().toString();
         }
 
-        public Integer getTotalMvrs() {
-            return contestRound.getActualMvrs();
-        }
-
-        public boolean isSuccess() {
-            return contestRound.getStatus().getSuccess();
-        }
-
-        public String getStatus() {
-            return Naming.status(contestRound.getStatus());
-        }
-
         public String getVotes() {
             var votes =  contestUA.getContest().votes();
             if (votes != null) return votes.toString();
@@ -289,6 +218,7 @@ public class AuditTable extends JPanel {
         }
 
         public double getDilutedMargin() {
+            // clca gets assertion with minimum noerror, and returns dilutedMargin of that.
             Double min = contestUA.minDilutedMargin();
             return min == null ? 0.0 : min;
         }
@@ -298,14 +228,23 @@ public class AuditTable extends JPanel {
             return min == null ? 0.0 : min;
         }
 
+        public Integer getTotalMvrs() {
+            return (lastRound == null) ? 0 : lastRound.getActualMvrs();
+        }
+
+        public String getStatus() {
+            return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
+        }
+
+        /*
         public Integer getCompleted() {
-            if (!contestRound.getStatus().getComplete()) return 0;
+            if (!lastRound.getStatus().getComplete()) return 0;
             int round = 0;
-            for (AssertionRound assertion : contestRound.getAssertionRounds()) {
+            for (AssertionRound assertion : lastRound.getAssertionRounds()) {
                 round = max(round, assertion.getRoundProved());
             }
             return round;
-        }
+        } */
 
         public Integer getPoolPct() {
             return contestUA.getContest().info().getMetadata().get("PoolPct");
@@ -313,28 +252,30 @@ public class AuditTable extends JPanel {
 
         public String show() {
             StringBuilder sb = new StringBuilder();
-            sb.append("roundIdx = %d%n".formatted(contestRound.getRoundIdx()));
-            sb.append("estSampleSize = %d%n".formatted(contestRound.getEstSampleSize()));
-            sb.append("estNewSampleSize = %d%n".formatted(contestRound.getEstNewSamples()));
-            sb.append("actualMvrs = %d%n".formatted(contestRound.getActualMvrs()));
-            sb.append("actualNewMvrs = %d%n".formatted(contestRound.getActualNewMvrs()));
-            sb.append("status = %s%n".formatted(Naming.status(contestRound.getStatus())));
-            sb.append("included = %s%n".formatted(contestRound.getIncluded()));
-            sb.append("done = %s%n".formatted(contestRound.getDone()));
+            if (lastRound != null) {
+                sb.append("roundIdx = %d%n".formatted(lastRound.getRoundIdx()));
+                sb.append("estSampleSize = %d%n".formatted(lastRound.getEstSampleSize()));
+                sb.append("estNewSampleSize = %d%n".formatted(lastRound.getEstNewSamples()));
+                sb.append("actualMvrs = %d%n".formatted(lastRound.getActualMvrs()));
+                sb.append("actualNewMvrs = %d%n".formatted(lastRound.getActualNewMvrs()));
+                sb.append("status = %s%n".formatted(Naming.status(lastRound.getStatus())));
+                sb.append("included = %s%n".formatted(lastRound.getIncluded()));
+                sb.append("done = %s%n".formatted(lastRound.getDone()));
+            }
             sb.append("\n%s%n".formatted(contestUA.show()));
             return sb.toString();
         }
     }
 
     public class AssertionBean {
-        ContestUnderAudit cua;
+        ContestWithAssertions cua;
         Assertion assertion;
         AssertionRound assertionRoundMaybe;
 
         public AssertionBean() {
         }
 
-        AssertionBean(ContestUnderAudit cua, Assertion assertion) {
+        AssertionBean(ContestWithAssertions cua, Assertion assertion) {
             this.cua = cua;
             this.assertion = assertion;
         }
@@ -381,53 +322,6 @@ public class AuditTable extends JPanel {
             StringBuilder sb = new StringBuilder();
             sb.append(assertion.show());
             sb.append("\n  diff: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
-            return sb.toString();
-        }
-    }
-
-    // the last round, if any
-    public class AuditRoundResultBean {
-        AuditRoundResult auditRound;
-
-        public AuditRoundResultBean() {}
-        AuditRoundResultBean(AuditRoundResult auditRound) {
-            this.auditRound = auditRound;
-        }
-
-        public Integer getRoundIdx() {
-            return auditRound.getRoundIdx();
-        }
-        public Integer getMvrs() {
-            return auditRound.getNmvrs();
-        }
-        public Double getPValue() {
-            return auditRound.getPvalue();
-        }
-        public Integer getMvrsUsed() {
-            return auditRound.getSamplesUsed();
-        }
-        public Integer getMvrsExtra() {
-            return (Math.max(0, auditRound.getNmvrs() - auditRound.getSamplesUsed()));
-        }
-        public String getStatus() {
-            return Naming.status(auditRound.getStatus());
-        }
-        public Double getMeasuredMargin() {
-            return mean2margin(auditRound.getMeasuredMean());
-        }
-
-        public String show() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("roundIdx = %d%n".formatted(getRoundIdx()));
-            sb.append("measuredMean = %f%n".formatted(auditRound.getMeasuredMean()));
-            sb.append("measuredMargin = %f%n".formatted(mean2margin(auditRound.getMeasuredMean())));
-            sb.append("estSampleSize = %d%n".formatted(auditRound.getNmvrs()));
-            sb.append("samplesUsed = %d%n".formatted(auditRound.getSamplesUsed()));
-            sb.append("samplesExtra = %d%n".formatted(getMvrsExtra()));
-            sb.append("pvalue = %f%n".formatted(auditRound.getPvalue()));
-            sb.append("status = %s%n".formatted(Naming.status(auditRound.getStatus())));
-            sb.append("measuredErrorCounts = %s%n".formatted(auditRound.measuredCounts()));
-            sb.append("maxBallotsUsed = %d%n".formatted(auditRound.getMaxBallotIndexUsed()));
             return sb.toString();
         }
     }

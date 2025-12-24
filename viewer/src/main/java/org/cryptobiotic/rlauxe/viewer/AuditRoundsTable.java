@@ -87,7 +87,7 @@ public class AuditRoundsTable extends JPanel {
 
         //   public BeanTable(Class<T> bc, PreferencesExt pstore, boolean canAddDelete, String header, String tooltip, T bean) {
         contestTable = new BeanTable<>(ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false,
-                "Contests", "ContestUnderAudit", new ContestBean());
+                "Contests", "ContestWithAssertions", new ContestBean());
         contestTable.addListSelectionListener(e -> {
             ContestBean contest = contestTable.getSelectedBean();
             if (contest != null) {
@@ -302,7 +302,7 @@ public class AuditRoundsTable extends JPanel {
             return;
         }
 
-        java.util.List<ContestUnderAudit> cuas = new ArrayList<>();
+        java.util.List<ContestWithAssertions> cuas = new ArrayList<>();
         for (ContestRound cr : this.lastAuditRound.getContestRounds()) {
             cuas.add(cr.getContestUA());
         }
@@ -399,7 +399,7 @@ public class AuditRoundsTable extends JPanel {
 
     public class ContestBean {
         ContestRound contestRound;
-        ContestUnderAudit contestUA;
+        ContestWithAssertions contestUA;
         int auditRound; // only last row can be edited
         TestH0Status initialStatus; // only last row can be edited
 
@@ -467,6 +467,7 @@ public class AuditRoundsTable extends JPanel {
             return contestUA.getNphantoms();
         }
 
+        public Integer getEstCards() {return contestRound.getEstCardsNeeded();}
         public Integer getEstMvrs() {return contestRound.getEstSampleSize();}
         public Integer getEstNewMvrs() {return contestRound.getEstNewSamples();}
         public Integer getActualMvrs() {return contestRound.getActualMvrs(); }
@@ -533,7 +534,7 @@ public class AuditRoundsTable extends JPanel {
             return contestUA.getContest().info().getMetadata().get("CORLAsample");
         }
 
-        // data class ContestRound(val contestUA: ContestUnderAudit, val assertions: List<AssertionRound>, val roundIdx: Int) {
+        // data class ContestRound(val contestUA: ContestWithAssertions, val assertions: List<AssertionRound>, val roundIdx: Int) {
         //    val id = contestUA.id
         //    val name = contestUA.name
         //    val Nc = contestUA.Nc
@@ -577,7 +578,7 @@ public class AuditRoundsTable extends JPanel {
         }
 
         public String getDesc() {
-            return contestBean.contestUA.getContest().showAssertionDifficulty(assertion.getAssorter());
+            return assertion.getAssorter().desc();
         }
 
         public double getRecountMargin() {
