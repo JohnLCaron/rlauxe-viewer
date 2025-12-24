@@ -10,7 +10,7 @@ import org.cryptobiotic.rlauxe.audit.AuditableCard;
 import org.cryptobiotic.rlauxe.audit.CardManifest;
 import org.cryptobiotic.rlauxe.audit.PopulationIF;
 import org.cryptobiotic.rlauxe.core.ContestInfo;
-import org.cryptobiotic.rlauxe.core.ContestUnderAudit;
+import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
@@ -90,10 +90,10 @@ public class CardTable extends JPanel {
 
         try {
             this.auditConfig = auditRecord.getConfig();
-            List<ContestUnderAudit> contestsUA = auditRecord.getContests();
+            List<ContestWithAssertions> contestsUA = auditRecord.getContests();
 
             Map<Integer, ContestInfo> infos = new TreeMap<>(); // sorted
-            for (ContestUnderAudit contestUA : contestsUA) {
+            for (ContestWithAssertions contestUA : contestsUA) {
                 infos.put(contestUA.getId(), contestUA.getContest().info());
             }
 
