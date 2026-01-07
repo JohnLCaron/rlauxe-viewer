@@ -742,10 +742,6 @@ public class AuditRoundsTable extends JPanel {
             return Naming.status(auditResultRound.getStatus());
         }
 
-        public String getMeasuredMargin() {
-            return dfn(mean2margin(auditResultRound.getMeasuredMean()), 5);
-        }
-
         public String getClcaErrorRate() {
             if (auditResultRound.getMeasuredCounts() != null)
                 return Double.toString(auditResultRound.getMeasuredCounts().clcaErrorRate());
@@ -760,8 +756,6 @@ public class AuditRoundsTable extends JPanel {
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append("roundIdx = %d%n".formatted(auditResultRound.getRoundIdx()));
-            sb.append("measuredMean = %f%n".formatted(auditResultRound.getMeasuredMean()));
-            sb.append("measuredMargin = %f%n".formatted(mean2margin(auditResultRound.getMeasuredMean())));
             sb.append("estSampleSize = %d%n".formatted(auditResultRound.getNmvrs()));
             sb.append("samplesUsed = %d%n".formatted(auditResultRound.getSamplesUsed()));
             sb.append("samplesExtra = %d%n".formatted(getMvrsExtra()));
