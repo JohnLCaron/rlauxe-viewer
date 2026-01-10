@@ -13,6 +13,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.List;
 import javax.swing.JFrame;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -97,6 +98,11 @@ public class TestBeanTable {
       frame.pack();
       frame.setLocation(300, 300);
       frame.setVisible(true);
+
+      var bean = new TestBean();
+      bean.setServerType("test server");
+      bt.setBeans(List.of(bean));
+
     } catch (HeadlessException e) {
       // ok to fail if there is no display
     }
