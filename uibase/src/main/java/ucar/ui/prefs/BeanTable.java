@@ -5,6 +5,7 @@
 
 package ucar.ui.prefs;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.table.HidableTableColumnModel;
@@ -79,11 +80,11 @@ public class BeanTable<T> extends JPanel {
   protected Class<T> beanClass;
   protected T innerbean;
   protected PreferencesExt store;
-  protected JTable jtable;
+  public JTable jtable;
   protected JScrollPane scrollPane;
 
   protected ArrayList<T> beans;
-  protected TableBeanModel model;
+  public TableBeanModel model;
   JCheckBox boolCellEditor;
 
   protected boolean debug, debugSelected, debugBean;
@@ -589,6 +590,11 @@ public class BeanTable<T> extends JPanel {
     public void setVisible(boolean visible) {
       this.visible = visible;
     }
+
+    @Override
+    public String toString() {
+      return "PropertyCol{name='" + name + '\'' + ", width=" + width + ", visible=" + visible + '}';
+    }
   }
 
   static class DateRenderer extends DefaultTableCellRenderer {
@@ -633,8 +639,8 @@ public class BeanTable<T> extends JPanel {
   }
 
   /** Does the reflection on the bean objects */
-  protected class TableBeanModel extends AbstractTableModel {
-    protected List<PropertyDescriptor> properties = new ArrayList<>();
+  public class TableBeanModel extends AbstractTableModel {
+    public List<PropertyDescriptor> properties = new ArrayList<>();
     private Method canedit;
 
     protected TableBeanModel() {}
@@ -941,6 +947,99 @@ public class BeanTable<T> extends JPanel {
       return hiddenP.contains(pd.getName());
     }
 
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Properties:\n");
+      sb.append("  display   name\n");
+      for (PropertyDescriptor pd : properties) {
+        String displayName = pd.getDisplayName();
+        String name = pd.getName();
+        sb.append("  %15s %s%n".formatted(displayName, name));
+      }
+
+      HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
+      ArrayList<PropertyCol> propertyCols = (ArrayList<PropertyCol>) store.getBean("propertyCol", new ArrayList<>());
+
+      sb.append("PropertyCols:\n");
+      for (PropertyCol pc : propertyCols) {
+        try {
+          int currentViewIndex = tableColumnModel.getColumnIndex(pc.getName()); // May throw IAE.
+          sb.append("  %s %s %d%n".formatted(pc.name, pc.visible, currentViewIndex));
+        } catch (Exception e) {
+          sb.append(" %s %s %s%n".formatted(pc.name, pc.visible, e.getMessage()));
+        }
+      }
+
+      return sb.toString();
+    }
+
+    public String showBean(Object bean, List<TableBeanProperty> props) {
+      StringBuilder sb = new StringBuilder();
+
+      HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
+
+      try {
+        int maxName = 1;
+        int maxValue = 1;
+        int maxDesc = 1;
+        for (TableBeanProperty pc : props) {
+          maxName = Math.max(maxName, pc.name.length());
+          maxDesc = Math.max(maxDesc, pc.desc.length());
+          try {
+            pc.viewColumnIndex = tableColumnModel.getColumnIndex(pc.name); // May throw IAE.
+            pc.visible = true;
+            Object colVal = getValueAt(bean, pc.viewColumnIndex);
+            maxValue = Math.max(maxValue, colVal.toString().length());
+
+          } catch (Exception e) {
+            pc.visible = false;
+          }
+        }
+
+        String rowf = new StringBuilder(" | %")
+                .append(maxName)
+                .append("s | %")
+                .append(maxValue)
+                .append("s | %-")
+                .append(maxDesc)
+                .append("s |%n")
+                .toString();
+
+        var sprops = props.stream().filter(p -> p.visible).sorted().toList();
+        sb.append(rowf.formatted("field", "value", "description"));
+        sb.append(rowf.formatted("-".repeat(maxName), "-".repeat(maxValue), "-".repeat(maxDesc)));
+
+        for (var p : sprops) {
+          int modelColumnIndex = jtable.convertColumnIndexToModel(p.viewColumnIndex);
+          Object colVal = getValueAt(bean, modelColumnIndex);
+          sb.append(rowf.formatted(p.name, colVal, p.desc));
+        }
+
+      } catch ( Throwable t) {
+        logger.error("fail in showBean", t);
+      }
+
+      return sb.toString();
+    }
+
+  }
+
+  static public class TableBeanProperty implements Comparable<TableBeanProperty> {
+    String name;
+    String desc;
+    boolean visible;
+    int viewColumnIndex;
+
+    public TableBeanProperty(String name, String desc) {
+      this.name = name;
+      this.desc = desc;
+    }
+
+    @Override
+    public int compareTo(@NotNull TableBeanProperty other) {
+      return this.viewColumnIndex - other.viewColumnIndex;
+    }
   }
 
   protected class TableBeanModelInfo extends TableBeanModel {

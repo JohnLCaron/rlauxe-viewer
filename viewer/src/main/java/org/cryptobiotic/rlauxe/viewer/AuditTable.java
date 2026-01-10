@@ -163,6 +163,26 @@ public class AuditTable extends JPanel {
     //////////////////////////////////////////////////////////////////
 
     public class ContestBean {
+        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
+        static {
+            beanProperties.add(new BeanTable.TableBeanProperty("id", "contest identifier"));
+            beanProperties.add(new BeanTable.TableBeanProperty("name", "contest name"));
+            beanProperties.add(new BeanTable.TableBeanProperty("type", "contest type"));
+            beanProperties.add(new BeanTable.TableBeanProperty("NCand", "number of candidates"));
+            beanProperties.add(new BeanTable.TableBeanProperty("winners", "list of winning candidates"));
+            beanProperties.add(new BeanTable.TableBeanProperty("nc", "trusted upper bound on contest ncards"));
+            beanProperties.add(new BeanTable.TableBeanProperty("npop", "population size for diluted margin"));
+            beanProperties.add(new BeanTable.TableBeanProperty("phantoms", "number of phantom votes"));
+            beanProperties.add(new BeanTable.TableBeanProperty("votes", "reported vote count"));
+            beanProperties.add(new BeanTable.TableBeanProperty("undervotes", "reported undervote count"));
+            beanProperties.add(new BeanTable.TableBeanProperty("uvPct", "percent undervote count"));
+            beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin (smallest assertion)"));
+            beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner (smallest assertion)"));
+
+            beanProperties.add(new BeanTable.TableBeanProperty("poolPct", "percent of cards in pools"));
+            beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
+        }
+
         ContestRound lastRound = null;
         ContestWithAssertions contestUA;
 
@@ -252,22 +272,27 @@ public class AuditTable extends JPanel {
 
         public String show() {
             StringBuilder sb = new StringBuilder();
-            if (lastRound != null) {
-                sb.append("roundIdx = %d%n".formatted(lastRound.getRoundIdx()));
-                sb.append("estSampleSize = %d%n".formatted(lastRound.getEstSampleSize()));
-                sb.append("estNewSampleSize = %d%n".formatted(lastRound.getEstNewSamples()));
-                sb.append("actualMvrs = %d%n".formatted(lastRound.getActualMvrs()));
-                sb.append("actualNewMvrs = %d%n".formatted(lastRound.getActualNewMvrs()));
-                sb.append("status = %s%n".formatted(Naming.status(lastRound.getStatus())));
-                sb.append("included = %s%n".formatted(lastRound.getIncluded()));
-                sb.append("done = %s%n".formatted(lastRound.getDone()));
-            }
+            sb.append("%n%s%n".formatted(contestTable.model.showBean(this, beanProperties)));
             sb.append("\n%s%n".formatted(contestUA.show()));
             return sb.toString();
         }
     }
 
     public class AssertionBean {
+        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
+        static {
+            beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion description"));
+            beanProperties.add(new BeanTable.TableBeanProperty("difficultyDesc", "assertion difficulty description"));
+            beanProperties.add(new BeanTable.TableBeanProperty("difficulty", "assertion difficulty measure (IRV only)"));
+            beanProperties.add(new BeanTable.TableBeanProperty("upperBound", "assorter upper bound"));
+            beanProperties.add(new BeanTable.TableBeanProperty("noError", "noerror assort value (CLCA only)"));
+
+            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "initial estimate samples needed"));
+            beanProperties.add(new BeanTable.TableBeanProperty("estNewMvrs", "initial estimate new samples needed"));
+            beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin"));
+            beanProperties.add(new BeanTable.TableBeanProperty("mean", "diluted mean"));
+        }
+
         ContestWithAssertions cua;
         Assertion assertion;
         AssertionRound assertionRoundMaybe;
@@ -320,8 +345,10 @@ public class AuditTable extends JPanel {
 
         public String show() {
             StringBuilder sb = new StringBuilder();
+            sb.append("%n%s%n".formatted(assertionTable.model.showBean(this, beanProperties)));
+
             sb.append(assertion.show());
-            sb.append("\n  diff: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
+            sb.append("\n  difficulty: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
             return sb.toString();
         }
     }
