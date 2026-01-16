@@ -84,6 +84,7 @@ public class ViewerMain extends JPanel {
     tabbedPane.addTab("Cards", cardPanel);
     tabbedPane.setSelectedIndex(0);
 
+    /*
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
       if (this.auditRecordDir.equals("none")) return;
@@ -96,7 +97,7 @@ public class ViewerMain extends JPanel {
       }  else if (c instanceof CardTable) {
           ((CardTable)c).setSelected(this.auditRecordDir);
       }
-    });
+    }); */
 
     ////// layout, left to right
 
@@ -135,7 +136,7 @@ public class ViewerMain extends JPanel {
     BAMutil.setActionProperties(startAction, "sunrise-icon.png", "Resample", false, 'S', -1);
     BAMutil.addActionToContainer(rightPanel, startAction);
 
-    // TODO put into seperate thread
+    // TODO put into separate thread
     AbstractAction runAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         logger.debug("call runRound");
