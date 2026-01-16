@@ -109,11 +109,11 @@ public class CardTable extends JPanel {
 
             List<CardBean> beanList = new ArrayList<>();
             var iter = cardManifest.getCards().iterator();
-            int count = 0;
-            while (iter.hasNext() && count < 1000) {
+            int index = 1;
+            while (iter.hasNext() && index < 11111) {
                 var card = iter.next();
-                beanList.add(new CardBean(card));
-                count++;
+                beanList.add(new CardBean(card, index));
+                index++;
             }
             cardTable.setBeans(beanList);
 
@@ -170,32 +170,37 @@ public class CardTable extends JPanel {
 
     public class CardBean {
         AuditableCard card;
+        int index;
 
         public CardBean() {
         }
 
-        CardBean(AuditableCard card) {
+        CardBean(AuditableCard card, int index) {
             this.card = card;
+            this.index = index;
         }
 
         public String getLocation() {
             return card.getLocation();
         }
         public Integer getIndex() {
+            return this.index;
+        }
+        public Integer getCardIndex() {
             return card.getIndex();
         }
         public long getPrn() {
             return card.getPrn();
         }
         public Boolean getPhantom() { return card.getPhantom(); }
-        /* public String getContests() {
+        public String getContests() {
             int[] ids = card.contests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
             }
             return sb.toString();
-        } */
+        }
         public Integer getPoolId() { return card.getPoolId(); }
         public String getCardStyle() { return card.getCardStyle(); }
         public String getPopulation() {

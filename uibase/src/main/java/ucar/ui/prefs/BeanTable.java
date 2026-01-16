@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * A JTable that uses JavaBeans to store the data.
@@ -79,13 +80,14 @@ public class BeanTable<T> extends JPanel {
 
   protected Class<T> beanClass;
   protected T innerbean;
+
   protected PreferencesExt store;
-  public JTable jtable;
   protected JScrollPane scrollPane;
+  JCheckBox boolCellEditor;
 
   protected ArrayList<T> beans;
-  public TableBeanModel model;
-  JCheckBox boolCellEditor;
+  public JTable jtable;
+  public TableBeanModel tableModel;
 
   protected boolean debug, debugSelected, debugBean;
   protected boolean debugEditing = false;
@@ -94,6 +96,7 @@ public class BeanTable<T> extends JPanel {
     this(bc, pstore, canAddDelete, null, null, null);
   }
 
+  /*
   public BeanTable(Class<T> bc, PreferencesExt pstore, String header, String tooltip, BeanInfo info) {
     this.beanClass = bc;
     this.store = pstore;
@@ -101,7 +104,7 @@ public class BeanTable<T> extends JPanel {
     beans = (store != null) ? (ArrayList<T>) store.getBean("beanList", new ArrayList<>()) : new ArrayList<>();
     model = new TableBeanModelInfo(info);
     init(header, tooltip);
-  }
+  } */
 
   /**
    * Constructor.
@@ -121,7 +124,7 @@ public class BeanTable<T> extends JPanel {
     this.boolCellEditor.setIcon(new SimpleCheckboxStyle(24));
 
     beans = (store != null) ? (ArrayList<T>) store.getBean("beanList", new ArrayList()) : new ArrayList<>();
-    model = new TableBeanModel(beanClass);
+    tableModel = new TableBeanModel(beanClass);
     init(header, tooltip);
 
     if (canAddDelete) {
@@ -152,7 +155,7 @@ public class BeanTable<T> extends JPanel {
         for (T o : getSelectedBeans()) {
           beans.remove(o);
         }
-        model.fireTableDataChanged();
+        tableModel.fireTableDataChanged();
       });
     }
   }
@@ -164,9 +167,9 @@ public class BeanTable<T> extends JPanel {
   private JLabel headerLabel;
 
   private void init(String header, String tooltip) {
-    TableColumnModel tcm = new HidableTableColumnModel(model);
-    jtable = new JTable(model, tcm);
-    jtable.setRowSorter(new UndoableRowSorter<>(model));
+    TableColumnModel tcm = new HidableTableColumnModel(tableModel);
+    jtable = new JTable(tableModel, tcm);
+    jtable.setRowSorter(new UndoableRowSorter<>(tableModel));
 
     ToolTipManager.sharedInstance().registerComponent(jtable);
 
@@ -240,7 +243,7 @@ public class BeanTable<T> extends JPanel {
   }
 
   public void setProperty(String propertyName, String displayName, String toolTipText) {
-    model.setProperty(propertyName, displayName, toolTipText);
+    tableModel.setProperty(propertyName, displayName, toolTipText);
   }
 
   public void setPropertyEditable(String propertyName, boolean isHidden) {
@@ -345,7 +348,7 @@ public class BeanTable<T> extends JPanel {
       for (int viewColumnIndex : viewColumnIndices) {
         int modelRowIndex = jtable.convertRowIndexToModel(viewRowIndex);
         int modelColumnIndex = jtable.convertColumnIndexToModel(viewColumnIndex);
-        list.add(model.getValueAt(modelRowIndex, modelColumnIndex));
+        list.add(tableModel.getValueAt(modelRowIndex, modelColumnIndex));
       }
     }
 
@@ -366,10 +369,10 @@ public class BeanTable<T> extends JPanel {
       int modelColumnIndex = tc.getModelIndex();
 
       Class<?> colClass = jtable.getColumnClass(viewColumnIndex);
-      Object zeroValue = model.zeroValue(colClass);
+      Object zeroValue = tableModel.zeroValue(colClass);
       for (int viewRowIndex : viewRowIndices) {
         int modelRowIndex = jtable.convertRowIndexToModel(viewRowIndex);
-        model.setValueAt(zeroValue, modelRowIndex, modelColumnIndex);
+        tableModel.setValueAt(zeroValue, modelRowIndex, modelColumnIndex);
       }
     }
   }
@@ -377,18 +380,18 @@ public class BeanTable<T> extends JPanel {
   public void addBean(T bean) {
     beans.add(bean);
     int row = beans.size() - 1;
-    model.fireTableRowsInserted(row, row);
+    tableModel.fireTableRowsInserted(row, row);
   }
 
   public void addBeans(List<T> newBeans) {
     this.beans.addAll(newBeans);
     int row = beans.size() - 1;
-    model.fireTableRowsInserted(row - newBeans.size(), row);
+    tableModel.fireTableRowsInserted(row - newBeans.size(), row);
   }
 
   public void setBeans(List<T> beans) {
     this.beans = (beans == null) ? new ArrayList<>() : new ArrayList<>(beans);
-    model.fireTableDataChanged(); // this should make the jtable update
+    tableModel.fireTableDataChanged(); // this should make the jtable update
     revalidate();
   }
 
@@ -521,7 +524,7 @@ public class BeanTable<T> extends JPanel {
   public void fireBeanDataChanged(T bean) {
     int row = beans.indexOf(bean);
     if (row >= 0) {
-      model.fireTableRowsUpdated(row, row);
+      tableModel.fireTableRowsUpdated(row, row);
     }
   }
 
@@ -540,8 +543,8 @@ public class BeanTable<T> extends JPanel {
     for (Object propColObj : propColObjs) {
       PropertyCol propCol = (PropertyCol) propColObj;
       try {
+        // TODO problem is these two dont know about invisible columns; but probably all start as visible
         int currentViewIndex = tableColumnModel.getColumnIndex(propCol.getName()); // May throw IAE.
-
         TableColumn column = tableColumnModel.getColumn(currentViewIndex);
         column.setPreferredWidth(propCol.getWidth());
 
@@ -794,6 +797,7 @@ public class BeanTable<T> extends JPanel {
       return properties.get(col).getDisplayName();
     }
 
+    // col =  "model column", index into properties
     public Object getValueAt(int row, int col) {
       Object bean = beans.get(row);
       Object value = "N/A";
@@ -950,15 +954,22 @@ public class BeanTable<T> extends JPanel {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("Properties:\n");
-      sb.append("  display   name\n");
-      for (PropertyDescriptor pd : properties) {
-        String displayName = pd.getDisplayName();
-        String name = pd.getName();
-        sb.append("  %15s %s%n".formatted(displayName, name));
-      }
 
       HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
+
+      sb.append("visibleCols:\n");
+      var visibleCols = tableColumnModel.getColumns(true);
+      while (visibleCols.hasMoreElements()) {
+        TableColumn vc = visibleCols.nextElement();
+        sb.append("  %15s %d%n".formatted(vc.getIdentifier(), vc.getModelIndex()));
+      }
+      sb.append("allCols:\n");
+      var allCols = tableColumnModel.getColumns(false);
+      while (allCols.hasMoreElements()) {
+        TableColumn vc = allCols.nextElement();
+        sb.append("  %15s %d%n".formatted(vc.getIdentifier(), vc.getModelIndex()));
+      }
+
       ArrayList<PropertyCol> propertyCols = (ArrayList<PropertyCol>) store.getBean("propertyCol", new ArrayList<>());
 
       sb.append("PropertyCols:\n");
@@ -975,26 +986,37 @@ public class BeanTable<T> extends JPanel {
     }
 
     public String showBean(Object bean, List<TableBeanProperty> props) {
-      StringBuilder sb = new StringBuilder();
-
-      HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
-
       try {
+        Map<String, TableBeanProperty> propm = props.stream()
+              .collect(Collectors.toMap(prop -> prop.name, prop -> prop));
+
+        StringBuilder sb = new StringBuilder();
+
+        // follow which columns are visible
+        HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
+        Enumeration<TableColumn> visibleCols = tableColumnModel.getColumns(true);
+
+
         int maxName = 1;
         int maxValue = 1;
         int maxDesc = 1;
-        for (TableBeanProperty pc : props) {
+        while (visibleCols.hasMoreElements()) {
+          TableColumn vc = visibleCols.nextElement();
+          var id = vc.getIdentifier();
+          var modelIdx = vc.getModelIndex();
+          var pc = propm.get(id.toString());
+          if (pc == null) {
+            logger.debug("cant find pc=" + id);
+            continue;
+          }
           maxName = Math.max(maxName, pc.name.length());
           maxDesc = Math.max(maxDesc, pc.desc.length());
-          try {
-            pc.viewColumnIndex = tableColumnModel.getColumnIndex(pc.name); // May throw IAE.
-            pc.visible = true;
-            Object colVal = getValueAt(bean, pc.viewColumnIndex);
-            maxValue = Math.max(maxValue, colVal.toString().length());
 
-          } catch (Exception e) {
-            pc.visible = false;
+          Object colVal = getValueAt(bean, modelIdx);
+          if (colVal != null) {
+            maxValue = Math.max(maxValue, colVal.toString().length());
           }
+          // logger.debug(pc.toString() + " " + colVal);
         }
 
         String rowf = new StringBuilder(" | %")
@@ -1006,27 +1028,32 @@ public class BeanTable<T> extends JPanel {
                 .append("s |%n")
                 .toString();
 
-        var sprops = props.stream().filter(p -> p.visible).sorted().toList();
         sb.append(rowf.formatted("field", "value", "description"));
         sb.append(rowf.formatted("-".repeat(maxName), "-".repeat(maxValue), "-".repeat(maxDesc)));
 
-        for (var p : sprops) {
-          int modelColumnIndex = jtable.convertColumnIndexToModel(p.viewColumnIndex);
-          Object colVal = getValueAt(bean, modelColumnIndex);
-          sb.append(rowf.formatted(p.name, colVal, p.desc));
+        visibleCols = tableColumnModel.getColumns(true);
+        while (visibleCols.hasMoreElements()) {
+          TableColumn vc = visibleCols.nextElement();
+          var id = vc.getIdentifier();
+          var modelIdx = vc.getModelIndex();
+          var pc = propm.get(id.toString());
+          if (pc == null) continue;
+          Object colVal = getValueAt(bean, modelIdx);
+          sb.append(rowf.formatted(pc.name, colVal, pc.desc));
         }
+        return sb.toString();
 
       } catch ( Throwable t) {
         logger.error("fail in showBean", t);
+        return t.getMessage();
       }
 
-      return sb.toString();
     }
 
   }
 
   static public class TableBeanProperty implements Comparable<TableBeanProperty> {
-    String name;
+    public String name;
     String desc;
     boolean visible;
     int viewColumnIndex;
@@ -1039,6 +1066,16 @@ public class BeanTable<T> extends JPanel {
     @Override
     public int compareTo(@NotNull TableBeanProperty other) {
       return this.viewColumnIndex - other.viewColumnIndex;
+    }
+
+    @Override
+    public String toString() {
+      return "TableBeanProperty{" +
+              "name='" + name + '\'' +
+              ", desc='" + desc + '\'' +
+              ", visible=" + visible +
+              ", viewColumnIndex=" + viewColumnIndex +
+              '}';
     }
   }
 

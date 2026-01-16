@@ -110,7 +110,7 @@ public class AuditTable extends JPanel {
                 Optional<ContestBean> minByMargin = beanList
                         .stream()
                         .filter(bean ->bean.getStatus().equals("InProgress"))
-                        .min(Comparator.comparing(ContestBean::getDilutedMargin));
+                        .min(Comparator.comparing(ContestBean::getMargin));
                 minByMargin.ifPresent(contestTable::setSelectedBean);
             }
 
@@ -136,7 +136,7 @@ public class AuditTable extends JPanel {
         // select assertion with smallest margin
         AssertionBean minByMargin = beanList
                 .stream()
-                .min(Comparator.comparing(AssertionBean::getDilutedMargin))
+                .min(Comparator.comparing(AssertionBean::getMargin))
                 .orElseThrow(NoSuchElementException::new);
         assertionTable.setSelectedBean(minByMargin);
     }
@@ -237,7 +237,7 @@ public class AuditTable extends JPanel {
             return "N/A";
         }
 
-        public double getDilutedMargin() {
+        public double getMargin() {
             // clca gets assertion with minimum noerror, and returns dilutedMargin of that.
             Double min = contestUA.minDilutedMargin();
             return min == null ? 0.0 : min;
@@ -248,9 +248,9 @@ public class AuditTable extends JPanel {
             return min == null ? 0.0 : min;
         }
 
-        public Integer getTotalMvrs() {
+        /* public Integer getTotalMvrs() {
             return (lastRound == null) ? 0 : lastRound.getActualMvrs();
-        }
+        } */
 
         public String getStatus() {
             return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
@@ -272,7 +272,8 @@ public class AuditTable extends JPanel {
 
         public String show() {
             StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(contestTable.model.showBean(this, beanProperties)));
+            // sb.append("%n%s%n".formatted(contestTable.tableModel.toString()));
+            sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, beanProperties)));
             sb.append("\n%s%n".formatted(contestUA.show()));
             return sb.toString();
         }
@@ -287,8 +288,6 @@ public class AuditTable extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("upperBound", "assorter upper bound"));
             beanProperties.add(new BeanTable.TableBeanProperty("noError", "noerror assort value (CLCA only)"));
 
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "initial estimate samples needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estNewMvrs", "initial estimate new samples needed"));
             beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin"));
             beanProperties.add(new BeanTable.TableBeanProperty("mean", "diluted mean"));
         }
@@ -318,7 +317,7 @@ public class AuditTable extends JPanel {
 
         // public String getStatus() {return Naming.status(assertionRound.getStatus());}
 
-        public double getDilutedMargin() {
+        public double getMargin() {
             return assertion.getAssorter().dilutedMargin();
         }
 
@@ -330,14 +329,9 @@ public class AuditTable extends JPanel {
             return -1;
         }
 
-        public double getDilutedMean() {
+        public double getMean() {
             return assertion.getAssorter().dilutedMean();
         }
-
-        public double getRecountMargin() {
-            return cua.getContest().recountMargin(assertion.getAssorter());
-        }
-
 
         public double getNoError() {return assertion.getAssorter().noerror(); }
 
@@ -345,7 +339,7 @@ public class AuditTable extends JPanel {
 
         public String show() {
             StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(assertionTable.model.showBean(this, beanProperties)));
+            sb.append("%n%s%n".formatted(assertionTable.tableModel.showBean(this, beanProperties)));
 
             sb.append(assertion.show());
             sb.append("\n  difficulty: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));

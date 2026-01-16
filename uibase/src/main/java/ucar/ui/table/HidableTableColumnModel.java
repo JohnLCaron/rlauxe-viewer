@@ -28,6 +28,7 @@ public class HidableTableColumnModel extends DefaultTableColumnModel implements 
   /** The model we're currently listening to. */
   private TableModel model;
 
+  // DefaultTableColumnModel has Vector<TableColumn> tableColumns holding only visible columns
   /** Array of TableColumn objects in this model. Holds all column objects, regardless of their visibility. */
   protected Vector<TableColumn> allTableColumns = new Vector<>();
 
@@ -187,6 +188,19 @@ public class HidableTableColumnModel extends DefaultTableColumnModel implements 
     } else {
       return allTableColumns.elementAt(columnIndex);
     }
+  }
+
+  // look through all columns
+  public TableColumn getColumnByName(Object identifier) {
+    Enumeration<TableColumn> enumeration = allTableColumns.elements();
+    TableColumn aColumn;
+
+    while (enumeration.hasMoreElements()) {
+      aColumn = enumeration.nextElement();
+      if (identifier.equals(aColumn.getIdentifier()))
+        return aColumn;
+    }
+    throw new IllegalArgumentException("Identifier not found");
   }
 
   @Override
