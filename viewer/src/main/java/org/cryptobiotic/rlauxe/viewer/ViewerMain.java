@@ -24,8 +24,6 @@ import java.util.HashSet;
 
 import org.slf4j.LoggerFactory;
 
-import static org.cryptobiotic.rlauxe.audit.RunAuditKt.runRound;
-
 /** ElectionRecord Viewer main program. */
 public class ViewerMain extends JPanel {
   static private final Logger logger = LoggerFactory.getLogger(ViewerMain.class);
@@ -49,6 +47,7 @@ public class ViewerMain extends JPanel {
   ComboBox<String> auditRecordDirCB;
   JPanel topPanel;
 
+  MvrAction mvrAction = new MvrAction();
   FileManager fileChooser;
   boolean eventOk = true;
 
@@ -59,7 +58,7 @@ public class ViewerMain extends JPanel {
   private final AuditRoundsTable auditRoundsPanel;
   private final PoolTable poolPanel;
   private final CardTable cardPanel;
-
+  private final MvrTable mvrPanel;
 
   public ViewerMain(PreferencesExt prefs, float fontSize) {
     // Popup info window
@@ -74,14 +73,16 @@ public class ViewerMain extends JPanel {
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
-    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize);
+    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
     poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
+    mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
 
     tabbedPane.addTab("Audit", auditPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
     tabbedPane.addTab("Populations", poolPanel);
     tabbedPane.addTab("Cards", cardPanel);
+    tabbedPane.addTab("Mvrs", mvrPanel);
     tabbedPane.setSelectedIndex(0);
 
     /*
@@ -104,10 +105,10 @@ public class ViewerMain extends JPanel {
     //// buttons to the left of auditRecordDir ComboBox
     AbstractAction refreshAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        auditPanel.setAuditRecordLocation(auditRecordDir);
-        auditRoundsPanel.setSelected(auditRecordDir);
-        poolPanel.setSelected(auditRecordDir);
-        cardPanel.setSelected(auditRecordDir);
+        auditPanel.setAuditRecord(auditRecordDir);
+        auditRoundsPanel.setAuditRecord(auditRecordDir);
+        poolPanel.setAuditRecord(auditRecordDir);
+        cardPanel.setAuditRecord(auditRecordDir);
       }
     };
     BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-', -1);
@@ -137,17 +138,13 @@ public class ViewerMain extends JPanel {
     BAMutil.addActionToContainer(rightPanel, startAction);
 
     // TODO put into separate thread
-    AbstractAction runAction = new AbstractAction() {
+    AbstractAction runAuditRoundAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        logger.debug("call runRound");
-        runRound(auditRecordDir, null);
-        logger.debug("return from runRound");
-        auditPanel.setAuditRecordLocation(auditRecordDir);
-        auditRoundsPanel.setSelected(auditRecordDir);
+        auditRoundsPanel.runAuditRound();
       }
     };
-    BAMutil.setActionProperties(runAction, "run-round-icon.png", "Run Audit Round", false, 'R', -1);
-    BAMutil.addActionToContainer(rightPanel, runAction);
+    BAMutil.setActionProperties(runAuditRoundAction, "run-round-icon.png", "Run Audit Round", false, 'R', -1);
+    BAMutil.addActionToContainer(rightPanel, runAuditRoundAction);
 
     AbstractAction offAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -211,10 +208,10 @@ public class ViewerMain extends JPanel {
       this.eventOk = false;
       this.auditRecordDirCB.addItem(this.auditRecordDir);
       this.eventOk = true;
-      auditPanel.setAuditRecordLocation(auditRecordDir);
-      auditRoundsPanel.setSelected(auditRecordDir);
-      poolPanel.setSelected(auditRecordDir);
-      cardPanel.setSelected(auditRecordDir);
+      auditPanel.setAuditRecord(auditRecordDir);
+      auditRoundsPanel.setAuditRecord(auditRecordDir);
+      poolPanel.setAuditRecord(auditRecordDir);
+      cardPanel.setAuditRecord(auditRecordDir);
     });
 
     ////////////////////////////////////////////////////////////////
@@ -248,6 +245,7 @@ public class ViewerMain extends JPanel {
       auditRoundsPanel.setFontSize(fontSize);
       poolPanel.setFontSize(fontSize);
       cardPanel.setFontSize(fontSize);
+      mvrPanel.setFontSize(fontSize);
       infoTA.setFontSize(fontSize);
   }
 
@@ -258,6 +256,7 @@ public class ViewerMain extends JPanel {
     auditRoundsPanel.save();
     poolPanel.save();
     cardPanel.save();
+    mvrPanel.save();
 
     fileChooser.save();
     auditRecordDirCB.save();
@@ -311,8 +310,16 @@ public class ViewerMain extends JPanel {
     }
   }
 
+  public class MvrAction extends AbstractAction {
+    public int roundIdx;
+    public void actionPerformed(ActionEvent e) {
+      mvrPanel.setAuditRecord(auditRecordDir, roundIdx);
+      tabbedPane.setSelectedIndex(4);
+    }
+  }
+
   public static void main(String[] args) {
-      logger.debug("Main started");
+      logger.info("------------- ViewerMain started ----------------------");
 
     // prefs storage
     try {
