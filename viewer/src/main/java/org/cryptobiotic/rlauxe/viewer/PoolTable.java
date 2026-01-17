@@ -6,10 +6,11 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
-import org.cryptobiotic.rlauxe.core.ContestInfo;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
+import org.cryptobiotic.rlauxe.persist.CompositeRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,8 @@ public class PoolTable extends JPanel {
     private final JSplitPane split1;
 
     private String auditRecordLocation = "none";
-    private AuditRecord auditRecord;
+    private AuditRecordIF auditRecord;
+    private boolean isComposite;
     private AuditConfig auditConfig;
 
     public PoolTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
@@ -70,34 +72,43 @@ public class PoolTable extends JPanel {
         localInfo.setFontSize(size);
     }
 
-    void setSelected(String wantRecordDir) {
-        setAuditRecord(wantRecordDir);
-    }
-
     boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (this.auditRecord == null) return false;
+        this.isComposite = (this.auditRecord instanceof CompositeRecord);
 
         try {
             this.auditConfig = auditRecord.getConfig();
             List<ContestWithAssertions> contestsUA = auditRecord.getContests();
 
-            Map<Integer, ContestInfo> infos = new TreeMap<>(); // sorted
-            for (ContestWithAssertions contestUA : contestsUA) {
-                infos.put(contestUA.getId(), contestUA.getContest().info());
-            }
+            if (isComposite) {
+                // TODO choose component
+                CompositeRecord composite = (CompositeRecord) this.auditRecord;
+                AuditRecord first = composite.getComponentRecords().getFirst();
 
-            Publisher publisher = new Publisher(auditRecordLocation);
-            CardManifest cardManifest = readCardManifest(publisher);
+                Publisher publisher = new Publisher(first.getLocation());
+                CardManifest cardManifest = readCardManifest(publisher);
 
-            java.util.List<PoolBean> beanList = new ArrayList<>();
-            for (var pop : cardManifest.getPopulations()) {
-                beanList.add(new PoolBean(pop));
+                java.util.List<PoolBean> beanList = new ArrayList<>();
+                for (var pop : cardManifest.getPopulations()) {
+                    beanList.add(new PoolBean(pop));
+                }
+                poolTable.setBeans(beanList);
+
+            } else {
+
+                Publisher publisher = new Publisher(auditRecordLocation);
+                CardManifest cardManifest = readCardManifest(publisher);
+
+                java.util.List<PoolBean> beanList = new ArrayList<>();
+                for (var pop : cardManifest.getPopulations()) {
+                    beanList.add(new PoolBean(pop));
+                }
+                poolTable.setBeans(beanList);
             }
-            poolTable.setBeans(beanList);
 
         } catch (Exception e) {
             e.printStackTrace();

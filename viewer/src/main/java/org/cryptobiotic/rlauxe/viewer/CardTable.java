@@ -9,10 +9,10 @@ import org.cryptobiotic.rlauxe.audit.AuditConfig;
 import org.cryptobiotic.rlauxe.audit.AuditableCard;
 import org.cryptobiotic.rlauxe.audit.CardManifest;
 import org.cryptobiotic.rlauxe.audit.PopulationIF;
-import org.cryptobiotic.rlauxe.core.ContestInfo;
-import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
+import org.cryptobiotic.rlauxe.persist.CompositeRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,8 @@ public class CardTable extends JPanel {
     private final JSplitPane split1;
 
     private String auditRecordLocation = "none";
-    private AuditRecord auditRecord;
+    private AuditRecordIF auditRecord;
+    private Boolean isComposite;
     private AuditConfig auditConfig;
     private CardManifest cardManifest;
     Map<String, PopulationIF> poolMap;
@@ -77,45 +78,63 @@ public class CardTable extends JPanel {
         localInfo.setFontSize(size);
     }
 
-    void setSelected(String wantRecordDir) {
-        setAuditRecord(wantRecordDir);
-    }
-
     boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (this.auditRecord == null) return false;
+        this.isComposite = (this.auditRecord instanceof CompositeRecord);
 
         try {
             this.auditConfig = auditRecord.getConfig();
-            List<ContestWithAssertions> contestsUA = auditRecord.getContests();
 
-            Map<Integer, ContestInfo> infos = new TreeMap<>(); // sorted
-            for (ContestWithAssertions contestUA : contestsUA) {
-                infos.put(contestUA.getId(), contestUA.getContest().info());
+            if (isComposite) {
+                // TODO choose component
+                CompositeRecord composite = (CompositeRecord) this.auditRecord;
+                AuditRecord first = composite.getComponentRecords().getFirst();
+
+                Publisher publisher = new Publisher(first.getLocation());
+                this.cardManifest = readCardManifest(publisher);
+
+                Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
+                for (PopulationIF pool : cardManifest.getPopulations()) {
+                    String cardStyle = "P" + pool.id();
+                    pools.put(cardStyle, pool);
+                }
+                this.poolMap = pools;
+
+                List<CardBean> beanList = new ArrayList<>();
+                var iter = cardManifest.getCards().iterator();
+                int index = 1;
+                while (iter.hasNext() && index < 11111) {
+                    var card = iter.next();
+                    beanList.add(new CardBean(card, index));
+                    index++;
+                }
+                cardTable.setBeans(beanList);
+
+            } else {
+                Publisher publisher = new Publisher(auditRecordLocation);
+                this.cardManifest = readCardManifest(publisher);
+
+                Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
+                for (PopulationIF pool : cardManifest.getPopulations()) {
+                    String cardStyle = "P" + pool.id();
+                    pools.put(cardStyle, pool);
+                }
+                this.poolMap = pools;
+
+                List<CardBean> beanList = new ArrayList<>();
+                var iter = cardManifest.getCards().iterator();
+                int index = 1;
+                while (iter.hasNext() && index < 11111) {
+                    var card = iter.next();
+                    beanList.add(new CardBean(card, index));
+                    index++;
+                }
+                cardTable.setBeans(beanList);
             }
-
-            Publisher publisher = new Publisher(auditRecordLocation);
-            this.cardManifest = readCardManifest(publisher);
-
-            Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
-            for (PopulationIF pool : cardManifest.getPopulations()) {
-                String cardStyle = "P" + pool.id();
-                pools.put(cardStyle, pool);
-            }
-            this.poolMap = pools;
-
-            List<CardBean> beanList = new ArrayList<>();
-            var iter = cardManifest.getCards().iterator();
-            int index = 1;
-            while (iter.hasNext() && index < 11111) {
-                var card = iter.next();
-                beanList.add(new CardBean(card, index));
-                index++;
-            }
-            cardTable.setBeans(beanList);
 
         } catch (Exception e) {
             e.printStackTrace();

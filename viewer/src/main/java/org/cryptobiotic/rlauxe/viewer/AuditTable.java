@@ -10,6 +10,7 @@ import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.raire.RaireAssertion;
 import org.cryptobiotic.rlauxe.raire.RaireAssorter;
 import org.slf4j.Logger;
@@ -34,7 +35,7 @@ public class AuditTable extends JPanel {
     private final JSplitPane split2;
 
     private String auditRecordLocation = "none";
-    private AuditRecord auditRecord;
+    private AuditRecordIF auditRecord;
     private AuditConfig auditConfig;
 
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
@@ -76,7 +77,7 @@ public class AuditTable extends JPanel {
         assertionTable.setFontSize(size);
     }
 
-    boolean setAuditRecordLocation(String auditRecordLocation) {
+    boolean setAuditRecord(String auditRecordLocation) {
         this.auditRecordLocation = auditRecordLocation;
 
         logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
@@ -282,14 +283,15 @@ public class AuditTable extends JPanel {
     public class AssertionBean {
         static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
         static {
-            beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion description"));
-            beanProperties.add(new BeanTable.TableBeanProperty("difficultyDesc", "assertion difficulty description"));
+            beanProperties.add(new BeanTable.TableBeanProperty("name", "assertion name"));
+            beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion difficulty description"));
             beanProperties.add(new BeanTable.TableBeanProperty("difficulty", "assertion difficulty measure (IRV only)"));
             beanProperties.add(new BeanTable.TableBeanProperty("upperBound", "assorter upper bound"));
             beanProperties.add(new BeanTable.TableBeanProperty("noError", "noerror assort value (CLCA only)"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin"));
             beanProperties.add(new BeanTable.TableBeanProperty("mean", "diluted mean"));
+            beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner"));
         }
 
         ContestWithAssertions cua;
@@ -304,10 +306,10 @@ public class AuditTable extends JPanel {
             this.assertion = assertion;
         }
 
-        public String getDesc() {
-            return assertion.getAssorter().hashcodeDesc();
+        public String getName() {
+            return assertion.getAssorter().shortName();
         }
-        public String getDifficultyDesc() {
+        public String getDesc() {
             return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
         }
 
@@ -327,6 +329,10 @@ public class AuditTable extends JPanel {
                 return rassertion.getDifficulty();
             }
             return -1;
+        }
+
+        public double getRecountMargin() {
+            return cua.getContest().recountMargin(assertion.getAssorter());
         }
 
         public double getMean() {
