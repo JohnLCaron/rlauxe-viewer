@@ -104,12 +104,7 @@ public class ViewerMain extends JPanel {
 
     //// buttons to the left of auditRecordDir ComboBox
     AbstractAction refreshAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        auditPanel.setAuditRecord(auditRecordDir);
-        auditRoundsPanel.setAuditRecord(auditRecordDir);
-        poolPanel.setAuditRecord(auditRecordDir);
-        cardPanel.setAuditRecord(auditRecordDir);
-      }
+      public void actionPerformed(ActionEvent e) { setAuditRecord(); }
     };
     BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-', -1);
     BAMutil.addActionToContainer(leftPanel, refreshAction);
@@ -208,10 +203,7 @@ public class ViewerMain extends JPanel {
       this.eventOk = false;
       this.auditRecordDirCB.addItem(this.auditRecordDir);
       this.eventOk = true;
-      auditPanel.setAuditRecord(auditRecordDir);
-      auditRoundsPanel.setAuditRecord(auditRecordDir);
-      poolPanel.setAuditRecord(auditRecordDir);
-      cardPanel.setAuditRecord(auditRecordDir);
+      setAuditRecord();
     });
 
     ////////////////////////////////////////////////////////////////
@@ -247,6 +239,14 @@ public class ViewerMain extends JPanel {
       cardPanel.setFontSize(fontSize);
       mvrPanel.setFontSize(fontSize);
       infoTA.setFontSize(fontSize);
+  }
+
+  void setAuditRecord() {
+    auditPanel.setAuditRecord(auditRecordDir);
+    auditRoundsPanel.setAuditRecord(auditRecordDir);
+    poolPanel.setAuditRecord(auditRecordDir);
+    cardPanel.setAuditRecord(auditRecordDir);
+    mvrPanel.clear();
   }
 
   public void exit() {

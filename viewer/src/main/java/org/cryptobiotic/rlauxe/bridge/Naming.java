@@ -18,7 +18,7 @@ public class Naming {
     //    SampleSumRejectNull(12,true, true), // SampleSum > Nc / 2, so we know H0 is false
     //    AcceptNull(13,true, false), // SampleSum + (all remaining ballots == 1) < Nc / 2, so we know that H0 is true.
     //}
-    static public String status(org.cryptobiotic.rlauxe.core.TestH0Status status) {
+    static public String status(org.cryptobiotic.rlauxe.betting.TestH0Status status) {
         switch (status) {
             case StatRejectNull:
                 return "Success";

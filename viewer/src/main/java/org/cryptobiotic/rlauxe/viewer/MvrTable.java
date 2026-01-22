@@ -7,9 +7,6 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditConfig;
 import org.cryptobiotic.rlauxe.audit.AuditableCard;
-import org.cryptobiotic.rlauxe.audit.CardManifest;
-import org.cryptobiotic.rlauxe.audit.PopulationIF;
-import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
@@ -17,19 +14,15 @@ import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
-import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
 import ucar.util.prefs.PreferencesExt;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
-import static org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerKt.readCardManifest;
+import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerKt.readMvrsForRound;
 
 public class MvrTable extends JPanel {
@@ -37,7 +30,7 @@ public class MvrTable extends JPanel {
 
     private final PreferencesExt prefs;
 
-    private final BeanTable<CardBean> cardTable;
+    private final BeanTable<CardBean> mvrTable;
     TextHistoryPane localInfo = new TextHistoryPane();
 
     private final JSplitPane split1;
@@ -51,10 +44,10 @@ public class MvrTable extends JPanel {
     public MvrTable(PreferencesExt prefs, float fontSize) {
         this.prefs = prefs;
 
-        cardTable = new BeanTable<>(CardBean.class, (PreferencesExt) prefs.node("cardTable"), false,
+        mvrTable = new BeanTable<>(CardBean.class, (PreferencesExt) prefs.node("cardTable"), false,
                 "AuditableCard", "CardManifest (sorted)", null);
-        cardTable.addListSelectionListener(e -> {
-            CardBean cardBean = cardTable.getSelectedBean();
+        mvrTable.addListSelectionListener(e -> {
+            CardBean cardBean = mvrTable.getSelectedBean();
             if (cardBean != null) {
                 setSelectedCard(cardBean);
             }
@@ -62,7 +55,7 @@ public class MvrTable extends JPanel {
         setFontSize(fontSize);
 
         // layout of tables
-        split1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, cardTable, localInfo);
+        split1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, mvrTable, localInfo);
         split1.setDividerLocation(prefs.getInt("splitPos1", 200));
 
         setLayout(new BorderLayout());
@@ -72,7 +65,7 @@ public class MvrTable extends JPanel {
     }
 
     public void setFontSize(float size) {
-        cardTable.setFontSize(size);
+        mvrTable.setFontSize(size);
         localInfo.setFontSize(size);
     }
 
@@ -95,7 +88,7 @@ public class MvrTable extends JPanel {
                     beanList.add(new CardBean(mvr, index));
                     index++;
                 }
-                cardTable.setBeans(beanList);
+                mvrTable.setBeans(beanList);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -106,13 +99,17 @@ public class MvrTable extends JPanel {
         return true;
     }
 
+    void clear() {
+        mvrTable.setBeans(emptyList());
+    }
+
     void setSelectedCard(CardBean bean) {
         localInfo.setText(bean.show());
         localInfo.gotoTop();
     }
 
     void save() {
-        cardTable.saveState(false);
+        mvrTable.saveState(false);
 
         prefs.putInt("splitPos1", split1.getDividerLocation());
     }

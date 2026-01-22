@@ -6,8 +6,10 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
+import org.cryptobiotic.rlauxe.betting.TestH0Status;
 import org.cryptobiotic.rlauxe.core.*;
 import org.cryptobiotic.rlauxe.estimate.ConsistentSamplingKt;
+import org.cryptobiotic.rlauxe.oneaudit.ClcaAssorterOneAudit;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
@@ -28,7 +30,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
-import static org.cryptobiotic.rlauxe.audit.RunAuditKt.runRound;
+import static org.cryptobiotic.rlauxe.audit.CreateAuditKt.writeMvrsForRound;
+import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.runRound;
 import static org.cryptobiotic.rlauxe.persist.json.AuditRoundJsonKt.writeAuditRoundJsonFile;
 import static org.cryptobiotic.rlauxe.persist.json.SamplePrnsJsonKt.writeSamplePrnsJsonFile;
 import static org.cryptobiotic.rlauxe.util.DecilesKt.probability;
@@ -320,7 +323,7 @@ public class AuditRoundsTable extends JPanel {
             logger.info(String.format("call sampleWithContestCutoff() with auditorWantNewMvrs = %d previousSamples = %d",
                     this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size()));
 
-            PersistedWorkflow workflow = new PersistedWorkflow(auditRecordLocation, false);
+            PersistedWorkflow workflow = PersistedWorkflow.Companion.readFrom(auditRecordLocation);
             ConsistentSamplingKt.sampleWithContestCutoff(auditConfig, workflow.mvrManager(), this.lastAuditRound, previousSamples, false);
 
             auditRoundTable.refresh();
@@ -352,6 +355,8 @@ public class AuditRoundsTable extends JPanel {
         }
     }
 
+    // only is written if the audit is run. Could also let runRound do it.
+    // probably needs to also rewrite sampleMvrs, in case samplePrns changed
     private void writeAuditState() {
         AuditRoundBean lastBean = auditRoundTable.getBeans().getLast();
         AuditRoundIF lastRound = lastBean.round;
@@ -362,6 +367,8 @@ public class AuditRoundsTable extends JPanel {
         logger.info(String.format("   write auditRoundFile to %s", publisher.auditStateFile(roundIdx)));
         writeSamplePrnsJsonFile(lastRound.getSamplePrns(), publisher.samplePrnsFile(roundIdx));
         logger.info(String.format("   write %d samplePrns to %s", lastRound.getSamplePrns().size(), publisher.samplePrnsFile(roundIdx)));
+        int ncards = writeMvrsForRound(publisher, roundIdx);
+        logger.info(String.format("   write %d sampleMvrs to %s", ncards, publisher.sampleMvrsFile(roundIdx)));
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -591,7 +598,6 @@ public class AuditRoundsTable extends JPanel {
             }
         }
 
-        // look over all the rounds NEEDED ?
         public int getMvrsUsed() {
             int maxUsed = 0;
             for (AssertionRound assertionRound : contestRound.getAssertionRounds()) {
@@ -646,13 +652,14 @@ public class AuditRoundsTable extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("estNewMvrs", "initial estimate new samples needed"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
-            beanProperties.add(new BeanTable.TableBeanProperty("risk", "measured risk (ending PValue of audit)"));
+            beanProperties.add(new BeanTable.TableBeanProperty("risk", "measured risk (minimum PValue of audit)"));
             beanProperties.add(new BeanTable.TableBeanProperty("completed", "round assertions was done"));
         }
 
         AssertionRound assertionRound;
         ContestBean contestBean;
         Assertion assertion;
+        ClcaAssorterOneAudit oaAssorter;
 
         public AssertionBean() {
         }
@@ -661,6 +668,11 @@ public class AuditRoundsTable extends JPanel {
             this.contestBean = contestBean;
             this.assertionRound = assertionRound;
             this.assertion = assertionRound.getAssertion();
+            if (assertion instanceof ClcaAssertion cassertion) {
+                if (cassertion.getCassorter() instanceof ClcaAssorterOneAudit) {
+                    this.oaAssorter = (ClcaAssorterOneAudit) cassertion.getCassorter();
+                }
+            }
         }
 
         public Integer getRound() {
@@ -698,7 +710,7 @@ public class AuditRoundsTable extends JPanel {
 
         public double getRisk() {
             if (assertionRound.getAuditResult() != null) {
-                return assertionRound.getAuditResult().getPvalue();
+                return assertionRound.getAuditResult().getPmin();
             } else {
                 return Double.NaN;
             }
@@ -712,6 +724,7 @@ public class AuditRoundsTable extends JPanel {
             sb.append("%n assorter = %s".formatted(assertionRound.getAssertion().getAssorter().toString()));
             sb.append("%n difficulty = %s".formatted(contestBean.contestUA.getContest().showAssertionDifficulty(assertion.getAssorter())));
             if (assertionRound.getPrevAuditResult() != null) sb.append("%n prevAuditResult = %s".formatted(assertionRound.getPrevAuditResult().toString()));
+            if (oaAssorter != null) sb.append("%n oaAssortRates = %s".formatted(oaAssorter.getOaAssortRates().toString()));
             if (assertionRound.getEstimationResult() != null) sb.append("%n estimationResult = %s".formatted(assertionRound.getEstimationResult().toString()));
             if (assertionRound.getAuditResult() != null) sb.append("%n auditResult = %s".formatted(assertionRound.getAuditResult().toString()));
 
@@ -831,7 +844,8 @@ public class AuditRoundsTable extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("startingRates", "starting estimate of error rates"));
             beanProperties.add(new BeanTable.TableBeanProperty("measuredErrorCounts", "measured CLCA error counts (cvr-mvr)"));
 
-            beanProperties.add(new BeanTable.TableBeanProperty("PValue", "ending PValue for this round"));
+            beanProperties.add(new BeanTable.TableBeanProperty("PValueLast", "ending PValue for this round"));
+            beanProperties.add(new BeanTable.TableBeanProperty("PValueMin", "minimum PValue acheived"));
             beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
             beanProperties.add(new BeanTable.TableBeanProperty("maxSampleIndex", "maximum sample index for this contest"));
         }
@@ -861,8 +875,12 @@ public class AuditRoundsTable extends JPanel {
             return auditResultRound.getMaxBallotIndexUsed();
         }
 
-        public Double getPValue() {
-            return auditResultRound.getPvalue();
+        public Double getPValueLast() {
+            return auditResultRound.getPlast();
+        }
+
+        public Double getPValueMin() {
+            return auditResultRound.getPmin();
         }
 
         public Integer getMvrsUsed() {
@@ -897,7 +915,7 @@ public class AuditRoundsTable extends JPanel {
 
         public String runRoundAgain() {
             try {
-                String result = RunAuditKt.runRoundAgain(auditRecordLocation, contestRound, assertionRound, auditResultRound);
+                String result = RunAuditRoundKt.runRoundAgain(auditRecordLocation, contestRound, assertionRound, auditResultRound);
                 StringBuilder sb = new StringBuilder();
                 sb.append(show());
                 sb.append(result);

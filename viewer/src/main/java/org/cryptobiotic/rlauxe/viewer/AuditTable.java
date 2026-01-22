@@ -8,7 +8,9 @@ package org.cryptobiotic.rlauxe.viewer;
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
+import org.cryptobiotic.rlauxe.core.ClcaAssertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
+import org.cryptobiotic.rlauxe.oneaudit.ClcaAssorterOneAudit;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.raire.RaireAssertion;
@@ -296,7 +298,7 @@ public class AuditTable extends JPanel {
 
         ContestWithAssertions cua;
         Assertion assertion;
-        AssertionRound assertionRoundMaybe;
+        ClcaAssorterOneAudit oaAssorter;
 
         public AssertionBean() {
         }
@@ -304,6 +306,11 @@ public class AuditTable extends JPanel {
         AssertionBean(ContestWithAssertions cua, Assertion assertion) {
             this.cua = cua;
             this.assertion = assertion;
+            if (assertion instanceof ClcaAssertion cassertion) {
+                if (cassertion.getCassorter() instanceof ClcaAssorterOneAudit) {
+                    this.oaAssorter = (ClcaAssorterOneAudit) cassertion.getCassorter();
+                }
+            }
         }
 
         public String getName() {
@@ -349,6 +356,8 @@ public class AuditTable extends JPanel {
 
             sb.append(assertion.show());
             sb.append("\n  difficulty: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
+            if (oaAssorter != null) sb.append("%n oaAssortRates = %s".formatted(oaAssorter.getOaAssortRates().toString()));
+
             return sb.toString();
         }
     }
