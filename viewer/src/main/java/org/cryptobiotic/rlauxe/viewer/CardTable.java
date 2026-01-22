@@ -43,7 +43,8 @@ public class CardTable extends JPanel {
     private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
     private Boolean isComposite;
-    private AuditConfig auditConfig;
+    private int ncards;
+
     private CardManifest cardManifest;
     Map<String, PopulationIF> poolMap;
 
@@ -85,9 +86,10 @@ public class CardTable extends JPanel {
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (this.auditRecord == null) return false;
         this.isComposite = (this.auditRecord instanceof CompositeRecord);
+        Integer cutoff = auditRecord.getConfig().getContestSampleCutoff();
+        this.ncards = (cutoff == null)? 11111 : cutoff;
 
         try {
-            this.auditConfig = auditRecord.getConfig();
 
             if (isComposite) {
                 // TODO choose component
@@ -107,7 +109,7 @@ public class CardTable extends JPanel {
                 List<CardBean> beanList = new ArrayList<>();
                 var iter = cardManifest.getCards().iterator();
                 int index = 1;
-                while (iter.hasNext() && index < 11111) {
+                while (iter.hasNext() && index < this.ncards) {
                     var card = iter.next();
                     beanList.add(new CardBean(card, index));
                     index++;
@@ -128,7 +130,7 @@ public class CardTable extends JPanel {
                 List<CardBean> beanList = new ArrayList<>();
                 var iter = cardManifest.getCards().iterator();
                 int index = 1;
-                while (iter.hasNext() && index < 11111) {
+                while (iter.hasNext() && index < this.ncards) {
                     var card = iter.next();
                     beanList.add(new CardBean(card, index));
                     index++;
