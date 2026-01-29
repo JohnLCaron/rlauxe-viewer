@@ -259,6 +259,7 @@ public class CardTable extends JPanel {
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append(card.toString());
+            sb.append("\n");
 
             var pop = card.getPopulation();
             if (pop == null) {

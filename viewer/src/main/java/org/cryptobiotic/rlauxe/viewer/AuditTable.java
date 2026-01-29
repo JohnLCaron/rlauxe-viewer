@@ -10,7 +10,7 @@ import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
 import org.cryptobiotic.rlauxe.core.ClcaAssertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
-import org.cryptobiotic.rlauxe.oneaudit.ClcaAssorterOneAudit;
+import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.raire.RaireAssertion;
@@ -298,7 +298,7 @@ public class AuditTable extends JPanel {
 
         ContestWithAssertions cua;
         Assertion assertion;
-        ClcaAssorterOneAudit oaAssorter;
+        OneAuditClcaAssorter oaAssorter;
 
         public AssertionBean() {
         }
@@ -307,8 +307,8 @@ public class AuditTable extends JPanel {
             this.cua = cua;
             this.assertion = assertion;
             if (assertion instanceof ClcaAssertion cassertion) {
-                if (cassertion.getCassorter() instanceof ClcaAssorterOneAudit) {
-                    this.oaAssorter = (ClcaAssorterOneAudit) cassertion.getCassorter();
+                if (cassertion.getCassorter() instanceof OneAuditClcaAssorter) {
+                    this.oaAssorter = (OneAuditClcaAssorter) cassertion.getCassorter();
                 }
             }
         }

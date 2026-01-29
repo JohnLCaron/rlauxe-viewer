@@ -57,6 +57,7 @@ public class ViewerMain extends JPanel {
   private final AuditTable auditPanel;
   private final AuditRoundsTable auditRoundsPanel;
   private final PoolTable poolPanel;
+  private final PopulationTable populationPanel;
   private final CardTable cardPanel;
   private final MvrTable mvrPanel;
 
@@ -74,13 +75,15 @@ public class ViewerMain extends JPanel {
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
     auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
+    populationPanel = new PopulationTable((PreferencesExt) prefs.node("PopulationTable"), infoTA, infoWindow, fontSize);
     poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
 
     tabbedPane.addTab("Audit", auditPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-    tabbedPane.addTab("Populations", poolPanel);
+    tabbedPane.addTab("Populations", populationPanel);
+    tabbedPane.addTab("Pools", poolPanel);
     tabbedPane.addTab("Cards", cardPanel);
     tabbedPane.addTab("Mvrs", mvrPanel);
     tabbedPane.setSelectedIndex(0);
@@ -235,6 +238,7 @@ public class ViewerMain extends JPanel {
       logger.debug("resizeFonts " + fontSize);
       auditPanel.setFontSize(fontSize);
       auditRoundsPanel.setFontSize(fontSize);
+      populationPanel.setFontSize(fontSize);
       poolPanel.setFontSize(fontSize);
       cardPanel.setFontSize(fontSize);
       mvrPanel.setFontSize(fontSize);
@@ -244,6 +248,7 @@ public class ViewerMain extends JPanel {
   void setAuditRecord() {
     auditPanel.setAuditRecord(auditRecordDir);
     auditRoundsPanel.setAuditRecord(auditRecordDir);
+    populationPanel.setAuditRecord(auditRecordDir);
     poolPanel.setAuditRecord(auditRecordDir);
     cardPanel.setAuditRecord(auditRecordDir);
     mvrPanel.clear();
@@ -254,6 +259,7 @@ public class ViewerMain extends JPanel {
 
     auditPanel.save();
     auditRoundsPanel.save();
+    populationPanel.save();
     poolPanel.save();
     cardPanel.save();
     mvrPanel.save();
@@ -264,7 +270,6 @@ public class ViewerMain extends JPanel {
     if (infoWindow != null) {
         prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
     }
-    // prefs.putBeanObject("InfoWindowBounds", infoWindow.getBounds());
 
     Rectangle bounds = frame.getBounds();
     prefs.putBeanObject(FRAME_SIZE, bounds);
