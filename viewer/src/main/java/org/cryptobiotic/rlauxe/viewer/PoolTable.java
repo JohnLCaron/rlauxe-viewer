@@ -6,12 +6,14 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
-import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
-import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
+import org.cryptobiotic.rlauxe.core.ContestInfo;
+import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolFromCvrs;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
+import org.cryptobiotic.rlauxe.util.ContestTabulation;
+import org.cryptobiotic.rlauxe.util.Vunder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -24,7 +26,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-import static org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerKt.readCardManifest;
+import static org.cryptobiotic.rlauxe.persist.csv.CardPoolCsvKt.readCardPoolCsvFile;
 
 public class PoolTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(PoolTable.class);
@@ -32,7 +34,8 @@ public class PoolTable extends JPanel {
     private final PreferencesExt prefs;
 
     private final BeanTable<PoolBean> poolTable;
-    TextHistoryPane localInfo = new TextHistoryPane();
+    private final BeanTable<ContestBean> contestTable;
+    // TextHistoryPane localInfo = new TextHistoryPane();
 
     private final JSplitPane split1;
 
@@ -45,20 +48,21 @@ public class PoolTable extends JPanel {
         this.prefs = prefs;
 
         poolTable = new BeanTable<>(PoolBean.class, (PreferencesExt) prefs.node("poolTable"), false,
-                "Population", "Population", null);
+                "Pool", "OneAuditPoolFromCvrs", null);
         poolTable.addListSelectionListener(e -> {
             PoolBean poolBean = poolTable.getSelectedBean();
             if (poolBean != null) {
                 setSelectedPool(poolBean);
             }
         });
-        // poolTable.addPopupOption("Show Population", poolTable.makeShowAction(localInfo,
-        //    bean -> ((PoolBean) bean).show()));
+
+        contestTable = new BeanTable<>(ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false,
+                "Contest", "Vunder", null);
 
         setFontSize(fontSize);
 
         // layout of tables
-        split1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, poolTable, localInfo);
+        split1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, poolTable, contestTable);
         split1.setDividerLocation(prefs.getInt("splitPos1", 200));
 
         setLayout(new BorderLayout());
@@ -69,7 +73,7 @@ public class PoolTable extends JPanel {
 
     public void setFontSize(float size) {
         poolTable.setFontSize(size);
-        localInfo.setFontSize(size);
+        contestTable.setFontSize(size);
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
@@ -79,8 +83,12 @@ public class PoolTable extends JPanel {
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (this.auditRecord == null) return false;
         this.isComposite = (this.auditRecord instanceof CompositeRecord);
+        var infos = new HashMap<Integer, ContestInfo>();
+        for (var contest : auditRecord.getContests()) {
+            infos.put(contest.getId(), contest.getContest().info());
+        }
 
-        try {
+        /* try {
             this.auditConfig = auditRecord.getConfig();
             List<ContestWithAssertions> contestsUA = auditRecord.getContests();
 
@@ -98,82 +106,74 @@ public class PoolTable extends JPanel {
                 }
                 poolTable.setBeans(beanList);
 
-            } else {
-
+            } else { */
                 Publisher publisher = new Publisher(auditRecordLocation);
-                CardManifest cardManifest = readCardManifest(publisher);
+
+                List<OneAuditPoolFromCvrs> pools = readCardPoolCsvFile(publisher.cardPoolsFile(), infos);
+
 
                 java.util.List<PoolBean> beanList = new ArrayList<>();
-                for (var pop : cardManifest.getPopulations()) {
-                    beanList.add(new PoolBean(pop));
+                for (var pool : pools) {
+                    beanList.add(new PoolBean(pool));
                 }
                 poolTable.setBeans(beanList);
-            }
+            /* }
 
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, e.getMessage());
             logger.error("setAuditRecord failed", e);
-        }
+        } */
 
         return true;
     }
 
     void setSelectedPool(PoolBean bean) {
-        localInfo.setText(bean.show());
-        localInfo.gotoTop();
+        java.util.List<ContestBean> beanList = new ArrayList<>();
+        for (ContestTabulation tab : bean.pool.getContestTabs().values()) {
+            beanList.add(new ContestBean(bean.pool, tab));
+        }
+        contestTable.setBeans(beanList);
     }
 
     void save() {
         poolTable.saveState(false);
+        contestTable.saveState(false);
 
         prefs.putInt("splitPos1", split1.getDividerLocation());
     }
 
-    //////////////////////////////////////////////////////////////////
-
-    /* void showInfo(Formatter f) {
-        if (this.auditRecord == null) { return; }
-        if (this.auditConfig == null) { return; }
-        if (this.auditConfig.getAuditType() != AuditType.ONEAUDIT) { return; }
-
-        var cardPools = makeCardPoolsFromAuditRecord(auditRecord);
-        String poolVotes = cardPools.showPoolVotes(4);
-        f.format("%s", poolVotes);
-    } */
 
     //////////////////////////////////////////////////////////////////
 
-    static public class PoolBean {
-        PopulationIF pop;
-        OneAuditPoolIF pool = null;
+    public class PoolBean {
+        OneAuditPoolFromCvrs pool = null;
 
         public PoolBean() {
         }
 
-        PoolBean(PopulationIF pop) {
-            this.pop = pop;
-            if (pop instanceof OneAuditPoolIF) pool = (OneAuditPoolIF) pop;
+        PoolBean(OneAuditPoolFromCvrs pool) {
+            this.pool = pool;
         }
 
         public String getName() {
-            return pop.name();
+            return pool.name();
         }
 
         public Integer getId() {
-            return pop.id();
+            return pool.id();
         }
 
-        public boolean getExactContests() {
-            return pop.hasSingleCardStyle();
+        public boolean getSingleStyle() {
+            return pool.hasSingleCardStyle();
         }
 
         public Integer getNcards() {
-            return pop.ncards();
+            return pool.ncards();
         }
 
         public String getContests() {
-            int[] ids = pop.contests();
+            int[] ids = pool.contests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
@@ -182,15 +182,43 @@ public class PoolTable extends JPanel {
         }
 
         public Integer getNcontests() {
-            return pop.contests().length;
+            return pool.contests().length;
         }
-
-        public String getClassName() { return pop.getClass().getSimpleName(); }
 
         public String show() {
             if (pool != null) return pool.show();
-            return pop.toString();
+            return pool.toString();
         }
     }
+
+    public class ContestBean {
+        ContestTabulation contestTab;
+        Vunder vunder;
+
+        public ContestBean() {
+        }
+
+        ContestBean(OneAuditPoolFromCvrs pool, ContestTabulation contestTab) {
+            this.contestTab = contestTab;
+            this.vunder = contestTab.votesAndUndervotes(pool.getPoolId(), pool.ncards());
+        }
+
+        public Integer getContestId() {return vunder.getContestId();}
+        public String getIsIrv() { return ((contestTab.isIrv()) ? "yes" : ""); }
+        public Integer getVoteForN() {return vunder.getVoteForN();}
+        public Integer getNcards() {return vunder.getNcards();}
+        public Integer getUndervotes() {return vunder.getUndervotes();}
+        public String getVotes() {
+            if (!contestTab.isIrv()) return vunder.cands().toString();
+            else return "VC " + vunder.getVoteCounts().size() + " unique rankings";
+        }
+        public Integer getNVotes() {return vunder.getNvotes();}
+        public Integer getMissing() {return vunder.getMissing();}
+
+        public String show() {
+            return contestTab.toString() + "\n" +  vunder.toString();
+        }
+    }
+
 
 }
