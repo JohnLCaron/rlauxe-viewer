@@ -10,6 +10,7 @@ import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
 import org.cryptobiotic.rlauxe.core.ClcaAssertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
+import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
@@ -288,7 +289,7 @@ public class AuditTable extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("name", "assertion name"));
             beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion difficulty description"));
             beanProperties.add(new BeanTable.TableBeanProperty("difficulty", "assertion difficulty measure (IRV only)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("upperBound", "assorter upper bound"));
+            beanProperties.add(new BeanTable.TableBeanProperty("upper", "assorter upper bound"));
             beanProperties.add(new BeanTable.TableBeanProperty("noError", "noerror assort value (CLCA only)"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin"));
@@ -330,10 +331,12 @@ public class AuditTable extends JPanel {
             return assertion.getAssorter().dilutedMargin();
         }
 
-        public double getDifficulty() {
+        public long getDifficulty() {
             if (assertion.getAssorter() instanceof RaireAssorter) {
                 RaireAssertion rassertion = ((RaireAssorter) assertion.getAssorter()).getRassertion();
-                return rassertion.getDifficulty();
+                return Math.round(rassertion.getDifficulty());
+            } else if (cua.getContest() instanceof DHondtContest) {
+                return Math.round(((DHondtContest) cua.getContest()).difficulty(assertion.getAssorter()));
             }
             return -1;
         }
@@ -348,14 +351,14 @@ public class AuditTable extends JPanel {
 
         public double getNoError() {return assertion.getAssorter().noerror(); }
 
-        public double getUpperBound() {return assertion.getAssorter().upperBound(); }
+        public double getUpper() {return assertion.getAssorter().upperBound(); }
 
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append("%n%s%n".formatted(assertionTable.tableModel.showBean(this, beanProperties)));
 
             sb.append(assertion.show());
-            sb.append("\n  difficulty: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
+            sb.append("\n   difficulty: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
             if (oaAssorter != null) sb.append("%n oaAssortRates = %s".formatted(oaAssorter.getOaAssortRates().toString()));
 
             return sb.toString();

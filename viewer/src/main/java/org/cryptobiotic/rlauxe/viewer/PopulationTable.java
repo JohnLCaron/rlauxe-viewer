@@ -6,14 +6,13 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditConfig;
-import org.cryptobiotic.rlauxe.audit.CardManifest;
+import org.cryptobiotic.rlauxe.workflow.CardManifest;
 import org.cryptobiotic.rlauxe.audit.PopulationIF;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
-import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -26,8 +25,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerKt.readCardManifest;
-
 public class PopulationTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(PopulationTable.class);
 
@@ -38,10 +35,7 @@ public class PopulationTable extends JPanel {
 
     private final JSplitPane split1;
 
-    private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
-    private boolean isComposite;
-    private AuditConfig auditConfig;
 
     public PopulationTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -77,40 +71,19 @@ public class PopulationTable extends JPanel {
     boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
 
-        this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (this.auditRecord == null) return false;
-        this.isComposite = (this.auditRecord instanceof CompositeRecord);
 
         try {
-            this.auditConfig = auditRecord.getConfig();
+            AuditConfig auditConfig = auditRecord.getConfig();
             List<ContestWithAssertions> contestsUA = auditRecord.getContests();
+            CardManifest cardManifest = this.auditRecord.readCardManifest();
 
-            if (isComposite) {
-                // TODO choose component
-                CompositeRecord composite = (CompositeRecord) this.auditRecord;
-                AuditRecord first = composite.getComponentRecords().getFirst();
-
-                Publisher publisher = new Publisher(first.getLocation());
-                CardManifest cardManifest = readCardManifest(publisher);
-
-                List<PopBean> beanList = new ArrayList<>();
-                for (var pop : cardManifest.getPopulations()) {
-                    beanList.add(new PopBean(pop));
-                }
-                poolTable.setBeans(beanList);
-
-            } else {
-
-                Publisher publisher = new Publisher(auditRecordLocation);
-                CardManifest cardManifest = readCardManifest(publisher);
-
-                List<PopBean> beanList = new ArrayList<>();
-                for (var pop : cardManifest.getPopulations()) {
-                    beanList.add(new PopBean(pop));
-                }
-                poolTable.setBeans(beanList);
+            List<PopBean> beanList = new ArrayList<>();
+            for (var pop : cardManifest.getPopulations()) {
+                beanList.add(new PopBean(pop));
             }
+            poolTable.setBeans(beanList);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -175,7 +148,7 @@ public class PopulationTable extends JPanel {
         }
 
         public String getContests() {
-            int[] ids = pop.contests();
+            int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
@@ -184,7 +157,7 @@ public class PopulationTable extends JPanel {
         }
 
         public Integer getNcontests() {
-            return pop.contests().length;
+            return pop.possibleContests().length;
         }
 
         public String getClassName() { return pop.getClass().getSimpleName(); }
