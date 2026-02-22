@@ -7,7 +7,7 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditConfig;
 import org.cryptobiotic.rlauxe.audit.AuditableCard;
-import org.cryptobiotic.rlauxe.audit.CardManifest;
+import org.cryptobiotic.rlauxe.workflow.CardManifest;
 import org.cryptobiotic.rlauxe.audit.PopulationIF;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import static org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerKt.readCardManifest;
 
 public class CardTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(CardTable.class);
@@ -90,58 +88,30 @@ public class CardTable extends JPanel {
         this.ncards = (cutoff == null)? 11111 : cutoff;
 
         try {
+            this.cardManifest = this.auditRecord.readCardManifest();
 
-            if (isComposite) {
-                // TODO choose component
-                CompositeRecord composite = (CompositeRecord) this.auditRecord;
-                AuditRecord first = composite.getComponentRecords().getFirst();
-
-                Publisher publisher = new Publisher(first.getLocation());
-                this.cardManifest = readCardManifest(publisher);
-
-                Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
-                for (PopulationIF pool : cardManifest.getPopulations()) {
-                    String cardStyle = "P" + pool.id();
-                    pools.put(cardStyle, pool);
-                }
-                this.poolMap = pools;
-
-                List<CardBean> beanList = new ArrayList<>();
-                var iter = cardManifest.getCards().iterator();
-                int index = 1;
-                while (iter.hasNext() && index < this.ncards) {
-                    var card = iter.next();
-                    beanList.add(new CardBean(card, index));
-                    index++;
-                }
-                cardTable.setBeans(beanList);
-
-            } else {
-                Publisher publisher = new Publisher(auditRecordLocation);
-                this.cardManifest = readCardManifest(publisher);
-
-                Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
-                for (PopulationIF pool : cardManifest.getPopulations()) {
-                    String cardStyle = "P" + pool.id();
-                    pools.put(cardStyle, pool);
-                }
-                this.poolMap = pools;
-
-                List<CardBean> beanList = new ArrayList<>();
-                var iter = cardManifest.getCards().iterator();
-                int index = 1;
-                while (iter.hasNext() && index < this.ncards) {
-                    var card = iter.next();
-                    beanList.add(new CardBean(card, index));
-                    index++;
-                }
-                cardTable.setBeans(beanList);
+            Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
+            for (PopulationIF pool : cardManifest.getPopulations()) {
+                String cardStyle = "P" + pool.id();
+                pools.put(cardStyle, pool);
             }
+            this.poolMap = pools;
+
+            List<CardBean> beanList = new ArrayList<>();
+            var iter = cardManifest.getCards().iterator();
+            int index = 1;
+            while (iter.hasNext() && index < this.ncards) {
+                var card = iter.next();
+                beanList.add(new CardBean(card, index));
+                index++;
+            }
+            cardTable.setBeans(beanList);
 
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, e.getMessage());
             logger.error("setAuditRecord failed", e);
+            return false;
         }
 
         return true;
@@ -223,11 +193,11 @@ public class CardTable extends JPanel {
             return sb.toString();
         }
         public Integer getPoolId() { return card.getPoolId(); }
-        public String getCardStyle() { return card.getCardStyle(); }
+        public String getPopulationName() { return card.getPopulationName(); }
         public String getPopulation() {
             var pop = card.getPopulation();
             if (pop == null) return "";
-            int[] ids = pop.contests();
+            int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
@@ -263,7 +233,7 @@ public class CardTable extends JPanel {
 
             var pop = card.getPopulation();
             if (pop == null) {
-                var cardStyle = card.getCardStyle();
+                var cardStyle = card.getPopulationName();
                 if (cardStyle != null) {
                     pop = findPool(cardStyle);
                 }

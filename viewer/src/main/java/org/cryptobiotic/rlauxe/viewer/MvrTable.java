@@ -175,11 +175,11 @@ public class MvrTable extends JPanel {
             return sb.toString();
         }
         public Integer getPoolId() { return card.getPoolId(); }
-        public String getCardStyle() { return card.getCardStyle(); }
+        public String getName() { return card.getPopulationName(); }
         public String getPopulation() {
             var pop = card.getPopulation();
             if (pop == null) return "";
-            int[] ids = pop.contests();
+            int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));

@@ -227,7 +227,7 @@ public class AuditRoundsTable extends JPanel {
                 int roundIdx = round.getRoundIdx();
                 int nmvrs = round.getSamplePrns().size();
                 f.format("%nnumber of Mvrs in round %d = %d %n", roundIdx, nmvrs);
-                int extra = round.getSamplesNotUsed();
+                int extra = round.getMvrsUnused();
                 f.format("          extraBallotsUsed = %d %n", extra);
                 totalExtra += extra;
             }
@@ -249,6 +249,7 @@ public class AuditRoundsTable extends JPanel {
         // select contest with smallest margin
         ContestBean minByMargin = beanList
                 .stream()
+                .filter(c -> !c.isDone())
                 .min(Comparator.comparing(ContestBean::getMargin)) // TODO use noerror
                 .orElseThrow(NoSuchElementException::new);
         contestTable.setSelectedBean(minByMargin);
@@ -277,8 +278,9 @@ public class AuditRoundsTable extends JPanel {
         java.util.List<EstimationRoundBean> estList = new ArrayList<>();
 
         int maxRound = assertionBean.assertionRound.getRoundIdx();
+        // show est, audir from all rounds
         for (AuditRoundIF auditRound : auditRecord.getRounds()) {
-            if (auditRound.getRoundIdx() > maxRound) break;
+            // if (auditRound.getRoundIdx() > maxRound) break;
 
             for (ContestRound contestRound : auditRound.getContestRounds()) {
                 if (contestRound.getContestUA().equals(assertionBean.contestBean.contestUA)) {
@@ -340,7 +342,7 @@ public class AuditRoundsTable extends JPanel {
                     this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size()));
 
             PersistedWorkflow workflow = PersistedWorkflow.Companion.readFrom(auditRecordLocation);
-            ConsistentSamplingKt.sampleWithContestCutoff(auditConfig, workflow.mvrManager(), this.lastAuditRound, previousSamples, false);
+            ConsistentSamplingKt.sampleWithContestCutoff(auditConfig, workflow.mvrManager().cardManifest(), this.lastAuditRound, previousSamples, false);
 
             auditRoundTable.refresh();
             contestTable.refresh();
@@ -379,8 +381,8 @@ public class AuditRoundsTable extends JPanel {
         int roundIdx = lastRound.getRoundIdx();
 
         var publisher = new Publisher(auditRecordLocation);
-        writeAuditRoundJsonFile(lastRound, publisher.auditStateFile(roundIdx));
-        logger.info(String.format("   write auditRoundFile to %s", publisher.auditStateFile(roundIdx)));
+        writeAuditRoundJsonFile(lastRound, publisher.auditEstFile(roundIdx));
+        logger.info(String.format("   write auditEstFile to %s", publisher.auditEstFile(roundIdx)));
         writeSamplePrnsJsonFile(lastRound.getSamplePrns(), publisher.samplePrnsFile(roundIdx));
         logger.info(String.format("   write %d samplePrns to %s", lastRound.getSamplePrns().size(), publisher.samplePrnsFile(roundIdx)));
         int ncards = writeMvrsForRound(publisher, roundIdx);
@@ -394,9 +396,9 @@ public class AuditRoundsTable extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("round", "index of audit round"));
             beanProperties.add(new BeanTable.TableBeanProperty("auditWasDone", "audit was performed"));
             beanProperties.add(new BeanTable.TableBeanProperty("auditIsComplete", "audit is complete"));
-            beanProperties.add(new BeanTable.TableBeanProperty("totalMvrs", "total samples needed for all rounds"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrs", "all samples needed for this round"));
-            beanProperties.add(new BeanTable.TableBeanProperty("newMvrs", "new samples needed for this round"));
+            beanProperties.add(new BeanTable.TableBeanProperty("totalMvrs", "total mvrs for all rounds"));
+            beanProperties.add(new BeanTable.TableBeanProperty("mvrsInRound", "est mvrs needed for this round"));
+            beanProperties.add(new BeanTable.TableBeanProperty("newMvrs", "est new mvrs needed for this round"));
             beanProperties.add(new BeanTable.TableBeanProperty("wantNewMvrs", "number of new samples wanted; set by auditor"));
             beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
             beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "number of mvrs not needed"));
@@ -441,10 +443,11 @@ public class AuditRoundsTable extends JPanel {
             }
         }
 
-        public Integer getMvrs() {
+        public Integer getMvrsInRound() {
             return round.getNmvrs();
         }
-        public Integer getMvrsExtra() {return round.getSamplesNotUsed();}
+        public Integer getMvrsUsed() {return round.getMvrsUsed();}
+        public Integer getMvrsExtra() {return round.getMvrsUnused();}
 
         public boolean isAuditWasDone() {
             return round.getAuditWasDone();
@@ -484,7 +487,7 @@ public class AuditRoundsTable extends JPanel {
         ContestWithAssertions contestUA;
         int auditRound; // only last row can be edited
         TestH0Status initialStatus; // only last row can be edited
-        int calcMvrsNeeded = 0;
+        // int calcMvrsNeeded = 0;
 
         public ContestBean() {}
 
@@ -493,7 +496,7 @@ public class AuditRoundsTable extends JPanel {
             this.auditRound = auditRound;
             this.contestUA = contestRound.getContestUA();
             this.initialStatus = contestRound.getStatus();
-            this.calcMvrsNeeded = contestRound.calcMvrsNeeded(auditConfig);
+            // this.calcMvrsNeeded = contestRound.calcMvrsNeeded(auditConfig);
         }
 
         // editable properties
@@ -548,13 +551,14 @@ public class AuditRoundsTable extends JPanel {
         public Integer getEstMvrs() {return contestRound.getEstMvrs();}
         public Integer getEstNewMvrs() {return contestRound.getEstNewMvrs();}
 
-        // public Integer getCalcMvrs() {return calcMvrsNeeded;}
-        // public Integer getCalcMvrsExtra() {return calcMvrsNeeded - getMvrsUsed();}
-
         public int getMvrsUsed() {
             return contestRound.countCvrsUsedInAudit();
         }
-        public Integer getMvrsExtra() { return contestRound.getEstMvrs() - getMvrsUsed(); }
+        public Integer getMvrsExtra() {
+            if (!contestRound.getDone()) return 0;
+            if (!contestRound.getIncluded()) return 0;
+            else return contestRound.getEstMvrs() - getMvrsUsed();
+        }
 
 
         // TODO REDO
@@ -599,11 +603,13 @@ public class AuditRoundsTable extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("noerror", "noerror assort value (CLCA only)"));
             beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin"));
             beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner"));
+            beanProperties.add(new BeanTable.TableBeanProperty("upper", "assorter upper bound"));
 
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimated samples needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "mvrs used in the audit"));
-            beanProperties.add(new BeanTable.TableBeanProperty("calcMvrsNoErrors", "calculated samples needed when there are no errors (OneAudit)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("optimalBet", "optimalBet when there are no errors (OneAudit)"));
+            beanProperties.add(new BeanTable.TableBeanProperty("prevMvrs", "mvrs from previous rounds"));
+            beanProperties.add(new BeanTable.TableBeanProperty("estNewMvrs", "estimated new samples needed"));
+            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "mvrs used in this round"));
+            beanProperties.add(new BeanTable.TableBeanProperty("calcMvrsNeeded", "calculated samples needed"));
+            beanProperties.add(new BeanTable.TableBeanProperty("optimalBet", "optimalBet when there are no errors"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
             beanProperties.add(new BeanTable.TableBeanProperty("risk", "measured risk (minimum PValue of audit)"));
@@ -614,7 +620,7 @@ public class AuditRoundsTable extends JPanel {
         ContestBean contestBean;
         Assertion assertion;
         OneAuditClcaAssorter oaAssorter = null;
-        int estSamplesNeeded = 0;
+        int calcNewMvrsNeeded = 0;
         double optimalBet = 0.0;
 
         public AssertionBean() {
@@ -624,9 +630,16 @@ public class AuditRoundsTable extends JPanel {
             this.contestBean = contestBean;
             this.assertionRound = assertionRound;
             this.assertion = assertionRound.getAssertion();
-            var pair = assertionRound.calcMvrsNeeded(contestBean.contestUA, auditConfig.getClcaConfig().getMaxLoss(), auditConfig.getRiskLimit() );
-            estSamplesNeeded = pair.component1();
-            optimalBet = pair.component2();
+            if (assertion instanceof ClcaAssertion) {
+                // why is this different from
+                var pair = assertionRound.calcNewMvrsNeeded(contestBean.contestUA, auditConfig.getClcaConfig().getMaxLoss(), auditConfig.getRiskLimit());
+                calcNewMvrsNeeded = pair.component1();
+                optimalBet = pair.component2();
+                var cassorter = ((ClcaAssertion)assertion).getCassorter();
+                if (cassorter instanceof OneAuditClcaAssorter) {
+                    oaAssorter = (OneAuditClcaAssorter) cassorter;
+                }
+            }
         }
 
         public Integer getRound() {
@@ -638,8 +651,10 @@ public class AuditRoundsTable extends JPanel {
         }
 
         public double getNoError() {return assertion.getAssorter().noerror(); }
+        public double getUpper() {return assertion.getAssorter().upperBound(); }
 
-        public Integer getEstMvrs() {return assertionRound.getEstMvrs();}
+        public Integer getPrevMvrs() {return assertionRound.getEstMvrs() - assertionRound.getEstNewMvrs();}
+        public Integer getEstNewMvrs() {return assertionRound.getEstNewMvrs();}
 
         public int getMvrsUsed() {
             int maxUsed = 0;
@@ -651,8 +666,8 @@ public class AuditRoundsTable extends JPanel {
         }
 
 
-        public Integer getCalcMvrsNoErrors() {
-            return estSamplesNeeded;
+        public Integer getCalcMvrsNeeded() {
+            return calcNewMvrsNeeded;
         }
 
         public Double getOptimalBet() {
@@ -671,6 +686,11 @@ public class AuditRoundsTable extends JPanel {
             return assertion.getAssorter().dilutedMargin();
         }
 
+        // debugging - really should be keyed on noerror.
+        public double getRecountMargin() {
+            return contestBean.contestUA.getContest().recountMargin(assertion.getAssorter());
+        }
+
         public double getRisk() {
             if (assertionRound.getAuditResult() != null) {
                 return assertionRound.getAuditResult().getPmin();
@@ -684,12 +704,11 @@ public class AuditRoundsTable extends JPanel {
             sb.append("%n%s%n".formatted(assertionTable.tableModel.showBean(this, beanProperties)));
 
             sb.append("%n assertion = %s".formatted(assertion.show()));
-            sb.append("%n assorter = %s".formatted(assertion.getAssorter().toString()));
             sb.append("%n difficulty = %s".formatted(contestBean.contestUA.getContest().showAssertionDifficulty(assertion.getAssorter())));
             if (assertionRound.getPrevAuditResult() != null) sb.append("%n prevAuditResult = %s".formatted(assertionRound.getPrevAuditResult().toString()));
 
             if (oaAssorter != null) {
-                sb.append("%n oaAssortRates = %s".formatted(oaAssorter.getOaAssortRates().toString()));
+                sb.append("%n%n oaAssortRates = %s".formatted(oaAssorter.getOaAssortRates().toString()));
                 sb.append("%n sumOneAuditTerm = %f".formatted(oaAssorter.getOaAssortRates().sumOneAuditTerm(optimalBet)));
             }
 
@@ -698,7 +717,7 @@ public class AuditRoundsTable extends JPanel {
 
         public String showPoolAssortValues() {
             if (this.oaAssorter != null) {
-                return this.oaAssorter.assortValuesForPool(3526);
+                return this.oaAssorter.assortValuesForPool(3526);  // TODO
             } else return "not a OneAudit assertion";
         }
 
@@ -716,7 +735,8 @@ public class AuditRoundsTable extends JPanel {
         static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
         static {
             beanProperties.add(new BeanTable.TableBeanProperty("round", "index of audit round"));
-            beanProperties.add(new BeanTable.TableBeanProperty("fuzzPct", "fuzzed percent for simulation"));
+            beanProperties.add(new BeanTable.TableBeanProperty("strategy", "estimation strategy"));
+            beanProperties.add(new BeanTable.TableBeanProperty("calcNewMvrs", "calculated new Mvrs needed"));
             beanProperties.add(new BeanTable.TableBeanProperty("simulatedDistribution", "deciles of simulated distribution"));
             beanProperties.add(new BeanTable.TableBeanProperty("simNewMvrs", "simulated new Mvrs needed"));
             beanProperties.add(new BeanTable.TableBeanProperty("simQuantile", "use this quantile from distribution"));
@@ -727,8 +747,7 @@ public class AuditRoundsTable extends JPanel {
 
         ContestRound contestRound;
         AssertionRound assertionRound;
-        EstimationRoundResult simRound;
-        ClcaAssorter cassorter = null;
+        EstimationRoundResult estRound;
 
         public EstimationRoundBean() {
         }
@@ -736,48 +755,46 @@ public class AuditRoundsTable extends JPanel {
         EstimationRoundBean(ContestRound contest, AssertionRound round) {
             this.contestRound = contest;
             this.assertionRound = round;
-            this.simRound = round.getEstimationResult();
-            var assertion = round.getAssertion();
+            this.estRound = round.getEstimationResult();
         }
 
         public Integer getRound() {
-            return simRound.getRoundIdx();
+            return estRound.getRoundIdx();
         }
 
         public String getStrategy() {
-            return simRound.getStrategy();
+            return estRound.getStrategy();
         }
         public String getStartingRates() {
-            return simRound.startingErrorRates();
+            return estRound.startingErrorRates();
         }
 
         public Double getStartingPvalue() {
-            var t = simRound.getStartingTestStatistic();
+            var t = estRound.getStartingTestStatistic();
             if (t == 0.0) return 0.0; else return 1.0/t;
         }
-        public Double getFuzzPct() {
-            return simRound.getFuzzPct();
+        public int getCalcNewMvrs() {
+            return estRound.getCalcNewMvrsNeeded();
         }
 
         public String getSimulatedDistribution() {
-            return String.format("%s (%d)", simRound.getEstimatedDistribution(), simRound.getNtrials());
+            return String.format("%s (%d)", estRound.getEstimatedDistribution(), estRound.getNtrials());
         }
 
         public Integer getSimNewMvrs() {
-            return simRound.getSimNewMvrs();
+            return estRound.getSimNewMvrsNeeded();
         }
         public Double getSimQuantile() {
             return auditConfig.getQuantile();
         }
-
 
         public String show() {
 
             StringBuilder sb = new StringBuilder();
             sb.append("%n%s%n".formatted(estRoundTable.tableModel.showBean(this, beanProperties)));
 
-            if (simRound.getStartingErrorRates() != null) {
-                sb.append("startingErrors = %s%n".formatted(simRound.startingErrorRates()));
+            if (estRound.getStartingErrorRates() != null) {
+                sb.append("startingErrors = %s%n".formatted(estRound.startingErrorRates()));
             }
 
             return sb.toString();
@@ -801,13 +818,15 @@ public class AuditRoundsTable extends JPanel {
         static {
             beanProperties.add(new BeanTable.TableBeanProperty("round", "index of audit round"));
             beanProperties.add(new BeanTable.TableBeanProperty("mvrs", "number of mvrs in this round that could be used for this contest"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
+            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs used in this round"));
+            beanProperties.add(new BeanTable.TableBeanProperty("newMvrs", "new mvrs for this round"));
+            beanProperties.add(new BeanTable.TableBeanProperty("newMvrsUsed", "number of new mvrs actually used in this round"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("startingRates", "starting estimate of error rates"));
             beanProperties.add(new BeanTable.TableBeanProperty("measuredErrorCounts", "measured CLCA error counts (cvr-mvr)"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("PValueLast", "ending PValue for this round"));
-            beanProperties.add(new BeanTable.TableBeanProperty("PValueMin", "minimum PValue acheived"));
+            beanProperties.add(new BeanTable.TableBeanProperty("PValueMin", "minimum PValue achieved"));
             beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest audit"));
             // beanProperties.add(new BeanTable.TableBeanProperty("cvrsUsedInAudit", "count cvrs used in audit"));
         }
@@ -815,6 +834,7 @@ public class AuditRoundsTable extends JPanel {
         ContestRound contestRound;
         AssertionRound assertionRound;
         AuditRoundResult auditResultRound;
+        int prevMvrs;
 
         public AuditRoundResultBean() {
         }
@@ -823,6 +843,9 @@ public class AuditRoundsTable extends JPanel {
             this.contestRound = contestRound;
             this.assertionRound = assertionRound;
             this.auditResultRound = assertionRound.getAuditResult();
+            if (assertionRound.getPrevAuditResult() != null) {
+                this.prevMvrs = assertionRound.getPrevAuditResult().getNmvrs();
+            }
         }
 
         public Integer getRound() {
@@ -833,6 +856,18 @@ public class AuditRoundsTable extends JPanel {
             return auditResultRound.getNmvrs();
         }
 
+        public Integer getMvrsUsed() {
+            return auditResultRound.getSamplesUsed();
+        }
+
+        public Integer getNewMvrs() {
+            return auditResultRound.getNmvrs() - prevMvrs;
+        }
+
+        public Integer getNewMvrsUsed() {
+            return auditResultRound.getSamplesUsed() - prevMvrs;
+        }
+
         // public Integer getCvrsUsedInAudit() {return auditResultRound.getCountCvrsUsedInAudit();}
 
         public Double getPValueLast() {
@@ -841,10 +876,6 @@ public class AuditRoundsTable extends JPanel {
 
         public Double getPValueMin() {
             return auditResultRound.getPmin();
-        }
-
-        public Integer getMvrsUsed() {
-            return auditResultRound.getSamplesUsed();
         }
 
         public String getStatus() {

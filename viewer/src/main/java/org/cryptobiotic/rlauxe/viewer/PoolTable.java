@@ -173,7 +173,7 @@ public class PoolTable extends JPanel {
         }
 
         public String getContests() {
-            int[] ids = pool.contests();
+            int[] ids = pool.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
@@ -182,7 +182,7 @@ public class PoolTable extends JPanel {
         }
 
         public Integer getNcontests() {
-            return pool.contests().length;
+            return pool.possibleContests().length;
         }
 
         public String show() {
