@@ -31,7 +31,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
-import static org.cryptobiotic.rlauxe.audit.CreateAuditKt.writeMvrsForRound;
+import static org.cryptobiotic.rlauxe.audit.StartAuditFirstRoundKt.writeMvrsForRound;
 import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.runRound;
 import static org.cryptobiotic.rlauxe.persist.json.AuditRoundJsonKt.writeAuditRoundJsonFile;
 import static org.cryptobiotic.rlauxe.persist.json.SamplePrnsJsonKt.writeSamplePrnsJsonFile;
@@ -213,26 +213,26 @@ public class AuditRoundsTable extends JPanel {
     ///
     void showInfo(Formatter f) {
         if (this.auditRecordLocation.equals("none")) { return; }
-        // int totalBallots = this.auditRecord.getCvrs().size(); TODO
 
-        f.format("Audit record at %s%n", this.auditRecordLocation);
+        f.format("Audit record at %s%n%n", this.auditRecordLocation);
+        f.format("%s%n%n", this.auditRecord.getElectionInfo());
         f.format("%s%n", this.auditConfig);
         if (this.lastAuditRound == null) return;
 
-        f.format(" total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
-
+        f.format("AuditRounds");
         int totalExtra = 0;
         for (AuditRoundIF round : auditRecord.getRounds()) {
             if (round.getAuditWasDone()) {
                 int roundIdx = round.getRoundIdx();
                 int nmvrs = round.getSamplePrns().size();
-                f.format("%nnumber of Mvrs in round %d = %d %n", roundIdx, nmvrs);
+                f.format("%n  number of Mvrs in round %d = %d %n", roundIdx, nmvrs);
                 int extra = round.getMvrsUnused();
-                f.format("          extraBallotsUsed = %d %n", extra);
+                f.format("  extraBallotsUsed = %d %n", extra);
                 totalExtra += extra;
             }
         }
-        f.format("%ntotal extraBallotsUsed = %d %n", totalExtra);
+        f.format("%n  total extraBallotsUsed = %d %n", totalExtra);
+        f.format("  total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
     }
 
     //////////////////////////////////////////////////////////////////
@@ -342,7 +342,7 @@ public class AuditRoundsTable extends JPanel {
                     this.lastAuditRound.getAuditorWantNewMvrs(), previousSamples.size()));
 
             PersistedWorkflow workflow = PersistedWorkflow.Companion.readFrom(auditRecordLocation);
-            ConsistentSamplingKt.sampleWithContestCutoff(auditConfig, workflow.mvrManager().cardManifest(), this.lastAuditRound, previousSamples, false);
+            ConsistentSamplingKt.sampleAndRemoveContests(auditConfig, workflow.mvrManager().cardManifest(), this.lastAuditRound, previousSamples, false);
 
             auditRoundTable.refresh();
             contestTable.refresh();
@@ -472,6 +472,7 @@ public class AuditRoundsTable extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin (smallest assertion)"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimated samples needed"));
+            beanProperties.add(new BeanTable.TableBeanProperty("estPct", "estimated samples needed / contest Nc"));
             beanProperties.add(new BeanTable.TableBeanProperty("estNewMvrs", "estimated new samples needed"));
             beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
             beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "estimated - used"));
@@ -487,7 +488,6 @@ public class AuditRoundsTable extends JPanel {
         ContestWithAssertions contestUA;
         int auditRound; // only last row can be edited
         TestH0Status initialStatus; // only last row can be edited
-        // int calcMvrsNeeded = 0;
 
         public ContestBean() {}
 
@@ -496,7 +496,6 @@ public class AuditRoundsTable extends JPanel {
             this.auditRound = auditRound;
             this.contestUA = contestRound.getContestUA();
             this.initialStatus = contestRound.getStatus();
-            // this.calcMvrsNeeded = contestRound.calcMvrsNeeded(auditConfig);
         }
 
         // editable properties
@@ -547,8 +546,9 @@ public class AuditRoundsTable extends JPanel {
         }
         public Double getMargin() {return contestUA.minDilutedMargin();}
 
-        public Integer getMaxIndex() {return contestRound.getMaxSampleAllowed();}
-        public Integer getEstMvrs() {return contestRound.getEstMvrs();}
+        public Integer getMaxIndex() { return contestRound.getMaxSampleAllowed();}
+        public Integer getEstMvrs() { return contestRound.getEstMvrs();}
+        public Double getEstPct() { return contestRound.getEstMvrs() / ((double) contestRound.getContestUA().getNc()); }
         public Integer getEstNewMvrs() {return contestRound.getEstNewMvrs();}
 
         public int getMvrsUsed() {

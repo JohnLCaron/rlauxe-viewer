@@ -7,13 +7,13 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.core.ContestInfo;
-import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolFromCvrs;
+import org.cryptobiotic.rlauxe.oneaudit.OneAuditPool;
+import org.cryptobiotic.rlauxe.oneaudit.Vunder;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.cryptobiotic.rlauxe.util.ContestTabulation;
-import org.cryptobiotic.rlauxe.util.Vunder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -26,7 +26,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-import static org.cryptobiotic.rlauxe.persist.csv.CardPoolCsvKt.readCardPoolCsvFile;
+import static org.cryptobiotic.rlauxe.persist.csv.OneAuditPoolCsvKt.readCardPoolCsvFile;
 
 public class PoolTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(PoolTable.class);
@@ -34,7 +34,7 @@ public class PoolTable extends JPanel {
     private final PreferencesExt prefs;
 
     private final BeanTable<PoolBean> poolTable;
-    private final BeanTable<ContestBean> contestTable;
+    private final BeanTable<ContestTabBean> contestTable;
     // TextHistoryPane localInfo = new TextHistoryPane();
 
     private final JSplitPane split1;
@@ -48,7 +48,7 @@ public class PoolTable extends JPanel {
         this.prefs = prefs;
 
         poolTable = new BeanTable<>(PoolBean.class, (PreferencesExt) prefs.node("poolTable"), false,
-                "Pool", "OneAuditPoolFromCvrs", null);
+                "Pool", "OneAuditPool", null);
         poolTable.addListSelectionListener(e -> {
             PoolBean poolBean = poolTable.getSelectedBean();
             if (poolBean != null) {
@@ -56,7 +56,7 @@ public class PoolTable extends JPanel {
             }
         });
 
-        contestTable = new BeanTable<>(ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false,
+        contestTable = new BeanTable<>(ContestTabBean.class, (PreferencesExt) prefs.node("contestTable"), false,
                 "Contest", "Vunder", null);
 
         setFontSize(fontSize);
@@ -109,7 +109,7 @@ public class PoolTable extends JPanel {
             } else { */
                 Publisher publisher = new Publisher(auditRecordLocation);
 
-                List<OneAuditPoolFromCvrs> pools = readCardPoolCsvFile(publisher.cardPoolsFile(), infos);
+                List<OneAuditPool> pools = readCardPoolCsvFile(publisher.oneauditPoolsFile(), infos);
 
 
                 java.util.List<PoolBean> beanList = new ArrayList<>();
@@ -129,9 +129,9 @@ public class PoolTable extends JPanel {
     }
 
     void setSelectedPool(PoolBean bean) {
-        java.util.List<ContestBean> beanList = new ArrayList<>();
+        java.util.List<ContestTabBean> beanList = new ArrayList<>();
         for (ContestTabulation tab : bean.pool.getContestTabs().values()) {
-            beanList.add(new ContestBean(bean.pool, tab));
+            beanList.add(new ContestTabBean(bean.pool, tab));
         }
         contestTable.setBeans(beanList);
     }
@@ -147,12 +147,12 @@ public class PoolTable extends JPanel {
     //////////////////////////////////////////////////////////////////
 
     public class PoolBean {
-        OneAuditPoolFromCvrs pool = null;
+        OneAuditPool pool = null;
 
         public PoolBean() {
         }
 
-        PoolBean(OneAuditPoolFromCvrs pool) {
+        PoolBean(OneAuditPool pool) {
             this.pool = pool;
         }
 
@@ -186,21 +186,20 @@ public class PoolTable extends JPanel {
         }
 
         public String show() {
-            if (pool != null) return pool.show();
             return pool.toString();
         }
     }
 
-    public class ContestBean {
+    public class ContestTabBean {
         ContestTabulation contestTab;
         Vunder vunder;
 
-        public ContestBean() {
+        public ContestTabBean() {
         }
 
-        ContestBean(OneAuditPoolFromCvrs pool, ContestTabulation contestTab) {
+        ContestTabBean(OneAuditPool pool, ContestTabulation contestTab) {
             this.contestTab = contestTab;
-            this.vunder = contestTab.votesAndUndervotes(pool.getPoolId(), pool.ncards());
+            this.vunder = contestTab.votesAndUndervotes(pool.getPoolId(), pool.ncards(), pool.hasSingleCardStyle());
         }
 
         public Integer getContestId() {return vunder.getContestId();}
