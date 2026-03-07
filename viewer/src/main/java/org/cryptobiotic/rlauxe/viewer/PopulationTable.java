@@ -121,14 +121,12 @@ public class PopulationTable extends JPanel {
 
     static public class PopBean {
         PopulationIF pop;
-        OneAuditPoolIF pool = null;
 
         public PopBean() {
         }
 
         PopBean(PopulationIF pop) {
             this.pop = pop;
-            if (pop instanceof OneAuditPoolIF) pool = (OneAuditPoolIF) pop;
         }
 
         public String getName() {
@@ -163,7 +161,6 @@ public class PopulationTable extends JPanel {
         public String getClassName() { return pop.getClass().getSimpleName(); }
 
         public String show() {
-            if (pool != null) return pool.show();
             return pop.toString();
         }
     }

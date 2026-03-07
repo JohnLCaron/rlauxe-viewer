@@ -239,13 +239,7 @@ public class CardTable extends JPanel {
                 }
             }
             if (pop != null) {
-                OneAuditPoolIF oapool = null;
-                if (pop instanceof OneAuditPoolIF) oapool = (OneAuditPoolIF) pop;
-                if (oapool != null) {
-                    sb.append(oapool.show());
-                } else {
-                    sb.append(pop.toString());
-                }
+                sb.append(pop.toString());
             }
             return sb.toString();
         }
