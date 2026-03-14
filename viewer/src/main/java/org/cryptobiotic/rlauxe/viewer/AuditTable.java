@@ -40,6 +40,7 @@ public class AuditTable extends JPanel {
     private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
     private AuditConfig auditConfig;
+    private Map<Integer, Integer> oneshotMvrs;
 
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -118,6 +119,8 @@ public class AuditTable extends JPanel {
                 minByMargin.ifPresent(contestTable::setSelectedBean);
             }
 
+            oneshotMvrs = auditRecord.readOneShotMvrs();
+
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, e.getMessage());
@@ -185,6 +188,8 @@ public class AuditTable extends JPanel {
 
             beanProperties.add(new BeanTable.TableBeanProperty("poolPct", "percent of cards in pools"));
             beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
+            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
+            beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "number of mvrs audited but not needed"));
         }
 
         ContestRound lastRound = null;
@@ -259,6 +264,21 @@ public class AuditTable extends JPanel {
         public String getStatus() {
             return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
         }
+
+        public Integer getMvrsUsed() {
+            return (lastRound == null) ? 0 : lastRound.maxSamplesUsed();
+        }
+
+        public Integer getMvrsExtra() {
+            if (lastRound == null) return 0;
+            if (!lastRound.getDone()) return 0;
+            if (!lastRound.getIncluded()) return 0;
+            else {
+                return (lastRound.getEstMvrs() < lastRound.maxSamplesUsed()) ? 0 :
+                       (lastRound.getEstMvrs() - lastRound.maxSamplesUsed());
+            }
+        }
+
 
         /*
         public Integer getCompleted() {

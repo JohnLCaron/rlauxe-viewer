@@ -23,10 +23,8 @@ import ucar.util.prefs.PreferencesExt;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class CardTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(CardTable.class);
@@ -41,7 +39,6 @@ public class CardTable extends JPanel {
     private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
     private Boolean isComposite;
-    private int ncards;
 
     private CardManifest cardManifest;
     Map<String, PopulationIF> poolMap;
@@ -78,18 +75,22 @@ public class CardTable extends JPanel {
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
-        logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
+        logger.info("CardTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
-        if (this.auditRecord == null) return false;
+        if (this.auditRecord == null) {
+            logger.info("CardTable failed on readFrom "+ auditRecordLocation);
+            return false;
+        }
         this.isComposite = (this.auditRecord instanceof CompositeRecord);
         Integer cutoff = auditRecord.getConfig().getContestSampleCutoff();
-        this.ncards = (cutoff == null)? 11111 : cutoff;
+        Integer ncardsToRead = (cutoff == null || cutoff < 11111) ? 11111 : cutoff;
 
         try {
-            this.cardManifest = this.auditRecord.readCardManifest();
+            this.cardManifest = this.auditRecord.readSortedManifest();
 
+            // wtf ?
             Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
             for (PopulationIF pool : cardManifest.getPopulations()) {
                 String cardStyle = "P" + pool.id();
@@ -98,14 +99,16 @@ public class CardTable extends JPanel {
             this.poolMap = pools;
 
             List<CardBean> beanList = new ArrayList<>();
-            var iter = cardManifest.getCards().iterator();
             int index = 1;
-            while (iter.hasNext() && index < this.ncards) {
-                var card = iter.next();
-                beanList.add(new CardBean(card, index));
-                index++;
+            try (var iter = cardManifest.getCards().iterator()) {
+                while (iter.hasNext() && index < ncardsToRead) {
+                    var card = iter.next();
+                    beanList.add(new CardBean(card, index));
+                    index++;
+                }
             }
             cardTable.setBeans(beanList);
+            logger.info("CardTable read " + index + " cards from "+ auditRecordLocation);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -208,7 +211,8 @@ public class CardTable extends JPanel {
             var votes = card.getVotes();
             if (votes == null) return "N/A";
             StringBuilder sb = new StringBuilder();
-            for (int contestId : votes.keySet()) {
+            SortedSet<Integer> ids = new TreeSet<>(votes.keySet());
+            for (int contestId : ids) {
                 sb.append("%d:".formatted(contestId));
                 var cands = votes.get(contestId);
                 if (cands.length == 0) sb.append(" ,");

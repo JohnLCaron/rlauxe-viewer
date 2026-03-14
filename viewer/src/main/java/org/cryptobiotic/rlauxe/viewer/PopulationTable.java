@@ -69,7 +69,7 @@ public class PopulationTable extends JPanel {
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
-        logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
+        logger.debug("PopulationTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (this.auditRecord == null) return false;
@@ -77,7 +77,7 @@ public class PopulationTable extends JPanel {
         try {
             AuditConfig auditConfig = auditRecord.getConfig();
             List<ContestWithAssertions> contestsUA = auditRecord.getContests();
-            CardManifest cardManifest = this.auditRecord.readCardManifest();
+            CardManifest cardManifest = this.auditRecord.readSortedManifest();
 
             List<PopBean> beanList = new ArrayList<>();
             for (var pop : cardManifest.getPopulations()) {

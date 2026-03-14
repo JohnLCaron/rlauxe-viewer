@@ -70,7 +70,7 @@ public class MvrTable extends JPanel {
     }
 
     boolean setAuditRecord(String auditRecordLocation, int roundIdx) {
-        logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
+        logger.debug("MvrTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
