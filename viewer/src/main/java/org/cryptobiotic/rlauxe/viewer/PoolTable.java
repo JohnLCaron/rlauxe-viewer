@@ -77,7 +77,7 @@ public class PoolTable extends JPanel {
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
-        logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
+        logger.debug("PoolTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
@@ -98,7 +98,7 @@ public class PoolTable extends JPanel {
                 AuditRecord first = composite.getComponentRecords().getFirst();
 
                 Publisher publisher = new Publisher(first.getLocation());
-                CardManifest cardManifest = readCardManifest(publisher);
+                CardManifest cardManifest = readSortedManifest(publisher);
 
                 java.util.List<PoolBean> beanList = new ArrayList<>();
                 for (var pop : cardManifest.getPopulations()) {

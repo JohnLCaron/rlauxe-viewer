@@ -139,6 +139,7 @@ public class ViewerMain extends JPanel {
     AbstractAction runAuditRoundAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         auditRoundsPanel.runAuditRound();
+        auditPanel.setAuditRecord(auditRecordDir);
       }
     };
     BAMutil.setActionProperties(runAuditRoundAction, "run-round-icon.png", "Run Audit Round", false, 'R', -1);
@@ -248,9 +249,9 @@ public class ViewerMain extends JPanel {
   void setAuditRecord() {
     auditPanel.setAuditRecord(auditRecordDir);
     auditRoundsPanel.setAuditRecord(auditRecordDir);
+    cardPanel.setAuditRecord(auditRecordDir);
     populationPanel.setAuditRecord(auditRecordDir);
     poolPanel.setAuditRecord(auditRecordDir);
-    cardPanel.setAuditRecord(auditRecordDir);
     mvrPanel.clear();
   }
 
