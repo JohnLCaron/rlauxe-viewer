@@ -294,6 +294,11 @@ public class AuditTable extends JPanel {
             return contestUA.getContest().info().getMetadata().get("PoolPct");
         }
 
+        public Integer getOneshotEst() {
+            Integer nmvrs = oneshotMvrs.get(contestUA.getId());
+            return (nmvrs != null) ? nmvrs : 0;
+        }
+
         public String show() {
             StringBuilder sb = new StringBuilder();
             // sb.append("%n%s%n".formatted(contestTable.tableModel.toString()));

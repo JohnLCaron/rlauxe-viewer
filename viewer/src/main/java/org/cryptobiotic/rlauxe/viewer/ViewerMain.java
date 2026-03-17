@@ -57,7 +57,7 @@ public class ViewerMain extends JPanel {
   private final AuditTable auditPanel;
   private final AuditRoundsTable auditRoundsPanel;
   private final PoolTable poolPanel;
-  private final PopulationTable populationPanel;
+  private final BatchTable populationPanel;
   private final CardTable cardPanel;
   private final MvrTable mvrPanel;
 
@@ -75,33 +75,28 @@ public class ViewerMain extends JPanel {
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
     auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
-    populationPanel = new PopulationTable((PreferencesExt) prefs.node("PopulationTable"), infoTA, infoWindow, fontSize);
+    populationPanel = new BatchTable((PreferencesExt) prefs.node("PopulationTable"), infoTA, infoWindow, fontSize);
     poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
 
     tabbedPane.addTab("Audit", auditPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-    tabbedPane.addTab("Populations", populationPanel);
+    tabbedPane.addTab("Batches", populationPanel);
     tabbedPane.addTab("Pools", poolPanel);
     tabbedPane.addTab("Cards", cardPanel);
     tabbedPane.addTab("Mvrs", mvrPanel);
     tabbedPane.setSelectedIndex(0);
 
-    /*
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
       if (this.auditRecordDir.equals("none")) return;
-      if (c instanceof AuditTable) {
-        ((AuditTable)c).setAuditRecordLocation(this.auditRecordDir);
-      } else if (c instanceof AuditRoundsTable) {
-          ((AuditRoundsTable)c).setSelected(this.auditRecordDir);
-      } else if (c instanceof PoolTable) {
-          ((PoolTable)c).setSelected(this.auditRecordDir);
-      }  else if (c instanceof CardTable) {
-          ((CardTable)c).setSelected(this.auditRecordDir);
+      if (c instanceof CardTable cardTable) {
+          cardTable.setSelectedTab();
+      } else if (c instanceof MvrTable mvrTable) {
+         mvrTable.setSelectedTab();
       }
-    }); */
+    });
 
     ////// layout, left to right
 
@@ -250,6 +245,7 @@ public class ViewerMain extends JPanel {
     auditPanel.setAuditRecord(auditRecordDir);
     auditRoundsPanel.setAuditRecord(auditRecordDir);
     cardPanel.setAuditRecord(auditRecordDir);
+    mvrPanel.setAuditRecord(auditRecordDir, 1);
     populationPanel.setAuditRecord(auditRecordDir);
     poolPanel.setAuditRecord(auditRecordDir);
     mvrPanel.clear();

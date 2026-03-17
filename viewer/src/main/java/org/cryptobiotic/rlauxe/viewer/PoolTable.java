@@ -7,8 +7,8 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.core.ContestInfo;
-import org.cryptobiotic.rlauxe.oneaudit.OneAuditPool;
-import org.cryptobiotic.rlauxe.oneaudit.Vunder;
+import org.cryptobiotic.rlauxe.audit.CardPool;
+import org.cryptobiotic.rlauxe.estimate.Vunder;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
@@ -26,7 +26,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-import static org.cryptobiotic.rlauxe.persist.csv.OneAuditPoolCsvKt.readCardPoolCsvFile;
+import static org.cryptobiotic.rlauxe.persist.csv.CardPoolCsvKt.readCardPoolCsvFile;
 
 public class PoolTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(PoolTable.class);
@@ -48,7 +48,7 @@ public class PoolTable extends JPanel {
         this.prefs = prefs;
 
         poolTable = new BeanTable<>(PoolBean.class, (PreferencesExt) prefs.node("poolTable"), false,
-                "Pool", "OneAuditPool", null);
+                "Pool", "CardPool", null);
         poolTable.addListSelectionListener(e -> {
             PoolBean poolBean = poolTable.getSelectedBean();
             if (poolBean != null) {
@@ -109,7 +109,7 @@ public class PoolTable extends JPanel {
             } else { */
                 Publisher publisher = new Publisher(auditRecordLocation);
 
-                List<OneAuditPool> pools = readCardPoolCsvFile(publisher.oneauditPoolsFile(), infos);
+                List<CardPool> pools = readCardPoolCsvFile(publisher.cardPoolsFile(), infos);
 
 
                 java.util.List<PoolBean> beanList = new ArrayList<>();
@@ -147,12 +147,12 @@ public class PoolTable extends JPanel {
     //////////////////////////////////////////////////////////////////
 
     public class PoolBean {
-        OneAuditPool pool = null;
+        CardPool pool = null;
 
         public PoolBean() {
         }
 
-        PoolBean(OneAuditPool pool) {
+        PoolBean(CardPool pool) {
             this.pool = pool;
         }
 
@@ -197,7 +197,7 @@ public class PoolTable extends JPanel {
         public ContestTabBean() {
         }
 
-        ContestTabBean(OneAuditPool pool, ContestTabulation contestTab) {
+        ContestTabBean(CardPool pool, ContestTabulation contestTab) {
             this.contestTab = contestTab;
             this.vunder = contestTab.votesAndUndervotes(pool.getPoolId(), pool.ncards(), pool.hasSingleCardStyle());
         }

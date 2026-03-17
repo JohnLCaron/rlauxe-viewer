@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
+import static org.cryptobiotic.rlauxe.persist.csv.AuditableCardCsvKt.readCardsCsvIterator;
 import static org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerKt.readMvrsForRound;
 
 public class MvrTable extends JPanel {
@@ -37,7 +38,7 @@ public class MvrTable extends JPanel {
 
     private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
-    private Boolean isComposite;
+    private Boolean needsReading = true;
     private AuditConfig auditConfig;
     private List<AuditableCard> mvrs;
 
@@ -45,7 +46,7 @@ public class MvrTable extends JPanel {
         this.prefs = prefs;
 
         mvrTable = new BeanTable<>(CardBean.class, (PreferencesExt) prefs.node("cardTable"), false,
-                "AuditableCard", "CardManifest (sorted)", null);
+                "Mvrs (sorted)", "AuditableCard", null);
         mvrTable.addListSelectionListener(e -> {
             CardBean cardBean = mvrTable.getSelectedBean();
             if (cardBean != null) {
@@ -69,26 +70,46 @@ public class MvrTable extends JPanel {
         localInfo.setFontSize(size);
     }
 
-    boolean setAuditRecord(String auditRecordLocation, int roundIdx) {
+    boolean setAuditRecord(String auditRecordLocation, Integer roundIdx) {
         logger.debug("MvrTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (this.auditRecord == null) return false;
-        this.isComposite = (this.auditRecord instanceof CompositeRecord);
+
+        this.auditConfig = auditRecord.getConfig();
+        mvrTable.setBeans(emptyList());
+        needsReading = true;
+
+        return true;
+    }
+
+    void setSelectedTab() {
+        if (needsReading) {
+            if (readCards()) needsReading = false;
+        }
+    }
+
+    boolean readCards() {
+        logger.debug("readCards for "+ auditRecordLocation);
+        Integer cutoff = this.auditConfig .getContestSampleCutoff();
+        Integer ncardsToRead = (cutoff == null || cutoff < 11111) ? 11111 : cutoff;
 
         try {
-            this.auditConfig = auditRecord.getConfig();
-                Publisher publisher = new Publisher(auditRecordLocation);
-                this.mvrs = readMvrsForRound(publisher, roundIdx);
 
-                List<CardBean> beanList = new ArrayList<>();
-                int index = 1;
-                for (AuditableCard mvr : this.mvrs) {
+            Publisher publisher = new Publisher(auditRecordLocation);
+            List<CardBean> beanList = new ArrayList<>();
+            int index = 1;
+
+            try (var mvrIter = readCardsCsvIterator(publisher.sortedMvrsFile())) {
+                while (mvrIter.hasNext() && index < ncardsToRead) {
+                    var mvr = mvrIter.next();
                     beanList.add(new CardBean(mvr, index));
                     index++;
                 }
-                mvrTable.setBeans(beanList);
+            }
+            mvrTable.setBeans(beanList);
+            logger.info("MvrTable read " + index + " cards from "+ publisher.sortedMvrsFile());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -175,9 +196,9 @@ public class MvrTable extends JPanel {
             return sb.toString();
         }
         public Integer getPoolId() { return card.getPoolId(); }
-        public String getName() { return card.getPopulationName(); }
+        public String getName() { return card.getBatchName(); }
         public String getPopulation() {
-            var pop = card.getPopulation();
+            var pop = card.getBatch();
             if (pop == null) return "";
             int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
