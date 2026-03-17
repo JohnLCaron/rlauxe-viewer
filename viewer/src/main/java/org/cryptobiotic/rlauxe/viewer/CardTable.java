@@ -5,15 +5,11 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AuditConfig;
 import org.cryptobiotic.rlauxe.audit.AuditableCard;
 import org.cryptobiotic.rlauxe.workflow.CardManifest;
-import org.cryptobiotic.rlauxe.audit.PopulationIF;
-import org.cryptobiotic.rlauxe.oneaudit.OneAuditPoolIF;
+import org.cryptobiotic.rlauxe.audit.BatchIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
-import org.cryptobiotic.rlauxe.persist.CompositeRecord;
-import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -25,6 +21,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 public class CardTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(CardTable.class);
@@ -38,16 +36,16 @@ public class CardTable extends JPanel {
 
     private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
-    private Boolean isComposite;
+    private Boolean needsReading = true;
 
     private CardManifest cardManifest;
-    Map<String, PopulationIF> poolMap;
+    Map<String, BatchIF> poolMap;
 
     public CardTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
 
         cardTable = new BeanTable<>(CardBean.class, (PreferencesExt) prefs.node("cardTable"), false,
-                "AuditableCard", "CardManifest (sorted)", null);
+                "CardManifest (sorted)","AuditableCard",  null);
         cardTable.addListSelectionListener(e -> {
             CardBean cardBean = cardTable.getSelectedBean();
             if (cardBean != null) {
@@ -83,7 +81,22 @@ public class CardTable extends JPanel {
             logger.info("CardTable failed on readFrom "+ auditRecordLocation);
             return false;
         }
-        this.isComposite = (this.auditRecord instanceof CompositeRecord);
+
+        cardTable.setBeans(emptyList());
+        needsReading = true;
+
+        return true;
+    }
+
+    void setSelectedTab() {
+        if (needsReading) {
+            if (readCards()) needsReading = false;
+        }
+    }
+
+    boolean readCards() {
+        logger.info("readCards for "+ auditRecordLocation);
+
         Integer cutoff = auditRecord.getConfig().getContestSampleCutoff();
         Integer ncardsToRead = (cutoff == null || cutoff < 11111) ? 11111 : cutoff;
 
@@ -91,8 +104,8 @@ public class CardTable extends JPanel {
             this.cardManifest = this.auditRecord.readSortedManifest();
 
             // wtf ?
-            Map<String, PopulationIF> pools = new TreeMap<>(); // sorted
-            for (PopulationIF pool : cardManifest.getPopulations()) {
+            Map<String, BatchIF> pools = new TreeMap<>(); // sorted
+            for (BatchIF pool : cardManifest.getBatches()) {
                 String cardStyle = "P" + pool.id();
                 pools.put(cardStyle, pool);
             }
@@ -120,7 +133,7 @@ public class CardTable extends JPanel {
         return true;
     }
 
-    PopulationIF findPool(String cardStyle) {
+    BatchIF findPool(String cardStyle) {
         return poolMap.get(cardStyle);
     }
 
@@ -159,7 +172,7 @@ public class CardTable extends JPanel {
     //    val votes: Map<Int, IntArray>?, // must have this and/or population
     //    val poolId: Int?,
     //    val cardStyle: String? = null, // remove
-    //    val population: PopulationIF? = null, // not needed if hasStyle ?
+    //    val population: BatchIF? = null, // not needed if hasStyle ?
     //)
 
     public class CardBean {
@@ -196,9 +209,9 @@ public class CardTable extends JPanel {
             return sb.toString();
         }
         public Integer getPoolId() { return card.getPoolId(); }
-        public String getPopulationName() { return card.getPopulationName(); }
-        public String getPopulation() {
-            var pop = card.getPopulation();
+        public String getBatchName() { return card.getBatchName(); }
+        public String getBatchContests() {
+            var pop = card.getBatch();
             if (pop == null) return "";
             int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
@@ -235,9 +248,9 @@ public class CardTable extends JPanel {
             sb.append(card.toString());
             sb.append("\n");
 
-            var pop = card.getPopulation();
+            var pop = card.getBatch();
             if (pop == null) {
-                var cardStyle = card.getPopulationName();
+                var cardStyle = card.getBatchName();
                 if (cardStyle != null) {
                     pop = findPool(cardStyle);
                 }
