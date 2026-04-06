@@ -14,8 +14,8 @@ import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
-import org.cryptobiotic.rlauxe.raire.RaireAssertion;
-import org.cryptobiotic.rlauxe.raire.RaireAssorter;
+import org.cryptobiotic.rlauxe.irv.RaireAssertion;
+import org.cryptobiotic.rlauxe.irv.RaireAssorter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -26,6 +26,8 @@ import ucar.util.prefs.PreferencesExt;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+
+import static java.util.Collections.emptyList;
 
 public class AuditTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(AuditTable.class);
@@ -39,7 +41,7 @@ public class AuditTable extends JPanel {
 
     private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
-    private AuditConfig auditConfig;
+    private Config config;
     private Map<Integer, Integer> oneshotMvrs;
 
     public AuditTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
@@ -83,6 +85,7 @@ public class AuditTable extends JPanel {
 
     boolean setAuditRecord(String auditRecordLocation) {
         this.auditRecordLocation = auditRecordLocation;
+        contestTable.setBeans(emptyList());
 
         logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
 
@@ -91,7 +94,7 @@ public class AuditTable extends JPanel {
         if (this.auditRecord == null) return false;
 
         try {
-            this.auditConfig = auditRecord.getConfig();
+            this.config = auditRecord.getConfig();
 
             var contestMap = new HashMap<Integer, ContestBean>();
             java.util.List<ContestBean> beanList = new ArrayList<>();

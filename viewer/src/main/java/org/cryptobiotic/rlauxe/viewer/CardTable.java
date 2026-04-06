@@ -6,10 +6,14 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditableCard;
-import org.cryptobiotic.rlauxe.workflow.CardManifest;
-import org.cryptobiotic.rlauxe.audit.BatchIF;
+import org.cryptobiotic.rlauxe.audit.CardPool;
+import org.cryptobiotic.rlauxe.audit.Config;
+import org.cryptobiotic.rlauxe.persist.CardManifest;
+import org.cryptobiotic.rlauxe.audit.CardStyleIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
+import org.cryptobiotic.rlauxe.persist.CompositeRecord;
+import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -35,11 +39,12 @@ public class CardTable extends JPanel {
     private final JSplitPane split1;
 
     private String auditRecordLocation = "none";
-    private AuditRecordIF auditRecord;
+    private AuditRecord auditRecord;
+    private PersistedMvrManager mvrManager;
     private Boolean needsReading = true;
 
     private CardManifest cardManifest;
-    Map<String, BatchIF> poolMap;
+    Map<String, CardStyleIF> poolMap = Collections.emptyMap();
 
     public CardTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -74,15 +79,18 @@ public class CardTable extends JPanel {
 
     boolean setAuditRecord(String auditRecordLocation) {
         logger.info("CardTable setAuditRecord "+ auditRecordLocation);
+        cardTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
-        this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
-        if (this.auditRecord == null) {
+        AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        if (auditRecord == null) {
             logger.info("CardTable failed on readFrom "+ auditRecordLocation);
             return false;
         }
+        if (auditRecord instanceof CompositeRecord) return false;
+        this.auditRecord = (AuditRecord) auditRecord;
+        this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
 
-        cardTable.setBeans(emptyList());
         needsReading = true;
 
         return true;
@@ -97,19 +105,32 @@ public class CardTable extends JPanel {
     boolean readCards() {
         logger.info("readCards for "+ auditRecordLocation);
 
-        Integer cutoff = auditRecord.getConfig().getContestSampleCutoff();
+        Config config = auditRecord.getConfig();
+        Integer cutoff = config.getRound().getSampling().getContestSampleCutoff();
         Integer ncardsToRead = (cutoff == null || cutoff < 11111) ? 11111 : cutoff;
 
         try {
-            this.cardManifest = this.auditRecord.readSortedManifest();
+            this.cardManifest = this.mvrManager.sortedManifest();
 
-            // wtf ?
-            Map<String, BatchIF> pools = new TreeMap<>(); // sorted
-            for (BatchIF pool : cardManifest.getBatches()) {
-                String cardStyle = "P" + pool.id();
-                pools.put(cardStyle, pool);
+            List<CardStyleIF> styles = this.mvrManager.batches();
+            if (styles != null) {
+                Map<String, CardStyleIF> pools = new TreeMap<>(); // sorted
+                for (CardStyleIF pool : styles) {
+                    String cardStyle = "P" + pool.id();
+                    pools.put(cardStyle, pool);
+                }
+                this.poolMap = pools;
+            } else {
+                List<CardPool> cardPools = this.mvrManager.pools();
+                if (cardPools != null) {
+                    Map<String, CardStyleIF> pools = new TreeMap<>(); // sorted
+                    for (CardStyleIF pool : cardPools) {
+                        String cardStyle = "P" + pool.id();
+                        pools.put(cardStyle, pool);
+                    }
+                    this.poolMap = pools;
+                }
             }
-            this.poolMap = pools;
 
             List<CardBean> beanList = new ArrayList<>();
             int index = 1;
@@ -133,7 +154,7 @@ public class CardTable extends JPanel {
         return true;
     }
 
-    BatchIF findPool(String cardStyle) {
+    CardStyleIF findPool(String cardStyle) {
         return poolMap.get(cardStyle);
     }
 
@@ -172,7 +193,7 @@ public class CardTable extends JPanel {
     //    val votes: Map<Int, IntArray>?, // must have this and/or population
     //    val poolId: Int?,
     //    val cardStyle: String? = null, // remove
-    //    val population: BatchIF? = null, // not needed if hasStyle ?
+    //    val population: CardStyleIF? = null, // not needed if hasStyle ?
     //)
 
     public class CardBean {
@@ -201,18 +222,17 @@ public class CardTable extends JPanel {
         }
         public Boolean getPhantom() { return card.getPhantom(); }
         public String getContests() {
-            int[] ids = card.contests();
+            int[] ids = card.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
             }
             return sb.toString();
         }
-        public Integer getPoolId() { return card.getPoolId(); }
-        public String getBatchName() { return card.getBatchName(); }
-        public String getBatchContests() {
-            var pop = card.getBatch();
-            if (pop == null) return "";
+        public Integer getPoolId() { return card.poolId(); }
+        public String getCardStyle() { return card.styleName(); }
+        public String getPossibleContests() {
+            var pop = card.getCardStyle();
             int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
@@ -248,16 +268,8 @@ public class CardTable extends JPanel {
             sb.append(card.toString());
             sb.append("\n");
 
-            var pop = card.getBatch();
-            if (pop == null) {
-                var cardStyle = card.getBatchName();
-                if (cardStyle != null) {
-                    pop = findPool(cardStyle);
-                }
-            }
-            if (pop != null) {
-                sb.append(pop.toString());
-            }
+            var pop = card.getCardStyle();
+            sb.append(pop.toString());
             return sb.toString();
         }
     }
