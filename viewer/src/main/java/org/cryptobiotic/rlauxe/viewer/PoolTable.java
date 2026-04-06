@@ -26,6 +26,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.persist.csv.CardPoolCsvKt.readCardPoolCsvFile;
 
 public class PoolTable extends JPanel {
@@ -42,7 +43,6 @@ public class PoolTable extends JPanel {
     private String auditRecordLocation = "none";
     private AuditRecordIF auditRecord;
     private boolean isComposite;
-    private AuditConfig auditConfig;
 
     public PoolTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -78,6 +78,7 @@ public class PoolTable extends JPanel {
 
     boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("PoolTable setAuditRecord "+ auditRecordLocation);
+        poolTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
@@ -88,42 +89,14 @@ public class PoolTable extends JPanel {
             infos.put(contest.getId(), contest.getContest().info());
         }
 
-        /* try {
-            this.auditConfig = auditRecord.getConfig();
-            List<ContestWithAssertions> contestsUA = auditRecord.getContests();
+        Publisher publisher = new Publisher(auditRecordLocation);
+        List<CardPool> pools = readCardPoolCsvFile(publisher.cardPoolsFile(), infos);
 
-            if (isComposite) {
-                // TODO choose component
-                CompositeRecord composite = (CompositeRecord) this.auditRecord;
-                AuditRecord first = composite.getComponentRecords().getFirst();
-
-                Publisher publisher = new Publisher(first.getLocation());
-                CardManifest cardManifest = readSortedManifest(publisher);
-
-                java.util.List<PoolBean> beanList = new ArrayList<>();
-                for (var pop : cardManifest.getPopulations()) {
-                    beanList.add(new PoolBean(pop));
-                }
-                poolTable.setBeans(beanList);
-
-            } else { */
-                Publisher publisher = new Publisher(auditRecordLocation);
-
-                List<CardPool> pools = readCardPoolCsvFile(publisher.cardPoolsFile(), infos);
-
-
-                java.util.List<PoolBean> beanList = new ArrayList<>();
-                for (var pool : pools) {
-                    beanList.add(new PoolBean(pool));
-                }
-                poolTable.setBeans(beanList);
-            /* }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, e.getMessage());
-            logger.error("setAuditRecord failed", e);
-        } */
+        java.util.List<PoolBean> beanList = new ArrayList<>();
+        for (var pool : pools) {
+            beanList.add(new PoolBean(pool));
+        }
+        poolTable.setBeans(beanList);
 
         return true;
     }

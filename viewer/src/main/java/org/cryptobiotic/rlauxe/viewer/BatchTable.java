@@ -5,10 +5,11 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.workflow.CardManifest;
-import org.cryptobiotic.rlauxe.audit.BatchIF;
+import org.cryptobiotic.rlauxe.audit.CardStyleIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
+import org.cryptobiotic.rlauxe.persist.CompositeRecord;
+import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -21,6 +22,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+
 public class BatchTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(BatchTable.class);
 
@@ -31,13 +34,14 @@ public class BatchTable extends JPanel {
 
     private final JSplitPane split1;
 
-    private AuditRecordIF auditRecord;
+    private AuditRecord auditRecord;
+    PersistedMvrManager mvrManager;
 
     public BatchTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
 
         poolTable = new BeanTable<>(PopBean.class, (PreferencesExt) prefs.node("poolTable"), false,
-                "Batches", "Batch", null);
+                "CardStyles", "CardStyle", null);
         poolTable.addListSelectionListener(e -> {
             PopBean poolBean = poolTable.getSelectedBean();
             if (poolBean != null) {
@@ -66,16 +70,25 @@ public class BatchTable extends JPanel {
 
     boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("PopulationTable setAuditRecord "+ auditRecordLocation);
+        poolTable.setBeans(emptyList());
 
-        this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
-        if (this.auditRecord == null) return false;
+        AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        if (auditRecord == null) {
+            logger.info("CardTable failed on readFrom "+ auditRecordLocation);
+            return false;
+        }
+        if (auditRecord instanceof CompositeRecord) return false;
+        this.auditRecord = (AuditRecord) auditRecord;
+        this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
 
         try {
-            CardManifest cardManifest = this.auditRecord.readSortedManifest();
-
             List<PopBean> beanList = new ArrayList<>();
-            for (var pop : cardManifest.getBatches()) {
-                beanList.add(new PopBean(pop));
+
+            var batches = mvrManager.batches();
+            if (batches != null) {
+                for (var pop : batches) {
+                    beanList.add(new PopBean(pop));
+                }
             }
             poolTable.setBeans(beanList);
 
@@ -114,12 +127,12 @@ public class BatchTable extends JPanel {
     //////////////////////////////////////////////////////////////////
 
     static public class PopBean {
-        BatchIF pop;
+        CardStyleIF pop;
 
         public PopBean() {
         }
 
-        PopBean(BatchIF pop) {
+        PopBean(CardStyleIF pop) {
             this.pop = pop;
         }
 

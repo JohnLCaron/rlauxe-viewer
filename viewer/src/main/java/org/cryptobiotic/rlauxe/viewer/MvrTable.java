@@ -5,12 +5,13 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AuditConfig;
 import org.cryptobiotic.rlauxe.audit.AuditableCard;
+import org.cryptobiotic.rlauxe.audit.Config;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
+import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -23,8 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
-import static org.cryptobiotic.rlauxe.persist.csv.AuditableCardCsvKt.readCardsCsvIterator;
-import static org.cryptobiotic.rlauxe.workflow.PersistedMvrManagerKt.readMvrsForRound;
+import static org.cryptobiotic.rlauxe.persist.csv.CardCsvKt.readCardsCsvIterator;
 
 public class MvrTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(MvrTable.class);
@@ -37,9 +37,11 @@ public class MvrTable extends JPanel {
     private final JSplitPane split1;
 
     private String auditRecordLocation = "none";
-    private AuditRecordIF auditRecord;
+    private AuditRecord auditRecord;
+    PersistedMvrManager mvrManager;
+
     private Boolean needsReading = true;
-    private AuditConfig auditConfig;
+    private Config config;
     private List<AuditableCard> mvrs;
 
     public MvrTable(PreferencesExt prefs, float fontSize) {
@@ -72,13 +74,19 @@ public class MvrTable extends JPanel {
 
     boolean setAuditRecord(String auditRecordLocation, Integer roundIdx) {
         logger.debug("MvrTable setAuditRecord "+ auditRecordLocation);
+        mvrTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
-        this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
-        if (this.auditRecord == null) return false;
+        AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        if (auditRecord == null) {
+            logger.info("CardTable failed on readFrom "+ auditRecordLocation);
+            return false;
+        }
+        if (auditRecord instanceof CompositeRecord) return false;
+        this.auditRecord = (AuditRecord) auditRecord;
+        this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
 
-        this.auditConfig = auditRecord.getConfig();
-        mvrTable.setBeans(emptyList());
+        this.config = auditRecord.getConfig();
         needsReading = true;
 
         return true;
@@ -92,7 +100,7 @@ public class MvrTable extends JPanel {
 
     boolean readCards() {
         logger.debug("readCards for "+ auditRecordLocation);
-        Integer cutoff = this.auditConfig .getContestSampleCutoff();
+        Integer cutoff = this.config.getRound().getSampling().getContestSampleCutoff();
         Integer ncardsToRead = (cutoff == null || cutoff < 11111) ? 11111 : cutoff;
 
         try {
@@ -101,7 +109,7 @@ public class MvrTable extends JPanel {
             List<CardBean> beanList = new ArrayList<>();
             int index = 1;
 
-            try (var mvrIter = readCardsCsvIterator(publisher.sortedMvrsFile())) {
+            try (var mvrIter = mvrManager.readCardsAndMerge(publisher.sortedMvrsFile())) {
                 while (mvrIter.hasNext() && index < ncardsToRead) {
                     var mvr = mvrIter.next();
                     beanList.add(new CardBean(mvr, index));
@@ -188,25 +196,15 @@ public class MvrTable extends JPanel {
         }
         public Boolean getPhantom() { return card.getPhantom(); }
         public String getContests() {
-            int[] ids = card.contests();
+            int[] ids = card.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
             }
             return sb.toString();
         }
-        public Integer getPoolId() { return card.getPoolId(); }
-        public String getName() { return card.getBatchName(); }
-        public String getPopulation() {
-            var pop = card.getBatch();
-            if (pop == null) return "";
-            int[] ids = pop.possibleContests();
-            StringBuilder sb = new StringBuilder();
-            for (int id : ids) {
-                sb.append("%d,".formatted(id));
-            }
-            return sb.toString();
-        }
+        public Integer getPoolId() { return card.poolId(); }
+        public String getCardStyle() { return card.styleName(); }
         public String getVotes() {
             var votes = card.getVotes();
             if (votes == null) return "N/A";

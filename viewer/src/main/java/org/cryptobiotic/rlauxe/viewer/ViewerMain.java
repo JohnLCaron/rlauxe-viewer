@@ -75,14 +75,14 @@ public class ViewerMain extends JPanel {
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
     auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
-    populationPanel = new BatchTable((PreferencesExt) prefs.node("PopulationTable"), infoTA, infoWindow, fontSize);
+    populationPanel = new BatchTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
     poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
 
     tabbedPane.addTab("Audit", auditPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-    tabbedPane.addTab("Batches", populationPanel);
+    tabbedPane.addTab("Styles", populationPanel);
     tabbedPane.addTab("Pools", poolPanel);
     tabbedPane.addTab("Cards", cardPanel);
     tabbedPane.addTab("Mvrs", mvrPanel);
