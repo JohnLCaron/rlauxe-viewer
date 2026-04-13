@@ -8,6 +8,7 @@ package org.cryptobiotic.rlauxe.viewer;
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.betting.TestH0Status;
 import org.cryptobiotic.rlauxe.core.*;
+import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import org.cryptobiotic.rlauxe.estimate.ConsistentSamplingKt;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
@@ -31,11 +32,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.runRound;
 import static org.cryptobiotic.rlauxe.persist.json.AuditRoundJsonKt.writeAuditRoundJsonFile;
 import static org.cryptobiotic.rlauxe.persist.json.SamplePrnsJsonKt.writeSamplePrnsJsonFile;
+import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
 
 public class AuditRoundsTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(AuditRoundsTable.class);
@@ -606,6 +610,15 @@ public class AuditRoundsTable extends JPanel {
             StringBuilder sb = new StringBuilder();
             sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, beanProperties)));
             sb.append("\n%s%n".formatted(contestUA.show()));
+            if (contestUA.getContest() instanceof DHondtContest) {
+                var rounds = auditRecord.getRounds();
+                List<AuditRound> asSubtype = rounds.stream()
+                        .filter(AuditRound.class::isInstance)
+                        .map(AuditRound.class::cast)
+                        .collect(Collectors.toList());
+
+                sb.append(((DHondtContest) contestUA.getContest()).showAssertions(rounds));
+            }
             return sb.toString();
         }
     }
@@ -665,6 +678,7 @@ public class AuditRoundsTable extends JPanel {
             return assertion.getAssorter().shortName();
         }
 
+        public double getNoErrorMargin() {return mean2margin(assertion.getAssorter().noerror()); }
         public double getNoError() {return assertion.getAssorter().noerror(); }
         public double getUpper() {return assertion.getAssorter().upperBound(); }
 

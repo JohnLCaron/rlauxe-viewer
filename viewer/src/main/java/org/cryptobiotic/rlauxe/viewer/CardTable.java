@@ -9,7 +9,7 @@ import org.cryptobiotic.rlauxe.audit.AuditableCard;
 import org.cryptobiotic.rlauxe.audit.CardPool;
 import org.cryptobiotic.rlauxe.audit.Config;
 import org.cryptobiotic.rlauxe.persist.CardManifest;
-import org.cryptobiotic.rlauxe.audit.CardStyleIF;
+import org.cryptobiotic.rlauxe.audit.StyleIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
@@ -44,13 +44,13 @@ public class CardTable extends JPanel {
     private Boolean needsReading = true;
 
     private CardManifest cardManifest;
-    Map<String, CardStyleIF> poolMap = Collections.emptyMap();
+    Map<String, StyleIF> poolMap = Collections.emptyMap();
 
     public CardTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
 
         cardTable = new BeanTable<>(CardBean.class, (PreferencesExt) prefs.node("cardTable"), false,
-                "CardManifest (sorted)","AuditableCard",  null);
+                "CardManifest (sorted)", "AuditableCard", null);
         cardTable.addListSelectionListener(e -> {
             CardBean cardBean = cardTable.getSelectedBean();
             if (cardBean != null) {
@@ -78,13 +78,13 @@ public class CardTable extends JPanel {
     }
 
     boolean setAuditRecord(String auditRecordLocation) {
-        logger.info("CardTable setAuditRecord "+ auditRecordLocation);
+        logger.info("CardTable setAuditRecord " + auditRecordLocation);
         cardTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
         AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
         if (auditRecord == null) {
-            logger.info("CardTable failed on readFrom "+ auditRecordLocation);
+            logger.info("CardTable failed on readFrom " + auditRecordLocation);
             return false;
         }
         if (auditRecord instanceof CompositeRecord) return false;
@@ -103,7 +103,7 @@ public class CardTable extends JPanel {
     }
 
     boolean readCards() {
-        logger.info("readCards for "+ auditRecordLocation);
+        logger.info("readCards for " + auditRecordLocation);
 
         Config config = auditRecord.getConfig();
         Integer cutoff = config.getRound().getSampling().getContestSampleCutoff();
@@ -112,10 +112,10 @@ public class CardTable extends JPanel {
         try {
             this.cardManifest = this.mvrManager.sortedManifest();
 
-            List<CardStyleIF> styles = this.mvrManager.batches();
+            List<StyleIF> styles = this.mvrManager.batches();
             if (styles != null) {
-                Map<String, CardStyleIF> pools = new TreeMap<>(); // sorted
-                for (CardStyleIF pool : styles) {
+                Map<String, StyleIF> pools = new TreeMap<>(); // sorted
+                for (StyleIF pool : styles) {
                     String cardStyle = "P" + pool.id();
                     pools.put(cardStyle, pool);
                 }
@@ -123,8 +123,8 @@ public class CardTable extends JPanel {
             } else {
                 List<CardPool> cardPools = this.mvrManager.pools();
                 if (cardPools != null) {
-                    Map<String, CardStyleIF> pools = new TreeMap<>(); // sorted
-                    for (CardStyleIF pool : cardPools) {
+                    Map<String, StyleIF> pools = new TreeMap<>(); // sorted
+                    for (StyleIF pool : cardPools) {
                         String cardStyle = "P" + pool.id();
                         pools.put(cardStyle, pool);
                     }
@@ -142,7 +142,7 @@ public class CardTable extends JPanel {
                 }
             }
             cardTable.setBeans(beanList);
-            logger.info("CardTable read " + index + " cards from "+ auditRecordLocation);
+            logger.info("CardTable read " + index + " cards from " + auditRecordLocation);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -154,7 +154,7 @@ public class CardTable extends JPanel {
         return true;
     }
 
-    CardStyleIF findPool(String cardStyle) {
+    StyleIF findPool(String cardStyle) {
         return poolMap.get(cardStyle);
     }
 
@@ -183,19 +183,20 @@ public class CardTable extends JPanel {
 
     //////////////////////////////////////////////////////////////////
 
-    // data class AuditableCard (
-    //    val location: String, // info to find the card for a manual audit. Aka ballot identifier.
-    //    val index: Int,  // index into the original, canonical list of cards
-    //    val prn: Long,   // psuedo random number
-    //    val phantom: Boolean,
-    //    val possibleContests: IntArray, // remove
-    //
-    //    val votes: Map<Int, IntArray>?, // must have this and/or population
-    //    val poolId: Int?,
-    //    val cardStyle: String? = null, // remove
-    //    val population: CardStyleIF? = null, // not needed if hasStyle ?
-    //)
+// data class AuditableCard (
+//    val location: String, // info to find the card for a manual audit. Aka ballot identifier.
+//    val index: Int,  // index into the original, canonical list of cards
+//    val prn: Long,   // psuedo random number
+//    val phantom: Boolean,
+//    val possibleContests: IntArray, // remove
+//
+//    val votes: Map<Int, IntArray>?, // must have this and/or population
+//    val poolId: Int?,
+//    val cardStyle: String? = null, // remove
+//    val population: StyleIF? = null, // not needed if hasStyle ?
+//)
 
+        // must be public
     public class CardBean {
         AuditableCard card;
         int index;
@@ -208,19 +209,29 @@ public class CardTable extends JPanel {
             this.index = index;
         }
 
+        public String getId() {
+            return card.getId();
+        }
         public String getLocation() {
             return card.getLocation();
         }
+
         public Integer getIndex() {
             return this.index;
         }
+
         public Integer getCardIndex() {
             return card.getIndex();
         }
+
         public long getPrn() {
             return card.getPrn();
         }
-        public Boolean getPhantom() { return card.getPhantom(); }
+
+        public Boolean getPhantom() {
+            return card.getPhantom();
+        }
+
         public String getContests() {
             int[] ids = card.possibleContests();
             StringBuilder sb = new StringBuilder();
@@ -229,10 +240,17 @@ public class CardTable extends JPanel {
             }
             return sb.toString();
         }
-        public Integer getPoolId() { return card.poolId(); }
-        public String getCardStyle() { return card.styleName(); }
+
+        public Integer getPoolId() {
+            return card.poolId();
+        }
+
+        public String getCardStyle() {
+            return card.styleName();
+        }
+
         public String getPossibleContests() {
-            var pop = card.getCardStyle();
+            var pop = card.getStyle();
             int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
@@ -240,6 +258,7 @@ public class CardTable extends JPanel {
             }
             return sb.toString();
         }
+
         public String getVotes() {
             var votes = card.getVotes();
             if (votes == null) return "N/A";
@@ -252,9 +271,9 @@ public class CardTable extends JPanel {
                 if (cands.length == 1) sb.append("%d, ".formatted(cands[0]));
                 else if (cands.length > 1) {
                     sb.append("[");
-                    for (int idx=0; idx<cands.length; idx++) {
+                    for (int idx = 0; idx < cands.length; idx++) {
                         int cand = cands[idx];
-                        if (idx > 0)  sb.append(", ");
+                        if (idx > 0) sb.append(", ");
                         sb.append("%d".formatted(cand));
                     }
                     sb.append("],");
@@ -268,10 +287,10 @@ public class CardTable extends JPanel {
             sb.append(card.toString());
             sb.append("\n");
 
-            var pop = card.getCardStyle();
+            var pop = card.getStyle();
             sb.append(pop.toString());
             return sb.toString();
         }
     }
-
 }
+

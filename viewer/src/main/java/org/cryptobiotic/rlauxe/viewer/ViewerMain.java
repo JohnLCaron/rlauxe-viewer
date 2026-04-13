@@ -57,9 +57,10 @@ public class ViewerMain extends JPanel {
   private final AuditTable auditPanel;
   private final AuditRoundsTable auditRoundsPanel;
   private final PoolTable poolPanel;
-  private final BatchTable populationPanel;
+  private final StyleTable stylePanel;
   private final CardTable cardPanel;
   private final MvrTable mvrPanel;
+  private final ContestPoolsTable contestPoolPanel;
 
   public ViewerMain(PreferencesExt prefs, float fontSize) {
     // Popup info window
@@ -75,15 +76,17 @@ public class ViewerMain extends JPanel {
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
     auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
-    populationPanel = new BatchTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
+    stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
     poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+    contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
 
     tabbedPane.addTab("Audit", auditPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-    tabbedPane.addTab("Styles", populationPanel);
+    tabbedPane.addTab("Styles", stylePanel);
     tabbedPane.addTab("Pools", poolPanel);
+    tabbedPane.addTab("ContestPools", contestPoolPanel);
     tabbedPane.addTab("Cards", cardPanel);
     tabbedPane.addTab("Mvrs", mvrPanel);
     tabbedPane.setSelectedIndex(0);
@@ -234,8 +237,9 @@ public class ViewerMain extends JPanel {
       logger.debug("resizeFonts " + fontSize);
       auditPanel.setFontSize(fontSize);
       auditRoundsPanel.setFontSize(fontSize);
-      populationPanel.setFontSize(fontSize);
+      stylePanel.setFontSize(fontSize);
       poolPanel.setFontSize(fontSize);
+      contestPoolPanel.setFontSize(fontSize);
       cardPanel.setFontSize(fontSize);
       mvrPanel.setFontSize(fontSize);
       infoTA.setFontSize(fontSize);
@@ -246,8 +250,9 @@ public class ViewerMain extends JPanel {
     auditRoundsPanel.setAuditRecord(auditRecordDir);
     cardPanel.setAuditRecord(auditRecordDir);
     mvrPanel.setAuditRecord(auditRecordDir, 1);
-    populationPanel.setAuditRecord(auditRecordDir);
+    stylePanel.setAuditRecord(auditRecordDir);
     poolPanel.setAuditRecord(auditRecordDir);
+    contestPoolPanel.setAuditRecord(auditRecordDir);
     mvrPanel.clear();
   }
 
@@ -256,8 +261,9 @@ public class ViewerMain extends JPanel {
 
     auditPanel.save();
     auditRoundsPanel.save();
-    populationPanel.save();
+    stylePanel.save();
     poolPanel.save();
+    contestPoolPanel.save();
     cardPanel.save();
     mvrPanel.save();
 

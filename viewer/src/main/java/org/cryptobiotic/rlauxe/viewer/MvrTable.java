@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
-import static org.cryptobiotic.rlauxe.persist.csv.CardCsvKt.readCardsCsvIterator;
 
 public class MvrTable extends JPanel {
     static private final Logger logger = LoggerFactory.getLogger(MvrTable.class);
@@ -182,6 +181,9 @@ public class MvrTable extends JPanel {
             this.index = index;
         }
 
+        public String getId() {
+            return card.getId();
+        }
         public String getLocation() {
             return card.getLocation();
         }
