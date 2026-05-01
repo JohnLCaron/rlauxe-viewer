@@ -14,6 +14,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
 import org.cryptobiotic.rlauxe.persist.Publisher;
 import org.cryptobiotic.rlauxe.util.ContestTabulation;
+import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -41,8 +42,8 @@ public class PoolTable extends JPanel {
     private final JSplitPane split1;
 
     private String auditRecordLocation = "none";
-    private AuditRecordIF auditRecord;
-    private boolean isComposite;
+    private AuditRecord auditRecord;
+    PersistedMvrManager mvrManager;
 
     public PoolTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
@@ -79,18 +80,21 @@ public class PoolTable extends JPanel {
     boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("PoolTable setAuditRecord "+ auditRecordLocation);
         poolTable.setBeans(emptyList());
+        contestTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
-        this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
-        if (this.auditRecord == null) return false;
-        this.isComposite = (this.auditRecord instanceof CompositeRecord);
-        var infos = new HashMap<Integer, ContestInfo>();
-        for (var contest : auditRecord.getContests()) {
-            infos.put(contest.getId(), contest.getContest().info());
+        AuditRecordIF auditRecord = AuditRecord.Companion.read(auditRecordLocation);
+        if (auditRecord == null) {
+            logger.info("PoolTable failed on readFrom "+ auditRecordLocation);
+            return false;
         }
 
-        Publisher publisher = new Publisher(auditRecordLocation);
-        List<CardPool> pools = readCardPoolCsvFile(publisher.cardPoolsFile(), infos);
+        if (auditRecord instanceof CompositeRecord) return false;
+        this.auditRecord = (AuditRecord) auditRecord;
+        this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
+
+        List<CardPool> pools = mvrManager.pools();
+        if (pools == null) return false;
 
         java.util.List<PoolBean> beanList = new ArrayList<>();
         for (var pool : pools) {
@@ -138,7 +142,7 @@ public class PoolTable extends JPanel {
         }
 
         public boolean getSingleStyle() {
-            return pool.hasSingleCardStyle();
+            return pool.hasExactContests();
         }
 
         public Integer getNcards() {
@@ -158,6 +162,8 @@ public class PoolTable extends JPanel {
             return pool.possibleContests().length;
         }
 
+        public String getClassName() { return pool.getClass().getSimpleName(); }
+
         public String show() {
             return pool.toString();
         }
@@ -172,20 +178,21 @@ public class PoolTable extends JPanel {
 
         ContestTabBean(CardPool pool, ContestTabulation contestTab) {
             this.contestTab = contestTab;
-            this.vunder = contestTab.votesAndUndervotes(pool.getPoolId(), pool.ncards(), pool.hasSingleCardStyle());
+            this.vunder = contestTab.votesAndUndervotes(pool.getPoolId(), pool.ncards(), pool.hasExactContests());
         }
 
         public Integer getContestId() {return vunder.getContestId();}
         public String getIsIrv() { return ((contestTab.isIrv()) ? "yes" : ""); }
         public Integer getVoteForN() {return vunder.getVoteForN();}
-        public Integer getNcards() {return vunder.getNcards();}
+
+        public Integer getNCards() {return vunder.getNcards();}
         public Integer getUndervotes() {return vunder.getUndervotes();}
+        public Integer getNVotes() {return vunder.getNvotes();}
+        public Integer getMissing() {return vunder.getMissing();}
         public String getVotes() {
             if (!contestTab.isIrv()) return vunder.cands().toString();
             else return "VC " + vunder.getVoteCounts().size() + " unique rankings";
         }
-        public Integer getNVotes() {return vunder.getNvotes();}
-        public Integer getMissing() {return vunder.getMissing();}
 
         public String show() {
             return contestTab.toString() + "\n" +  vunder.toString();

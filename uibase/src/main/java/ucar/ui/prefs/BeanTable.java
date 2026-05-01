@@ -304,6 +304,18 @@ public class BeanTable<T> extends JPanel {
         };
     }
 
+  public Action makeActionOnCurrentBean(Function<Object, AbstractAction> act) {
+    return new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        Object bean = getSelectedBean();
+        logger.debug(String.format("makeActionOnCurrentBean %s", bean));
+        if (bean != null) {
+           act.apply(bean);
+        }
+      }
+    };
+  }
+
   /**
    * Get the currently selected bean, or null if none selected.
    */
