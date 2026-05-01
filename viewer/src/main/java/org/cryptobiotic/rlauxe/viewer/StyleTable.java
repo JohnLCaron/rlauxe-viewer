@@ -72,7 +72,7 @@ public class StyleTable extends JPanel {
         logger.debug("PopulationTable setAuditRecord "+ auditRecordLocation);
         poolTable.setBeans(emptyList());
 
-        AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        AuditRecordIF auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (auditRecord == null) {
             logger.info("CardTable failed on readFrom "+ auditRecordLocation);
             return false;

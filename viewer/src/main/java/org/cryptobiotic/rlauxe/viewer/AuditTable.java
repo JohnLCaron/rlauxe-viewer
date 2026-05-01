@@ -10,12 +10,9 @@ import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
 import org.cryptobiotic.rlauxe.core.ClcaAssertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
-import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
-import org.cryptobiotic.rlauxe.irv.RaireAssertion;
-import org.cryptobiotic.rlauxe.irv.RaireAssorter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -90,7 +87,7 @@ public class AuditTable extends JPanel {
         logger.debug("auditTable setAuditRecord "+ auditRecordLocation);
 
         this.auditRecordLocation = auditRecordLocation;
-        this.auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        this.auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (this.auditRecord == null) return false;
 
         try {
@@ -314,7 +311,9 @@ public class AuditTable extends JPanel {
     public class AssertionBean {
         static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
         static {
-            beanProperties.add(new BeanTable.TableBeanProperty("name", "assertion name"));
+            beanProperties.add(new BeanTable.TableBeanProperty("type", "assorter type"));
+            beanProperties.add(new BeanTable.TableBeanProperty("winner", "assertion winner candidate"));
+            beanProperties.add(new BeanTable.TableBeanProperty("loser", "assertion loser candidate"));
             beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion difficulty description"));
             beanProperties.add(new BeanTable.TableBeanProperty("difficulty", "assertion difficulty measure (IRV only)"));
             beanProperties.add(new BeanTable.TableBeanProperty("upper", "assorter upper bound"));
@@ -327,6 +326,7 @@ public class AuditTable extends JPanel {
 
         ContestWithAssertions cua;
         Assertion assertion;
+        Map<Integer, String> candidates;
         OneAuditClcaAssorter oaAssorter;
 
         public AssertionBean() {
@@ -335,6 +335,7 @@ public class AuditTable extends JPanel {
         AssertionBean(ContestWithAssertions cua, Assertion assertion) {
             this.cua = cua;
             this.assertion = assertion;
+            this.candidates = cua.getContest().info().getCandidateIdToName();
             if (assertion instanceof ClcaAssertion cassertion) {
                 if (cassertion.getCassorter() instanceof OneAuditClcaAssorter) {
                     this.oaAssorter = (OneAuditClcaAssorter) cassertion.getCassorter();
@@ -342,11 +343,20 @@ public class AuditTable extends JPanel {
             }
         }
 
-        public String getName() {
-            return assertion.getAssorter().shortName();
+        public String getType() {
+            return assertion.getAssorter().getClass().getSimpleName();
+        }
+        public String getWinner() {
+            int winner =  assertion.getAssorter().winner();
+            return candidates.get(winner);
+        }
+        public String getLoser() {
+            int loser =  assertion.getAssorter().loser();
+            return candidates.get(loser);
         }
         public String getDesc() {
-            return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
+            return assertion.getAssorter().hashcodeDesc();
+            // return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
         }
 
         //public Integer getEstMvrs() {return assertionRound.getEstSampleSize();}
@@ -359,14 +369,16 @@ public class AuditTable extends JPanel {
             return assertion.getAssorter().dilutedMargin();
         }
 
-        public long getDifficulty() {
-            if (assertion.getAssorter() instanceof RaireAssorter) {
+        public String getDifficulty() {
+            return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
+
+            /* if (assertion.getAssorter() instanceof RaireAssorter) {
                 RaireAssertion rassertion = ((RaireAssorter) assertion.getAssorter()).getRassertion();
                 return Math.round(rassertion.getDifficulty());
             } else if (cua.getContest() instanceof DHondtContest) {
                 return Math.round(((DHondtContest) cua.getContest()).difficulty(assertion.getAssorter()));
             }
-            return -1;
+            return -1; */
         }
 
         public double getRecountMargin() {

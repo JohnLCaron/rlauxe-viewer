@@ -83,7 +83,7 @@ public class PoolTable extends JPanel {
         contestTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
-        AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        AuditRecordIF auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (auditRecord == null) {
             logger.info("PoolTable failed on readFrom "+ auditRecordLocation);
             return false;

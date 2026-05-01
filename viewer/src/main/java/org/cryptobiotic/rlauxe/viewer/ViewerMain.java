@@ -5,6 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
+import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;
 import ucar.ui.prefs.Debug;
@@ -136,7 +137,7 @@ public class ViewerMain extends JPanel {
     // TODO put into separate thread
     AbstractAction runAuditRoundAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        auditRoundsPanel.runAuditRound();
+        auditRoundsPanel.callRunRound();
         auditPanel.setAuditRecord(auditRecordDir);
       }
     };
@@ -201,11 +202,16 @@ public class ViewerMain extends JPanel {
       if (!this.eventOk) {
         return;
       }
-      this.auditRecordDir = (String) auditRecordDirCB.getSelectedItem();
-      this.eventOk = false;
-      this.auditRecordDirCB.addItem(this.auditRecordDir);
-      this.eventOk = true;
-      setAuditRecord();
+      var checkAuditDir = (String) auditRecordDirCB.getSelectedItem();
+      if (AuditRecord.Companion.checkExists(checkAuditDir)) {
+        this.auditRecordDir = checkAuditDir;
+        this.eventOk = false;
+        this.auditRecordDirCB.addItem(checkAuditDir);
+        this.eventOk = true;
+        setAuditRecord();
+      } else {
+        JOptionPane.showMessageDialog(null, String.format("No AuditRecord in %s", checkAuditDir));
+      }
     });
 
     ////////////////////////////////////////////////////////////////

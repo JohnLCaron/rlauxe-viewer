@@ -82,7 +82,7 @@ public class CardTable extends JPanel {
         cardTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
-        AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        AuditRecordIF auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (auditRecord == null) {
             logger.info("CardTable failed on readFrom " + auditRecordLocation);
             return false;

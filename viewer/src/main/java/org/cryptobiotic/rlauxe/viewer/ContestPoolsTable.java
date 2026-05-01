@@ -107,7 +107,7 @@ public class ContestPoolsTable extends JPanel {
         cvrTable.setBeans(emptyList());
 
         this.auditRecordLocation = auditRecordLocation;
-        AuditRecordIF auditRecord = AuditRecord.Companion.readFrom(auditRecordLocation);
+        AuditRecordIF auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (auditRecord == null) {
             logger.info("ContestPoolsTable failed on readFrom "+ auditRecordLocation);
             return false;
