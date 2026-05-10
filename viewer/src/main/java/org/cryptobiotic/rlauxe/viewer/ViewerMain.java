@@ -55,7 +55,7 @@ public class ViewerMain extends JPanel {
   String auditRecordDir = "none";
 
   JTabbedPane tabbedPane;
-  private final AuditTable auditPanel;
+  private final ContestsPanel contestsPanel;
   private final AuditRoundsTable auditRoundsPanel;
   private final PoolTable poolPanel;
   private final StyleTable stylePanel;
@@ -63,19 +63,22 @@ public class ViewerMain extends JPanel {
   private final MvrTable mvrPanel;
   private final ContestPoolsTable contestPoolPanel;
 
-  public ViewerMain(PreferencesExt prefs, float fontSize) {
+  private CorlaPanel corlaPanel = null;
+
+  public ViewerMain(PreferencesExt prefs, float fontSize, boolean isCorlaAudit) {
     // Popup info window
     this.infoTA = new TextHistoryPane(true);
     infoTA.setFontSize(fontSize);
 
     this.infoWindow = new IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), new JScrollPane(infoTA));
-    Rectangle bounds = (Rectangle) prefs.getBean(ViewerMain.INFO_BOUNDS, new Rectangle(200, 50, 500, 700));
+    Rectangle bounds = (Rectangle) prefs.getBean(ViewerMain.INFO_BOUNDS, new Rectangle(50, 50, 1000, 700));
+    // Rectangle bounds = new Rectangle(50, 50, 1000, 700);
     this.infoWindow.setBounds(bounds);
 
     ////////////////////////////////////////////
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    auditPanel = new AuditTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
+    contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, isCorlaAudit);
     auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
     stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
     poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
@@ -83,7 +86,12 @@ public class ViewerMain extends JPanel {
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
 
-    tabbedPane.addTab("Audit", auditPanel);
+    if (isCorlaAudit) {
+      corlaPanel = new CorlaPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("CorlaAudit", corlaPanel);
+    }
+
+    tabbedPane.addTab("Contests", contestsPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
     tabbedPane.addTab("Styles", stylePanel);
     tabbedPane.addTab("Pools", poolPanel);
@@ -138,7 +146,7 @@ public class ViewerMain extends JPanel {
     AbstractAction runAuditRoundAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         auditRoundsPanel.callRunRound();
-        auditPanel.setAuditRecord(auditRecordDir);
+        contestsPanel.setAuditRecord(auditRecordDir);
       }
     };
     BAMutil.setActionProperties(runAuditRoundAction, "run-round-icon.png", "Run Audit Round", false, 'R', -1);
@@ -241,7 +249,8 @@ public class ViewerMain extends JPanel {
   // I believe you need to update the UIManager with a FontUIResource, not just a Font.
   void resizeFonts(float fontSize) {
       logger.debug("resizeFonts " + fontSize);
-      auditPanel.setFontSize(fontSize);
+      if (corlaPanel != null) corlaPanel.setFontSize(fontSize);
+      contestsPanel.setFontSize(fontSize);
       auditRoundsPanel.setFontSize(fontSize);
       stylePanel.setFontSize(fontSize);
       poolPanel.setFontSize(fontSize);
@@ -252,7 +261,8 @@ public class ViewerMain extends JPanel {
   }
 
   void setAuditRecord() {
-    auditPanel.setAuditRecord(auditRecordDir);
+    if (corlaPanel != null) corlaPanel.setAuditRecord(auditRecordDir);
+    contestsPanel.setAuditRecord(auditRecordDir);
     auditRoundsPanel.setAuditRecord(auditRecordDir);
     cardPanel.setAuditRecord(auditRecordDir);
     mvrPanel.setAuditRecord(auditRecordDir, 1);
@@ -265,7 +275,8 @@ public class ViewerMain extends JPanel {
   public void exit() {
     logger.debug("exit ");
 
-    auditPanel.save();
+    if (corlaPanel != null) corlaPanel.save();
+    contestsPanel.save();
     auditRoundsPanel.save();
     stylePanel.save();
     poolPanel.save();
@@ -276,7 +287,7 @@ public class ViewerMain extends JPanel {
     fileChooser.save();
     auditRecordDirCB.save();
 
-    if (infoWindow != null) {
+   if (infoWindow != null) {
         prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
     }
 
@@ -335,9 +346,17 @@ public class ViewerMain extends JPanel {
   public static void main(String[] args) {
       logger.info("------------- ViewerMain started ----------------------");
 
+    boolean isCorlaAudit = false;
+    boolean isBelgiumAudit = false;
+    for (String arg : args) {
+      if (arg.equals("isCorlaAudit")) isCorlaAudit = true;
+      if (arg.equals("isBelgiumAudit")) isBelgiumAudit = true;
+    }
+
     // prefs storage
     try {
-      String prefStore = XMLStore.makeStandardFilename(".rlauxe", "RlauxeViewer.xml");
+      String storeName = isCorlaAudit ? "CorlaViewer.xml" : isBelgiumAudit ? "BelgiumViewer.xml" : "RlauxeViewer.xml";
+      String prefStore = XMLStore.makeStandardFilename(".rlauxe", storeName);
       store = XMLStore.createFromFile(prefStore, null);
       prefs = store.getPreferences();
       Debug.setStore(prefs.node("Debug"));
@@ -350,10 +369,10 @@ public class ViewerMain extends JPanel {
     ucar.ui.widget.FontUtil.init();
     resizeDefaultFonts(fontSize);
 
-      // put UI in a JFrame
+    // put UI in a JFrame
     // JFrame.setDefaultLookAndFeelDecorated(true);
     frame = new JFrame("Rlauxe Viewer");
-    ui = new ViewerMain(prefs, fontSize);
+    ui = new ViewerMain(prefs, fontSize, isCorlaAudit);
 
     frame.setIconImage(BAMutil.getImage("rlauxe-logo.png"));
     frame.addWindowListener(new WindowAdapter() {

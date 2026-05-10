@@ -304,7 +304,7 @@ public class BeanTable<T> extends JPanel {
         };
     }
 
-  public Action makeActionOnCurrentBean(Function<Object, AbstractAction> act) {
+  public Action makeActionOnCurrentBean(Function<Object, Boolean> act) {
     return new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         Object bean = getSelectedBean();
@@ -833,8 +833,8 @@ public class BeanTable<T> extends JPanel {
         Method m = properties.get(col).getReadMethod();
         value = m.invoke(bean, (Object[]) null);
       } catch (Exception ee) {
-        System.out.println("BeanTable: Bad Bean " + bean + " " + col + " " + beanClass.getName());
-        ee.printStackTrace();
+        logger.error("BeanTable: Bad Bean nean=" + bean.getClass().getName() + ", beanClass=" + beanClass.getName());
+        logger.error("BeanTable: getValueAt error message= {}", ee.getMessage());
       }
       return value;
     }
@@ -1008,7 +1008,6 @@ public class BeanTable<T> extends JPanel {
         HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
         Enumeration<TableColumn> visibleCols = tableColumnModel.getColumns(true);
 
-
         int maxName = 1;
         int maxValue = 1;
         int maxDesc = 1;
@@ -1025,10 +1024,13 @@ public class BeanTable<T> extends JPanel {
           maxDesc = Math.max(maxDesc, pc.desc.length());
 
           Object colVal = getValueAt(bean, modelIdx);
+          logger.debug(vc.getIdentifier() + " " + modelIdx + " " + colVal);
+
           if (colVal != null) {
             maxValue = Math.max(maxValue, colVal.toString().length());
           }
-          // logger.debug(pc.toString() + " " + colVal);
+
+          logger.debug(pc.toString() + " " + colVal);
         }
 
         String rowf = new StringBuilder(" | %")
@@ -1060,6 +1062,64 @@ public class BeanTable<T> extends JPanel {
         return t.getMessage();
       }
 
+    }
+
+    public String beanTableHeader(List<TableBeanProperty> props) {
+      StringBuilder sb = new StringBuilder();
+      Map<String, TableBeanProperty> propm = props.stream()
+              .collect(Collectors.toMap(prop -> prop.name, prop -> prop));
+
+      try {
+        // follow which columns are visible
+        HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
+        Enumeration<TableColumn> visibleCols = tableColumnModel.getColumns(true);
+        visibleCols = tableColumnModel.getColumns(true);
+        while (visibleCols.hasMoreElements()) {
+          TableColumn vc = visibleCols.nextElement();
+          var id = vc.getIdentifier();
+          var pc = propm.get(id.toString());
+          if (pc == null) continue;
+
+          sb.append(pc.name);
+          sb.append(", ");
+        }
+        sb.append("\n");
+        return sb.toString();
+
+      } catch ( Throwable t) {
+        logger.error("fail in beanTableHeader", t);
+        return t.getMessage();
+      }
+    }
+
+    public String beanCsv(Object bean, List<TableBeanProperty> props) {
+      Map<String, TableBeanProperty> propm = props.stream()
+              .collect(Collectors.toMap(prop -> prop.name, prop -> prop));
+      StringBuilder sb = new StringBuilder();
+
+      try {
+        // follow which columns are visible
+        HidableTableColumnModel tableColumnModel = (HidableTableColumnModel) jtable.getColumnModel();
+        Enumeration<TableColumn> visibleCols = tableColumnModel.getColumns(true);
+
+        visibleCols = tableColumnModel.getColumns(true);
+        while (visibleCols.hasMoreElements()) {
+          TableColumn vc = visibleCols.nextElement();
+          var id = vc.getIdentifier();
+          var modelIdx = vc.getModelIndex();
+          var pc = propm.get(id.toString());
+          if (pc == null) continue;
+          Object colVal = getValueAt(bean, modelIdx);
+          sb.append(colVal);
+          sb.append(", ");
+        }
+        sb.append("\n");
+        return sb.toString();
+
+      } catch ( Throwable t) {
+        logger.error("fail in beanCsv", t);
+        return t.getMessage();
+      }
     }
 
   }
