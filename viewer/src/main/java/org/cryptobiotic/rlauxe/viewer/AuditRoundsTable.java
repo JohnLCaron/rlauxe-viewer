@@ -15,6 +15,7 @@ import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
+import org.cryptobiotic.rlauxe.util.UtilsKt;
 import org.cryptobiotic.rlauxe.workflow.PersistedWorkflow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,6 +122,8 @@ public class AuditRoundsTable extends JPanel {
         });
         contestTable.addPopupOption("Show ContestRound", contestTable.makeShowAction(infoTA, infoWindow,
                 bean -> ((ContestBean)bean).show()));
+        contestTable.addPopupOption("Include All Contess", contestTable.makeActionOnCurrentBean( (e) -> setInclude(true)));
+        contestTable.addPopupOption("Exclude All Contess", contestTable.makeActionOnCurrentBean( (e) -> setInclude(false)));
 
         assertionTable = new BeanTable<>(AssertionBean.class, (PreferencesExt) prefs.node("assertionTable"), false,
                 "Assertion Rounds", "Assertion", null);
@@ -219,7 +222,7 @@ public class AuditRoundsTable extends JPanel {
         if (this.auditRecordLocation.equals("none")) { return; }
 
         f.format("Audit record at %s%n%n", this.auditRecordLocation);
-        f.format("%s%n%n", this.auditRecord.getElectionInfo());
+        f.format("%s%n%n", this.auditRecord.getConfig().getElection());
         f.format("%s%n", this.config);
         if (this.lastAuditRound == null) return;
 
@@ -244,6 +247,14 @@ public class AuditRoundsTable extends JPanel {
         f.format("%s", CandSeatRanges.Companion.showSeatRanges(this.auditRecordLocation));
     }
 
+    Boolean setInclude(Boolean include) {
+        for (ContestRound contestRound: lastAuditRound.getContestRounds()) {
+            contestRound.setIncluded(include);
+        }
+        samplingChanged = true;
+        contestTable.refresh();
+        return true;
+    }
     //////////////////////////////////////////////////////////////////
 
     void setSelectedAuditRound(AuditRoundBean auditBean) {
@@ -259,7 +270,7 @@ public class AuditRoundsTable extends JPanel {
         ContestBean minByMargin = beanList
                 .stream()
                 .filter(c -> !c.isDone())
-                .min(Comparator.comparing(ContestBean::getMargin)) // TODO use noerror
+                .min(Comparator.comparing(ContestBean::getReportedMargin)) // TODO use noerror
                 .orElseThrow(NoSuchElementException::new);
         contestTable.setSelectedBean(minByMargin);
     }
@@ -347,10 +358,10 @@ public class AuditRoundsTable extends JPanel {
             if (nrounds == 0) return;
 
             Set<Long> previousSamples = org.cryptobiotic.rlauxe.audit.AuditRoundKt.previousSamplePrns(auditRecord.getRounds(), nrounds);
-            logger.info(String.format("call sampleWithContestCutoff() with previousSamples = %d", previousSamples.size()));
+            logger.info(String.format("call consistentSampling() with previousSamples = %d", previousSamples.size()));
 
             PersistedWorkflow workflow = PersistedWorkflow.Companion.readFrom(auditRecordLocation);
-            ConsistentSamplingKt.consistentSampling(this.lastAuditRound, workflow.mvrManager().sortedManifest(), previousSamples);
+            ConsistentSamplingKt.chooseSamples(config.getSampling(), this.lastAuditRound, workflow.mvrManager().sortedManifest(), previousSamples);
 
             auditRoundTable.refresh();
             contestTable.refresh();
@@ -369,7 +380,7 @@ public class AuditRoundsTable extends JPanel {
                 if (samplingChanged && lastAuditRound != null)
                     resampleAndRun(auditRecordLocation, (AuditRound) lastAuditRound);
                 else
-                    runRound(auditRecordLocation, null); // TODO why not use startFirstRound ?
+                    runRound(auditRecordLocation, null, null); // TODO why not use startFirstRound ?
                 logger.info("return from runRound");
                 setAuditRecord(auditRecordLocation); // reread in
             }
@@ -542,7 +553,7 @@ public class AuditRoundsTable extends JPanel {
                 contestRound.setIncluded(include);
                 samplingChanged = true;
             }
-            setDone(!include);
+            // setDone(!include);
         }
         public boolean isDone() { return contestRound.getDone(); }
         public void setDone(boolean done) {
@@ -561,7 +572,6 @@ public class AuditRoundsTable extends JPanel {
         public String getType() {
             return contestUA.getChoiceFunction().toString();
         }
-        public Double getMargin() {return contestUA.minDilutedMargin();}
         public Integer getPhantoms() { return contestUA.getNphantoms(); }
 
         public Integer getMaxIndex() { return contestRound.getMaxSampleAllowed();}
@@ -597,6 +607,19 @@ public class AuditRoundsTable extends JPanel {
             return Double.NaN;
         }
 
+
+        public double getReportedMargin() {
+            // clca gets assertion with minimum noerror, and returns dilutedMargin of that.
+            Double min = contestUA.minReportedMargin();
+            return min == null ? 0.0 : min;
+        }
+
+        public double getDilutedMargin() {
+            // clca gets assertion with minimum noerror, and returns dilutedMargin of that.
+            Double min = contestUA.minDilutedMargin();
+            return min == null ? 0.0 : min;
+        }
+
         // TODO REDO
         /* public int getProbSuccess() {
             if (getActualMvrs() == contestUA.getNc()) {
@@ -626,6 +649,14 @@ public class AuditRoundsTable extends JPanel {
         public Integer getOneshotEst() {
             Integer nmvrs = oneshotMvrs.get(contestRound.getId());
             return (nmvrs != null) ? nmvrs : 0;
+        }
+
+        public String getNCounties() {
+            var CORLAcounties =  contestUA.getContest().info().getMetadata().get("CORLAcounties");
+            if (CORLAcounties == null) return "N/A";
+            var toks = CORLAcounties.split(",");
+            if (toks.length == 1) return toks[0];
+            return String.format("%4d", toks.length);
         }
 
         public String show() {

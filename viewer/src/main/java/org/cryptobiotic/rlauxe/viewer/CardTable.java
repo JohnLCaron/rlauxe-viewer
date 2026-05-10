@@ -50,7 +50,7 @@ public class CardTable extends JPanel {
         this.prefs = prefs;
 
         cardTable = new BeanTable<>(CardBean.class, (PreferencesExt) prefs.node("cardTable"), false,
-                "CardManifest (sorted)", "AuditableCard", null);
+                "CardManifest", "AuditableCard", null);
         cardTable.addListSelectionListener(e -> {
             CardBean cardBean = cardTable.getSelectedBean();
             if (cardBean != null) {
