@@ -41,6 +41,7 @@ public class ViewerMain extends JPanel {
 
   private final JPanel leftPanel = new JPanel();
   private final JPanel rightPanel = new JPanel();
+  private final JPanel componentActions = new JPanel();
   private final FontUtil.StandardFont fontu;
 
   TextHistoryPane infoTA;
@@ -63,9 +64,9 @@ public class ViewerMain extends JPanel {
   private final MvrTable mvrPanel;
   private final ContestPoolsTable contestPoolPanel;
 
-  private CorlaPanel corlaPanel = null;
+  private CountyPanel countyPanel = null;
 
-  public ViewerMain(PreferencesExt prefs, float fontSize, boolean isCorlaAudit) {
+  public ViewerMain(PreferencesExt prefs, float fontSize, ViewerProfile profile, String datadir) {
     // Popup info window
     this.infoTA = new TextHistoryPane(true);
     infoTA.setFontSize(fontSize);
@@ -78,21 +79,22 @@ public class ViewerMain extends JPanel {
     ////////////////////////////////////////////
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, isCorlaAudit);
-    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
+    contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
+    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
     stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
     poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
     contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
 
-    if (isCorlaAudit) {
-      corlaPanel = new CorlaPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("CorlaAudit", corlaPanel);
-    }
-
     tabbedPane.addTab("Contests", contestsPanel);
     tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+
+    if (profile.isCorla()) {
+      countyPanel = new CountyPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Counties", countyPanel);
+    }
+
     tabbedPane.addTab("Styles", stylePanel);
     tabbedPane.addTab("Pools", poolPanel);
     tabbedPane.addTab("ContestPools", contestPoolPanel);
@@ -108,57 +110,38 @@ public class ViewerMain extends JPanel {
       } else if (c instanceof MvrTable mvrTable) {
          mvrTable.setSelectedTab();
       }
+      // actions on right side
+      rightPanel.removeAll();
+      if (c instanceof AuditRoundsTable auditRound) {
+        auditRound.getActions(rightPanel, contestsPanel);
+      } else if (c instanceof CountyPanel countyPanel) {
+        countyPanel.getActions(rightPanel, contestsPanel);
+      }
+      validate();
     });
 
     ////// layout, left to right
 
     //// buttons to the left of auditRecordDir ComboBox
-    AbstractAction refreshAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) { setAuditRecord(); }
-    };
-    BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-', -1);
-    BAMutil.addActionToContainer(leftPanel, refreshAction);
 
-    // choose the audit record
-    AbstractAction fileAction = new AbstractAction() {
-      @Override
+    //// TODO move to pulldown menu or something
+    // font resizing
+    fontu = FontUtil.getStandardFont(fontSize);
+    AbstractAction incrFontAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        String dirName = fileChooser.chooseDirectory("");
-        if (dirName != null) {
-            auditRecordDirCB.setSelectedItem(dirName);
-        }
+        resizeFonts(fontu.incrFontSize().getSize2D());
       }
     };
-    BAMutil.setActionProperties(fileAction, "Open-File-Folder-icon.png", "Directory chooser...", false, 'L', -1);
-    BAMutil.addActionToContainer(leftPanel, fileAction);
-    this.leftPanel.add(new JLabel("Audit Record Directory: "), BorderLayout.WEST);
+    BAMutil.setActionProperties(incrFontAction, "format-font-size-increase-icon.png", "Increase Font Size", false, '+', -1);
+    BAMutil.addActionToContainer(leftPanel, incrFontAction);
 
-    //// buttons to the right of the file chooser
-    AbstractAction startAction = new AbstractAction() {
+    AbstractAction decrFontAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        auditRoundsPanel.resample();
+        resizeFonts(fontu.decrFontSize().getSize2D());
       }
     };
-    BAMutil.setActionProperties(startAction, "sunrise-icon.png", "Resample", false, 'S', -1);
-    BAMutil.addActionToContainer(rightPanel, startAction);
-
-    // TODO put into separate thread
-    AbstractAction runAuditRoundAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        auditRoundsPanel.callRunRound();
-        contestsPanel.setAuditRecord(auditRecordDir);
-      }
-    };
-    BAMutil.setActionProperties(runAuditRoundAction, "run-round-icon.png", "Run Audit Round", false, 'R', -1);
-    BAMutil.addActionToContainer(rightPanel, runAuditRoundAction);
-
-    AbstractAction offAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-         auditRoundsPanel.turnOffIncluded();
-      }
-    };
-    BAMutil.setActionProperties(offAction, "Clear.gif", "Turn off include", false, 'R', -1);
-    BAMutil.addActionToContainer(rightPanel, offAction);
+    BAMutil.setActionProperties(decrFontAction, "format-font-size-decrease-icon.png", "Decrease Font Size", false, '-', -1);
+    BAMutil.addActionToContainer(leftPanel, decrFontAction);
 
     // TODO put into seperate thread
     AbstractAction verifyAction = new AbstractAction() {
@@ -170,7 +153,7 @@ public class ViewerMain extends JPanel {
     };
     // Verify-icon.png
     BAMutil.setActionProperties(verifyAction, "Verify-icon.png", "Verify Audit Record", false, 'V', -1);
-    BAMutil.addActionToContainer(rightPanel, verifyAction);
+    BAMutil.addActionToContainer(leftPanel, verifyAction);
 
     AbstractAction infoAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -182,29 +165,31 @@ public class ViewerMain extends JPanel {
       }
     };
     BAMutil.setActionProperties(infoAction, "Info-icon.png", "info on Election Record", false, 'I', -1);
-    BAMutil.addActionToContainer(rightPanel, infoAction);
+    BAMutil.addActionToContainer(leftPanel, infoAction);
 
-    // font resizing
-    fontu = FontUtil.getStandardFont(fontSize);
-    AbstractAction incrFontAction = new AbstractAction() {
+    AbstractAction refreshAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) { setAuditRecord(); }
+    };
+    BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-', -1);
+    BAMutil.addActionToContainer(leftPanel, refreshAction);
+
+    // choose the audit record
+    AbstractAction fileAction = new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.incrFontSize().getSize2D());
+        String dirName = fileChooser.chooseDirectory();
+        if (dirName != null) {
+            auditRecordDirCB.setSelectedItem(dirName);
+        }
       }
     };
-    BAMutil.setActionProperties(incrFontAction, "format-font-size-increase-icon.png", "Increase Font Size", false, '+', -1);
-    BAMutil.addActionToContainer(rightPanel, incrFontAction);
-
-    AbstractAction decrFontAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.decrFontSize().getSize2D());
-      }
-    };
-    BAMutil.setActionProperties(decrFontAction, "format-font-size-decrease-icon.png", "Decrease Font Size", false, '-', -1);
-    BAMutil.addActionToContainer(rightPanel, decrFontAction);
+    BAMutil.setActionProperties(fileAction, "Open-File-Folder-icon.png", "Audit Record chooser...", false, 'L', -1);
+    BAMutil.addActionToContainer(leftPanel, fileAction);
+    this.leftPanel.add(new JLabel("Audit Record: "), BorderLayout.WEST);
 
     ////////////////////////////////////////////
 
-    this.fileChooser = new FileManager(frame, null, null, (PreferencesExt) prefs.node("FileManager"));
+    this.fileChooser = new FileManager(frame, datadir, null, (PreferencesExt) prefs.node("FileManager"));
     this.auditRecordDirCB = new ComboBox<>((PreferencesExt) prefs.node("auditRecordDirCB"));
     this.auditRecordDirCB.addChangeListener(e -> {
       if (!this.eventOk) {
@@ -249,7 +234,7 @@ public class ViewerMain extends JPanel {
   // I believe you need to update the UIManager with a FontUIResource, not just a Font.
   void resizeFonts(float fontSize) {
       logger.debug("resizeFonts " + fontSize);
-      if (corlaPanel != null) corlaPanel.setFontSize(fontSize);
+      if (countyPanel != null) countyPanel.setFontSize(fontSize);
       contestsPanel.setFontSize(fontSize);
       auditRoundsPanel.setFontSize(fontSize);
       stylePanel.setFontSize(fontSize);
@@ -261,7 +246,7 @@ public class ViewerMain extends JPanel {
   }
 
   void setAuditRecord() {
-    if (corlaPanel != null) corlaPanel.setAuditRecord(auditRecordDir);
+    if (countyPanel != null) countyPanel.setAuditRecord(auditRecordDir);
     contestsPanel.setAuditRecord(auditRecordDir);
     auditRoundsPanel.setAuditRecord(auditRecordDir);
     cardPanel.setAuditRecord(auditRecordDir);
@@ -275,7 +260,7 @@ public class ViewerMain extends JPanel {
   public void exit() {
     logger.debug("exit ");
 
-    if (corlaPanel != null) corlaPanel.save();
+    if (countyPanel != null) countyPanel.save();
     contestsPanel.save();
     auditRoundsPanel.save();
     stylePanel.save();
@@ -343,19 +328,28 @@ public class ViewerMain extends JPanel {
     }
   }
 
+  public enum ViewerProfile {
+    BelgiumViewer, CorlaViewer, RlauxeViewer;
+
+    boolean isBelgium() { return this == BelgiumViewer; }
+    boolean isCorla() { return this == CorlaViewer; }
+  }
+
   public static void main(String[] args) {
       logger.info("------------- ViewerMain started ----------------------");
 
-    boolean isCorlaAudit = false;
-    boolean isBelgiumAudit = false;
-    for (String arg : args) {
-      if (arg.equals("isCorlaAudit")) isCorlaAudit = true;
-      if (arg.equals("isBelgiumAudit")) isBelgiumAudit = true;
+    ViewerProfile profile = ViewerProfile.RlauxeViewer;
+    String datadir = null;
+    for (int idx=0; idx < args.length; idx++) {
+      String arg = args[idx];
+      if (arg.equals("-corlaAudit")) profile = ViewerProfile.CorlaViewer;
+      if (arg.equals("-belgiumAudit")) profile = ViewerProfile.BelgiumViewer;
+      if (arg.equals("-datadir")) datadir = args[idx+1];
     }
 
     // prefs storage
     try {
-      String storeName = isCorlaAudit ? "CorlaViewer.xml" : isBelgiumAudit ? "BelgiumViewer.xml" : "RlauxeViewer.xml";
+      String storeName = profile.isCorla() ? "CorlaViewer.xml" : profile.isBelgium() ? "BelgiumViewer.xml" : "RlauxeViewer.xml";
       String prefStore = XMLStore.makeStandardFilename(".rlauxe", storeName);
       store = XMLStore.createFromFile(prefStore, null);
       prefs = store.getPreferences();
@@ -371,8 +365,8 @@ public class ViewerMain extends JPanel {
 
     // put UI in a JFrame
     // JFrame.setDefaultLookAndFeelDecorated(true);
-    frame = new JFrame("Rlauxe Viewer");
-    ui = new ViewerMain(prefs, fontSize, isCorlaAudit);
+    frame = new JFrame(profile.toString());
+    ui = new ViewerMain(prefs, fontSize, profile, datadir);
 
     frame.setIconImage(BAMutil.getImage("rlauxe-logo.png"));
     frame.addWindowListener(new WindowAdapter() {

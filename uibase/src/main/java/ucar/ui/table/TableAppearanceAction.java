@@ -2,12 +2,12 @@ package ucar.ui.table;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ucar.ui.util.Resource;
-import ucar.ui.widget.BAMutil;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.util.Enumeration;
+
+import static ucar.ui.widget.BAMutil.getIcon;
 
 /**
  * Displays a popup menu containing several options to configure the appearance of a JTable.
@@ -28,7 +28,7 @@ public class TableAppearanceAction extends AbstractAction {
     this.table = table;
 
     putValue(NAME, "Table appearance");
-    putValue(SMALL_ICON, Resource.getIcon(BAMutil.getResourcePath() + "TableAppearance.png", true));
+    putValue(SMALL_ICON, getIcon("TableAppearance.png", true));
     putValue(SHORT_DESCRIPTION, "Configure the appearance of the table.");
   }
 

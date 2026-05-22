@@ -84,9 +84,9 @@ public class StyleTable extends JPanel {
         try {
             List<PopBean> beanList = new ArrayList<>();
 
-            var batches = mvrManager.batches();
-            if (batches != null) {
-                for (var pop : batches) {
+            var styles = mvrManager.styles();
+            if (styles != null) {
+                for (var pop : styles) {
                     beanList.add(new PopBean(pop));
                 }
             }

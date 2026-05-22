@@ -215,9 +215,10 @@ public class FileManager {
     return result;
   }
 
-  public String chooseDirectory(String defaultDirectory) {
+  public String chooseDirectory() {
     chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-    String result = (defaultDirectory == null) ? chooseFilename() : chooseFilename(defaultDirectory);
+    // String result = (defaultDirectory == null) ? chooseFilename() : chooseDirectory(defaultDirectory);
+    String result = chooseFilename();
     chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
     return result;
   }
