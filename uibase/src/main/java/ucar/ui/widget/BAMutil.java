@@ -54,6 +54,7 @@ public class BAMutil {
   /** the state of "toggle" actions = Boolean */
   public static final String STATE = "state";
 
+  private static String topResourcePath = "/resources/ui/";
   private static String defaultResourcePath = "/resources/ui/icons/";
 
   // Check if on a mac
@@ -83,11 +84,12 @@ public class BAMutil {
    * @return the Icon or null if not found
    */
   public static ImageIcon getIcon(String name, boolean errMsg) {
-    ImageIcon ii = Resource.getIcon(defaultResourcePath + name, errMsg);
-    if (ii == null)
-      ii = Resource.getIcon(defaultResourcePath + name + ".gif", errMsg);
-    if (ii == null)
-      ii = Resource.getIcon(defaultResourcePath + name + ".png", errMsg);
+    ImageIcon ii = null;
+    if (name.endsWith(".png")) ii = Resource.getIcon(topResourcePath + "png/" + name, errMsg);
+    if (name.endsWith(".svg")) ii = Resource.getIcon(topResourcePath + "svg/" + name, errMsg);
+
+    if (ii == null) ii = Resource.getIcon(defaultResourcePath + name + ".gif", errMsg);
+
     return ii;
   }
 

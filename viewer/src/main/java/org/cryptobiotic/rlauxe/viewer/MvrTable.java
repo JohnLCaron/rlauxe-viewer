@@ -5,7 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AuditableCard;
+import org.cryptobiotic.rlauxe.audit.AuditableCardIF;
 import org.cryptobiotic.rlauxe.audit.Config;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
@@ -41,7 +41,7 @@ public class MvrTable extends JPanel {
 
     private Boolean needsReading = true;
     private Config config;
-    private List<AuditableCard> mvrs;
+    private List<AuditableCardIF> mvrs;
 
     public MvrTable(PreferencesExt prefs, float fontSize) {
         this.prefs = prefs;
@@ -170,33 +170,33 @@ public class MvrTable extends JPanel {
     //)
 
     public class CardBean {
-        AuditableCard card;
+        AuditableCardIF card;
         int index;
 
         public CardBean() {
         }
 
-        CardBean(AuditableCard card, int index) {
+        CardBean(AuditableCardIF card, int index) {
             this.card = card;
             this.index = index;
         }
 
         public String getId() {
-            return card.getId();
+            return card.id();
         }
         public String getLocation() {
-            return card.getLocation();
+            return card.location();
         }
         public Integer getIndex() {
             return this.index;
         }
         public Integer getCardIndex() {
-            return card.getIndex();
+            return card.index();
         }
         public long getPrn() {
-            return card.getPrn();
+            return card.prn();
         }
-        public Boolean getPhantom() { return card.getPhantom(); }
+        public Boolean getPhantom() { return card.phantom(); }
         public String getContests() {
             int[] ids = card.possibleContests();
             StringBuilder sb = new StringBuilder();
@@ -208,7 +208,7 @@ public class MvrTable extends JPanel {
         public Integer getPoolId() { return card.poolId(); }
         public String getCardStyle() { return card.styleName(); }
         public String getVotes() {
-            var votes = card.getVotes();
+            var votes = card.votes();
             if (votes == null) return "N/A";
             StringBuilder sb = new StringBuilder();
             for (int contestId : votes.keySet()) {

@@ -5,11 +5,8 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AuditableCard;
-import org.cryptobiotic.rlauxe.audit.CardPool;
-import org.cryptobiotic.rlauxe.audit.Config;
-import org.cryptobiotic.rlauxe.persist.CardManifest;
-import org.cryptobiotic.rlauxe.audit.StyleIF;
+import org.cryptobiotic.rlauxe.audit.*;
+import org.cryptobiotic.rlauxe.persist.SortedManifest;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
@@ -43,7 +40,7 @@ public class CardTable extends JPanel {
     private PersistedMvrManager mvrManager;
     private Boolean needsReading = true;
 
-    private CardManifest cardManifest;
+    private SortedManifest cardManifest;
     Map<String, StyleIF> poolMap = Collections.emptyMap();
 
     public CardTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
@@ -112,7 +109,7 @@ public class CardTable extends JPanel {
         try {
             this.cardManifest = this.mvrManager.sortedManifest();
 
-            List<StyleIF> styles = this.mvrManager.batches();
+            List<StyleIF> styles = this.mvrManager.styles();
             if (styles != null) {
                 Map<String, StyleIF> pools = new TreeMap<>(); // sorted
                 for (StyleIF pool : styles) {
@@ -198,22 +195,22 @@ public class CardTable extends JPanel {
 
         // must be public
     public class CardBean {
-        AuditableCard card;
+        AuditableCardIF card;
         int index;
 
         public CardBean() {
         }
 
-        CardBean(AuditableCard card, int index) {
+        CardBean(AuditableCardIF card, int index) {
             this.card = card;
             this.index = index;
         }
 
         public String getId() {
-            return card.getId();
+            return card.id();
         }
         public String getLocation() {
-            return card.getLocation();
+            return card.location();
         }
 
         public Integer getIndex() {
@@ -221,15 +218,15 @@ public class CardTable extends JPanel {
         }
 
         public Integer getCardIndex() {
-            return card.getIndex();
+            return card.index();
         }
 
         public long getPrn() {
-            return card.getPrn();
+            return card.prn();
         }
 
         public Boolean getPhantom() {
-            return card.getPhantom();
+            return card.phantom();
         }
 
         public String getContests() {
@@ -250,7 +247,7 @@ public class CardTable extends JPanel {
         }
 
         public String getPossibleContests() {
-            var pop = card.getStyle();
+            var pop = card.style();
             int[] ids = pop.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
@@ -260,7 +257,7 @@ public class CardTable extends JPanel {
         }
 
         public String getVotes() {
-            var votes = card.getVotes();
+            var votes = card.votes();
             if (votes == null) return "N/A";
             StringBuilder sb = new StringBuilder();
             SortedSet<Integer> ids = new TreeSet<>(votes.keySet());
@@ -287,7 +284,7 @@ public class CardTable extends JPanel {
             sb.append(card.toString());
             sb.append("\n");
 
-            var pop = card.getStyle();
+            var pop = card.style();
             sb.append(pop.toString());
             return sb.toString();
         }

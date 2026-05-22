@@ -1,14 +1,17 @@
 # rlauxe-viewer
 
 WORK IN PROGRESS
-_last update: 12/13/2025_
+_last update: 05/22/2026_
 
 <!-- TOC -->
 * [rlauxe-viewer](#rlauxe-viewer)
   * [Building Rlauxe-viewer](#building-rlauxe-viewer)
+  * [Audit Case Study Data](#audit-case-study-data)
   * [Starting Rlauxe-viewer](#starting-rlauxe-viewer)
     * [Setting UI choices](#setting-ui-choices)
   * [Showing the results of an audit](#showing-the-results-of-an-audit)
+  * [Special Features for Belgium Audits](#special-features-for-belgium-audits)
+  * [Special Features for Corla Audits](#special-features-for-corla-audits)
 <!-- TOC -->
 
 ## Building Rlauxe-viewer
@@ -25,14 +28,37 @@ cd rlauxe-viewer
 ./gradlew clean assemble uberJar
 ````
 
+## Audit Case Study Data
+
+[The Rlauxe getting started page](https://github.com/JohnLCaron/rlauxe/blob/main/docs/Developer.md#getting-started) has instructions
+on how to build all of the case study datasets.
+
+Contact me for the prebuilt Belgium 2024 dataset. This will be a zip file that you can unzip in your data directory.
+
+
 ## Starting Rlauxe-viewer
 
-From shell:
+`cd devhome/rlauxe-viewer
+`
+(for Belgium Chamber of Representatives audits with D'Hondt scoring):
 
-````
-cd devhome/rlauxe-viewer
-java -jar viewer/build/libs/viewer-uber.jar
-````
+`java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit
+`
+(for Colorado Statewide audits with County breakout):
+
+`java -jar viewer/build/libs/viewer-uber.jar -corlaAudit
+`
+(or regular audit):
+
+`java -jar viewer/build/libs/viewer-uber.jar
+`
+
+For all of these, you can optionally set the default directory where Audit Records are kept, eg
+
+`java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit -datadir /my/rlauxe/audits
+`
+
+which is where the "Audit Record Chooser" widget will start from.
 
 From IntelliJ:
 
@@ -44,11 +70,13 @@ In the editor, there should be a clickable green button on class ViewerMain:
 
 ![image](docs/images/ViewerMain.png).
 
-After the application starts, use the Directory Chooser button
+After the application starts, use the "Audit Record Chooser" button
 ![image](uibase/src/main/resources/resources/ui/icons/Open-File-Folder-icon.png)
-to bring up the Directory Chooser,
-then navigate to the directory where the Audit Record is stored (note that for the test cases, its always a subdirectory
-named "audit" of the test case name).
+to bring up the "Audit Record Chooser" widget,
+then navigate to the directory where the Audit Record is stored 
+
+Note that for Belgium or Corla audits, this is the top directory containing the component counties or province audits,
+but for regular audits, its the subdirectory named "audit" under the test case name. (Sorry about that).
 
 ![image](docs/images/DirectoryChooser.png)
 
@@ -104,13 +132,12 @@ actual audit sample values, betting value, pvalue, mvr and cvr. The fields are:
 
 ![image](docs/images/AuditDetail.png)
 
-In this example, the votes always match, so the assort value always equals noerror. mj is slow varying, so tj is approximately constant, and
+In this example, the votes always match, so the assort value always equals noerror, and the estimate should be spot on.
 
-````
-1/risk = Prod (tj) 
-1/.05 = tj ^ nsamples
-ln(20) = nsamples*ln(1.0054)
-nsamples = ln(20)/ln(1.0054)
-nsamples = 556
-````
+## Special Features for Belgium Audits
+
+
+
+
+## Special Features for Corla Audits
 

@@ -15,6 +15,7 @@ import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.util.UtilsKt;
+import org.cryptobiotic.rlauxe.viewer.ViewerMain.ViewerProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -47,7 +48,7 @@ public class ContestsPanel extends JPanel {
     private Config config;
     private Map<Integer, Integer> oneshotMvrs;
 
-    public ContestsPanel(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize, boolean isCorlaAudit) {
+    public ContestsPanel(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize, ViewerProfile profile) {
         this.prefs = prefs;
 
         contestTable = new BeanTable<>(ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false,
@@ -88,6 +89,10 @@ public class ContestsPanel extends JPanel {
         assertionTable.setFontSize(size);
     }
 
+    public void resetAuditRecord() {
+        setAuditRecord(auditRecordLocation);
+    }
+
     boolean setAuditRecord(String auditRecordLocation) {
         this.auditRecordLocation = auditRecordLocation;
         contestTable.setBeans(emptyList());
@@ -126,7 +131,7 @@ public class ContestsPanel extends JPanel {
                 Optional<ContestBean> minByMargin = beanList
                         .stream()
                         .filter(bean -> bean.getStatus().equals("InProgress"))
-                        .min(Comparator.comparing(ContestBean::getDilutedMargin));
+                        .min(Comparator.comparing(ContestBean::getMargin));
                 minByMargin.ifPresent(contestTable::setSelectedBean);
             }
 
@@ -233,7 +238,7 @@ public class ContestsPanel extends JPanel {
             beanProperties.add(new BeanTable.TableBeanProperty("uvPct", "percent undervote count"));
 
             beanProperties.add(new BeanTable.TableBeanProperty("voteDiff", "(winner-loser) votes (smallest assertion)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("reportedMargin", "voteDiff/Nc (smallest assertion) %"));
+            beanProperties.add(new BeanTable.TableBeanProperty("margin", "voteDiff/Nc (smallest assertion) %"));
             beanProperties.add(new BeanTable.TableBeanProperty("dilutedMargin", "voteDiff/Npop (smallest assertion) %"));
             beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner (smallest assertion) %"));
             beanProperties.add(new BeanTable.TableBeanProperty("estRisk", "estimated maximum risk %"));
@@ -246,14 +251,17 @@ public class ContestsPanel extends JPanel {
             // Corla
             beanProperties.add(new BeanTable.TableBeanProperty("target", "is a Corla targeted contest"));
             beanProperties.add(new BeanTable.TableBeanProperty("NCounties", "number of counties, or the county name if only one"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimate number of mvrs needed (Corla)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("haveMvrs", "number of mvrs that were sampled for this contest (Corla)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "(haveMvrs-estMvrs) (Corla)"));
+            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimate number of mvrs needed"));
+            beanProperties.add(new BeanTable.TableBeanProperty("haveMvrs", "number of mvrs that were sampled for this contest"));
+            beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "(haveMvrs-estMvrs)"));
 
         }
 
-        ContestRound lastRound = null;
+        ContestRound lastRound;
         ContestWithAssertions contestUA;
+
+        int auditRound; // only last row can be edited
+        TestH0Status initialStatus; // only last row can be edited
         Integer countyMvrs = -1;
         Integer countyNpop = -1;
 
@@ -272,93 +280,36 @@ public class ContestsPanel extends JPanel {
             return contestUA.getId();
         }
 
-        public String getType() {
-            return contestUA.getChoiceFunction().toString();
-        }
-
-        public Integer getNCand() {
-            return contestUA.getNcandidates();
-        }
-
-        public Integer getNc() {
-            return contestUA.getNc();
-        }
-
-        public Integer getNpop() {
-            if (countyNpop >= 0) return countyNpop;
-            return contestUA.getNpop();
-        }
-
-        public Integer getUndervotes() {
-            return contestUA.getContest().Nundervotes();
-        }
-
-        public Integer getUvPct() {
-            return contestUA.getContest().undervotePct();
-        }
-
-        public Integer getPhantoms() {
-            return contestUA.getNphantoms();
-        }
-
-        public String getWinners() {
-            return contestUA.getContest().winners().toString();
-        }
-
-        public String getVotes() {
-            var votes = contestUA.getContest().votes();
-            if (votes != null) return votes.toString();
-            return "N/A";
-        }
-
-        public String getReportedMargin() {
-            return pfz(contestUA.minReportedMargin(), 2);
-        }
-
-        public String getDilutedMargin() {
-            return pfz(contestUA.minDilutedMargin(), 2);
-        }
-
-        private double dilutedMargin() {
-            // clca gets assertion with minimum noerror, and returns dilutedMargin of that.
-            Double min = contestUA.minDilutedMargin();
-            return min == null ? 0.0 : 100 * min;
-        }
-
-        public String getEstRisk() {
-            Double dilutedMargin = contestUA.minDilutedMargin();
-            if (dilutedMargin == null) return "N/A";
+        // TODO for hasStyle, get this number from EstimateAudit (put into ContestRound) instead of approx
+        public double getEstRisk() {
+            Double margin = contestUA.minMargin();
+            if (margin == null) return 1.0;
             Integer nmvrs = getHaveMvrs();
-            var risk = UtilsKt.estRiskFromMargin(2.0 / 1.03905, dilutedMargin, nmvrs);
-            return pfz(risk, 1);
+            return UtilsKt.estRiskFromMargin(2.0 / 1.03905, margin, nmvrs);
         }
 
         public Integer getEstMvrs() {
-            Double dilutedMargin = contestUA.minDilutedMargin(); // TODO might be reportedMargin
-            if (dilutedMargin == null || dilutedMargin <= 0) return -1;
-            return roundUp(UtilsKt.estSamplesFromMarginUpper(2.0 / 1.03905, dilutedMargin, alpha));
+            if (contestUA.getHasStyle()) {
+                return ((lastRound == null)) ? 0 : lastRound.getEstMvrs();
+            }
+
+            Double margin = contestUA.minMargin();
+            if (margin == null) return 0;
+            return roundUp(UtilsKt.estSamplesFromMarginUpper(2.0 / 1.03905, margin, alpha));
         }
 
-        public double getRecountMargin() {
-            Double min = contestUA.minRecountMargin();
-            return min == null ? 0.0 : 100 * min;
+        public Integer getHaveMvrs() {
+            if (contestUA.getHasStyle()) {
+                return ((lastRound == null)) ? 0 : lastRound.getHaveSampleSize();
+            }
+
+            var have = contestUA.getContest().info().getMetadata().get("CORLAhaveMvrs");
+            return (have == null) ? 0 : Integer.parseInt(have);
         }
 
-        public Integer getVoteDiff() {
-            Assertion minAssertion = contestUA.minAssertion();
-            return contestUA.getContest().marginInVotes(minAssertion.getAssorter());
-        }
-
-    /* public Integer getTotalMvrs() {
-        return (lastRound == null) ? 0 : lastRound.getActualMvrs();
-    } */
-
-        public String getStatus() {
-            return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
-        }
-
-        public Integer getMvrsUsed() {
-            return (lastRound == null) ? 0 : lastRound.maxSamplesUsed();
+        public double getMargin() {
+            Double margin = contestUA.minMargin();
+            return margin == null ? 0.0 : margin;
         }
 
         public Integer getMvrsExtras() {
@@ -375,16 +326,17 @@ public class ContestsPanel extends JPanel {
             return getHaveMvrs() - getEstMvrs();
         }
 
-
-    /*
-    public Integer getCompleted() {
-        if (!lastRound.getStatus().getComplete()) return 0;
-        int round = 0;
-        for (AssertionRound assertion : lastRound.getAssertionRounds()) {
-            round = max(round, assertion.getRoundProved());
+        public Integer getMvrsUsed() {
+            return (lastRound == null) ? 0 : lastRound.maxSamplesUsed();
         }
-        return round;
-    } */
+
+        public Integer getNc() {
+            return contestUA.getNc();
+        }
+
+        public Integer getNCand() {
+            return contestUA.getNcandidates();
+        }
 
         public String getNCounties() {
             var CORLAcounties =  contestUA.getContest().info().getMetadata().get("CORLAcounties");
@@ -394,11 +346,63 @@ public class ContestsPanel extends JPanel {
             return String.format("%02d", toks.length);
         }
 
-        public Integer getPoolPct() {
+        public Integer getNpop() {
+            if (countyNpop >= 0) return countyNpop;
+            return contestUA.getNpop();
+        }
+
+        public Integer getPhantoms() {
+            return contestUA.getNphantoms();
+        }
+
+        public double getRecountMargin() {
+            Double min = contestUA.minRecountMargin();
+            return min == null ? 0.0 : min;
+        }
+
+        // TODO maybe not needed
+        public String getStatus() {
+            return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
+        }
+
+        public Boolean getTarget() {
+            var reason = contestUA.getContest().info().getMetadata().get("CORLAauditReason");
+            if (reason == null) return false;
+            return reason.equals("state_wide_contest") || reason.equals("county_wide_contest");
+        }
+
+        public String getType() {
+            return contestUA.getChoiceFunction().toString();
+        }
+
+        public Integer getUndervotes() {
+            return contestUA.getContest().Nundervotes();
+        }
+
+        public Integer getUvPct() {
+            return contestUA.getContest().undervotePct();
+        }
+
+        public String getVotes() {
+            var votes = contestUA.getContest().votes();
+            if (votes != null) return votes.toString();
+            return "N/A";
+        }
+
+        public Integer getVoteDiff() {
+            Assertion minAssertion = contestUA.minAssertion();
+            return contestUA.getContest().marginInVotes(minAssertion.getAssorter());
+        }
+
+        public String getWinners() {
+            return contestUA.getContest().winners().toString();
+        }
+
+        /*
+                public Integer getPoolPct() {
             var pct =  contestUA.getContest().info().getMetadata().get("PoolPct");
             return (pct == null) ? 0 : Integer.parseInt(pct);
         }
-
         public Integer getCardDiff() {
             var votes = contestUA.getContest().info().getMetadata().get("CORLApoolTotalCards"); // change to CORLApoolTotalCards
             var poolCards = (votes == null) ? 0 : Integer.parseInt(votes);
@@ -417,17 +421,6 @@ public class ContestsPanel extends JPanel {
             return contestUA.getContest().nvotes() - poolVotes;
         }
 
-        public Integer getHaveMvrs() {
-            /* if (getStatewide()) {
-                var stateMvrs = contestUA.getContest().info().getMetadata().get("CORLAstatewideNmvrs");
-                return (stateMvrs == null) ? 0 : Integer.parseInt(stateMvrs);
-            }
-
-            if (countyMvrs >= 0) return countyMvrs; */
-            var have = contestUA.getContest().info().getMetadata().get("CORLAhaveMvrs");
-            return (have == null) ? 0 : Integer.parseInt(have);
-        }
-
         public Integer getStateMvrs() {
             var nmvrss = contestUA.getContest().info().getMetadata().get("CORLAstatewideNmvrs");
             return (nmvrss == null) ? 0 : Integer.parseInt(nmvrss);
@@ -438,17 +431,10 @@ public class ContestsPanel extends JPanel {
             return (nmvrss == null) ? 0 : Integer.parseInt(nmvrss);
         }
 
-        public Boolean getTarget() {
-            var reason = contestUA.getContest().info().getMetadata().get("CORLAauditReason");
-            return reason.equals("state_wide_contest") || reason.equals("county_wide_contest");
-        }
-
-
-    /*
-    public Integer getOneshotEst() {
-        Integer nmvrs = oneshotMvrs.get(contestUA.getId());
-        return (nmvrs != null) ? nmvrs : 0;
-    } */
+        public Integer getOneshotEst() {
+            Integer nmvrs = oneshotMvrs.get(contestUA.getId());
+            return (nmvrs != null) ? nmvrs : 0;
+        } */
     }
 
     static public class AssertionBean {
@@ -513,10 +499,10 @@ public class ContestsPanel extends JPanel {
         // public String getStatus() {return Naming.status(assertionRound.getStatus());}
 
         public double getReportedMargin() {
-            return 100 * assertion.getAssorter().reportedMargin();
+            return assertion.getAssorter().reportedMargin();
         }
         public double getDilutedMargin() {
-            return 100 * assertion.getAssorter().dilutedMargin();
+            return assertion.getAssorter().dilutedMargin();
         }
 
         public String getDifficulty() {
@@ -539,9 +525,7 @@ public class ContestsPanel extends JPanel {
             return assertion.getAssorter().dilutedMean();
         }
 
-        public double getNoError() {
-            return assertion.getAssorter().noerror();
-        }
+        public double getNoError() {return assertion.getAssorter().noerror(cua.getHasStyle()); }
 
         public double getUpper() {
             return assertion.getAssorter().upperBound();
