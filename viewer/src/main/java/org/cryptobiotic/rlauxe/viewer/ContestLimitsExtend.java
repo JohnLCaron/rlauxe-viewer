@@ -7,8 +7,6 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AssertionRound;
 import org.cryptobiotic.rlauxe.audit.ContestRound;
-import org.cryptobiotic.rlauxe.core.Assertion;
-import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
