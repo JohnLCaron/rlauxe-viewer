@@ -81,7 +81,7 @@ public class CountyPanel extends JPanel {
     }
 
 
-    public void getActions(JPanel container, ContestsPanel contestsPanel) {
+    public void getActions(JPanel container) {
         AbstractAction readSampleMvrs = new AbstractAction() {
             public void actionPerformed(ActionEvent e) { readSample();}
         };

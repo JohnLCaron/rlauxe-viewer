@@ -7,14 +7,13 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.betting.TestH0Status;
+import org.cryptobiotic.rlauxe.betting.UtilsKt;
 import org.cryptobiotic.rlauxe.core.*;
-import org.cryptobiotic.rlauxe.dhondt.CandSeatRanges;
 import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
 import org.cryptobiotic.rlauxe.persist.CompositeRecord;
-import org.cryptobiotic.rlauxe.util.UtilsKt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -261,34 +260,6 @@ public class AuditRoundsTable extends JPanel {
     }
 
     //// Actions
-    void showInfo(Formatter f) {
-        // if (this.auditRecordLocation.equals("none")) { return; }
-
-        f.format("Audit record at %s%n%n", auditRecord.getLocation());
-        f.format("%s%n%n", this.auditRecord.getConfig().getElection());
-        f.format("%s%n", this.config);
-        if (this.lastAuditRound == null) return;
-
-        f.format("AuditRounds");
-        int totalExtra = 0;
-        for (AuditRoundIF round : auditRecord.getRounds()) {
-            if (round.getAuditWasDone()) {
-                int roundIdx = round.getRoundIdx();
-                int nmvrs = round.getSamplePrns().size();
-                f.format("%n  number of Mvrs in round %d = %d %n", roundIdx, nmvrs);
-                int extra = round.getMvrsUnused();
-                f.format("  extraBallotsUsed = %d %n", extra);
-                totalExtra += extra;
-            }
-        }
-        f.format("%n  total extraBallotsUsed = %d %n", totalExtra);
-        f.format("  total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
-
-        f.format("  total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
-
-        // just in case this is the limited belgium election
-        f.format("%s", CandSeatRanges.Companion.showSeatRanges(auditRecord.getLocation()));
-    }
 
     Boolean setInclude(Boolean include) {
         for (ContestRound contestRound: lastAuditRound.getContestRounds()) {
@@ -690,7 +661,7 @@ public class AuditRoundsTable extends JPanel {
             double nomargin = mean2margin(noerror);
 
             Integer haveMvrs = getHaveMvrs();
-            return UtilsKt.estRisk(2.0 / 1.03905, nomargin, haveMvrs);
+            return UtilsKt.estRiskStandardBet(contestUA.getNpop(), nomargin, haveMvrs);
         }
 
         public String getNCounties() {
