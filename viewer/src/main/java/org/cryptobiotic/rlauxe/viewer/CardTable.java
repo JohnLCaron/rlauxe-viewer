@@ -100,7 +100,7 @@ public class CardTable extends JPanel {
     }
 
     boolean readCards() {
-        logger.info("readCards for " + auditRecordLocation);
+        logger.info("start readCards for " + auditRecordLocation);
 
         Config config = auditRecord.getConfig();
         Integer cutoff = config.getRound().getSampling().getContestSampleCutoff();
@@ -139,7 +139,7 @@ public class CardTable extends JPanel {
                 }
             }
             cardTable.setBeans(beanList);
-            logger.info("CardTable read " + index + " cards from " + auditRecordLocation);
+            logger.info("end readCards " + index + " cards from " + auditRecordLocation);
 
         } catch (Exception e) {
             e.printStackTrace();

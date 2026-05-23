@@ -714,7 +714,7 @@ public class BeanTable<T> extends JPanel {
 
         if (m.getName().equals("hiddenProperties")) {
           try {
-            hiddenProperties = (String) m.invoke(null, (Object[]) null);
+            hiddenProperties = (String) m.invoke(null, (Object[]) null); // class property
             if (debugBean)
               System.out.println(" hiddenProperties: " + hiddenProperties);
 
@@ -833,7 +833,7 @@ public class BeanTable<T> extends JPanel {
         Method m = properties.get(col).getReadMethod();
         value = m.invoke(bean, (Object[]) null);
       } catch (Exception ee) {
-        logger.error("BeanTable: Bad Bean nean=" + bean.getClass().getName() + ", beanClass=" + beanClass.getName());
+        logger.error("BeanTable: Bad bean=" + bean.getClass().getName() + ", beanClass=" + beanClass.getName());
         logger.error("BeanTable: getValueAt error message= {}", ee.getMessage());
       }
       return value;

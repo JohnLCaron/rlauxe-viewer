@@ -41,6 +41,7 @@ public class ViewerMain extends JPanel {
 
   private final JPanel leftPanel = new JPanel();
   private final JPanel rightPanel = new JPanel();
+  private final JPanel actionsPanel = new JPanel();
   private final JPanel componentActions = new JPanel();
   private final FontUtil.StandardFont fontu;
 
@@ -48,6 +49,7 @@ public class ViewerMain extends JPanel {
   IndependentWindow infoWindow;
   ComboBox<String> auditRecordDirCB;
   JPanel topPanel;
+  JButton statusButton = new JButton("status");
 
   MvrAction mvrAction = new MvrAction();
   FileManager fileChooser;
@@ -57,7 +59,7 @@ public class ViewerMain extends JPanel {
 
   JTabbedPane tabbedPane;
   private final ContestsPanel contestsPanel;
-  private final AuditRoundsTable auditRoundsPanel;
+  private AuditRoundsTable auditRoundsPanel = null;
   private final PoolTable poolPanel;
   private final StyleTable stylePanel;
   private final CardTable cardPanel;
@@ -79,27 +81,34 @@ public class ViewerMain extends JPanel {
     ////////////////////////////////////////////
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
-    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
-    stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
-    poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
-    contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
-    cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
-    mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
-
+    contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
     tabbedPane.addTab("Contests", contestsPanel);
-    tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+
+    if (!profile.isBelgium()) {
+      auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
+      tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+    }
 
     if (profile.isCorla()) {
       countyPanel = new CountyPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
       tabbedPane.addTab("Counties", countyPanel);
     }
 
+    stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
     tabbedPane.addTab("Styles", stylePanel);
+
+    poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
     tabbedPane.addTab("Pools", poolPanel);
+
+    contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
     tabbedPane.addTab("ContestPools", contestPoolPanel);
+
+    cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     tabbedPane.addTab("Cards", cardPanel);
+
+    mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
     tabbedPane.addTab("Mvrs", mvrPanel);
+
     tabbedPane.setSelectedIndex(0);
 
     tabbedPane.addChangeListener(e -> {
@@ -110,12 +119,13 @@ public class ViewerMain extends JPanel {
       } else if (c instanceof MvrTable mvrTable) {
          mvrTable.setSelectedTab();
       }
+
       // actions on right side
-      rightPanel.removeAll();
+      actionsPanel.removeAll();
       if (c instanceof AuditRoundsTable auditRound) {
-        auditRound.getActions(rightPanel, contestsPanel);
+        auditRound.getActions(actionsPanel, contestsPanel);
       } else if (c instanceof CountyPanel countyPanel) {
-        countyPanel.getActions(rightPanel, contestsPanel);
+        countyPanel.getActions(actionsPanel);
       }
       validate();
     });
@@ -187,6 +197,9 @@ public class ViewerMain extends JPanel {
     BAMutil.addActionToContainer(leftPanel, fileAction);
     this.leftPanel.add(new JLabel("Audit Record: "), BorderLayout.WEST);
 
+    // the right Panel
+    this.rightPanel.add(statusButton, BorderLayout.WEST);
+
     ////////////////////////////////////////////
 
     this.fileChooser = new FileManager(frame, datadir, null, (PreferencesExt) prefs.node("FileManager"));
@@ -224,8 +237,7 @@ public class ViewerMain extends JPanel {
   }
 
   void showInfo(Formatter f) {
-    auditRoundsPanel.showInfo(f);
-    // auditPanel.showInfo(f);
+    contestsPanel.showInfo(f);
   }
 
   // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
@@ -233,10 +245,9 @@ public class ViewerMain extends JPanel {
   // Afterwards, the code calls SwingUtilities.updateComponentTreeUI() on the frame, and then packs the frame.
   // I believe you need to update the UIManager with a FontUIResource, not just a Font.
   void resizeFonts(float fontSize) {
-      logger.debug("resizeFonts " + fontSize);
-      if (countyPanel != null) countyPanel.setFontSize(fontSize);
       contestsPanel.setFontSize(fontSize);
-      auditRoundsPanel.setFontSize(fontSize);
+      if (auditRoundsPanel != null) auditRoundsPanel.setFontSize(fontSize);
+      if (countyPanel != null) countyPanel.setFontSize(fontSize);
       stylePanel.setFontSize(fontSize);
       poolPanel.setFontSize(fontSize);
       contestPoolPanel.setFontSize(fontSize);
@@ -246,9 +257,9 @@ public class ViewerMain extends JPanel {
   }
 
   void setAuditRecord() {
-    if (countyPanel != null) countyPanel.setAuditRecord(auditRecordDir);
     contestsPanel.setAuditRecord(auditRecordDir);
-    auditRoundsPanel.setAuditRecord(auditRecordDir);
+    if (auditRoundsPanel != null) auditRoundsPanel.setAuditRecord(auditRecordDir);
+    if (countyPanel != null) countyPanel.setAuditRecord(auditRecordDir);
     cardPanel.setAuditRecord(auditRecordDir);
     mvrPanel.setAuditRecord(auditRecordDir, 1);
     stylePanel.setAuditRecord(auditRecordDir);
@@ -260,9 +271,9 @@ public class ViewerMain extends JPanel {
   public void exit() {
     logger.debug("exit ");
 
-    if (countyPanel != null) countyPanel.save();
     contestsPanel.save();
-    auditRoundsPanel.save();
+    if (auditRoundsPanel != null) auditRoundsPanel.save();
+    if (countyPanel != null) countyPanel.save();
     stylePanel.save();
     poolPanel.save();
     contestPoolPanel.save();
