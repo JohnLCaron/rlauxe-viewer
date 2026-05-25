@@ -69,12 +69,12 @@ public class StyleTable  extends JPanel  implements ViewerPanelIF{
     }
 
     public boolean setAuditRecord(String auditRecordLocation) {
-        logger.debug("PopulationTable setAuditRecord "+ auditRecordLocation);
+        logger.debug("StyleTable setAuditRecord "+ auditRecordLocation);
         poolTable.setBeans(emptyList());
 
         AuditRecordIF auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (auditRecord == null) {
-            logger.info("CardTable failed on readFrom "+ auditRecordLocation);
+            logger.info("StyleTable failed on readFrom "+ auditRecordLocation);
             return false;
         }
         if (auditRecord instanceof CompositeAuditRecord) return false;

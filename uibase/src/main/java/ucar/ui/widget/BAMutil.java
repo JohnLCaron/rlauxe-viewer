@@ -432,12 +432,12 @@ public class BAMutil {
    * @param mnemonic menu item shortcut
    * @param accel menu item global keyboard accelerator
    **/
-  public static void setActionProperties(AbstractAction act, String icon_name, String action_name, boolean is_toggle,
-      int mnemonic, int accel) {
+  public static void setActionProperties(AbstractAction act, String icon_name, String action_name, boolean is_toggle, int mnemonic, int accel) {
     if (icon_name != null) {
       act.putValue(Action.SMALL_ICON, getIcon(icon_name, false));
       act.putValue(BAMutil.SELECTED_ICON, getIcon(icon_name + "Sel", false));
     }
+
     act.putValue(Action.SHORT_DESCRIPTION, action_name);
     act.putValue(Action.LONG_DESCRIPTION, action_name);
     act.putValue(BAMutil.TOGGLE, is_toggle);

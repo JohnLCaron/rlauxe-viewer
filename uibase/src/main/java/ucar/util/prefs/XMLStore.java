@@ -48,7 +48,7 @@ import java.util.Stack;
  * }
  * </pre>
  *
- * If you plan to call Preferences.userRoot(), you must explicilty set it, eg:
+ * If you plan to call Preferences.userRoot(), you must explicitly set it, eg:
  * 
  * <pre>
  * PreferencesExt.setUserRoot(prefs);
@@ -98,8 +98,8 @@ public class XMLStore {
   }
 
   /**
-   * Create an XMLStore reading from an input stream. Because of some peculiariteis, you must open the
-   * input stream wtice, and pass both in.
+   * Create an XMLStore reading from an input stream. Because of some peculiarities, you must open the
+   * input stream twice, and pass both in.
    *
    * @param is1 the first copy of the input stream.
    * @param is2 the second copy of the input stream.
