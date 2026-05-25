@@ -373,7 +373,9 @@ public class ViewerMain extends JPanel {
     try {
       String storeName = profile.isCorla() ? "CorlaViewer.xml" : profile.isBelgium() ? "BelgiumViewer.xml" : "RlauxeViewer.xml";
       String prefStore = XMLStore.makeStandardFilename(".rlauxe", storeName);
-      store = XMLStore.createFromFile(prefStore, null);
+      XMLStore storedDefaults = profile.isBelgium() ? XMLStore.createFromResource("/resources/prefs/BelgiumViewerDefaults.xml", null) : null;
+
+      store = XMLStore.createFromFile(prefStore, storedDefaults);
       prefs = store.getPreferences();
       Debug.setStore(prefs.node("Debug"));
     } catch (IOException e) {
