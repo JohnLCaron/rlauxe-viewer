@@ -13,7 +13,7 @@ import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
-import org.cryptobiotic.rlauxe.persist.CompositeRecord;
+import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -34,7 +34,7 @@ import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.*;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
 
-public class AuditRoundsTable extends JPanel {
+public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(AuditRoundsTable.class);
 
     private final PreferencesExt prefs;
@@ -219,7 +219,7 @@ public class AuditRoundsTable extends JPanel {
         rerunTA.setFontSize(size);
     }
 
-    boolean setAuditRecord(String auditRecordLocation) {
+    public boolean setAuditRecord(String auditRecordLocation) {
         logger.info("AuditRoundsTable setAuditRecord "+ auditRecordLocation);
         auditRoundTable.setBeans(emptyList());
         contestTable.setBeans(new ArrayList<>());
@@ -230,7 +230,7 @@ public class AuditRoundsTable extends JPanel {
         //this.auditRecordLocation = auditRecordLocation;
         this.auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (this.auditRecord == null) return false;
-        this.isComposite = (this.auditRecord instanceof CompositeRecord);
+        this.isComposite = (this.auditRecord instanceof CompositeAuditRecord);
         this.samplingChanged = false;
 
         try {
@@ -395,7 +395,7 @@ public class AuditRoundsTable extends JPanel {
         estRoundTable.setBeans(estList);
     }
 
-    void save() {
+    public void saveState() {
         auditRoundTable.saveState(false);
         contestTable.saveState(false);
         assertionTable.saveState(false);

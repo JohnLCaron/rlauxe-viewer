@@ -8,7 +8,7 @@ package org.cryptobiotic.rlauxe.viewer;
 import org.cryptobiotic.rlauxe.audit.StyleIF;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
-import org.cryptobiotic.rlauxe.persist.CompositeRecord;
+import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord;
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class StyleTable extends JPanel {
+public class StyleTable  extends JPanel  implements ViewerPanelIF{
     static private final Logger logger = LoggerFactory.getLogger(StyleTable.class);
 
     private final PreferencesExt prefs;
@@ -68,7 +68,7 @@ public class StyleTable extends JPanel {
         localInfo.setFontSize(size);
     }
 
-    boolean setAuditRecord(String auditRecordLocation) {
+    public boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("PopulationTable setAuditRecord "+ auditRecordLocation);
         poolTable.setBeans(emptyList());
 
@@ -77,7 +77,7 @@ public class StyleTable extends JPanel {
             logger.info("CardTable failed on readFrom "+ auditRecordLocation);
             return false;
         }
-        if (auditRecord instanceof CompositeRecord) return false;
+        if (auditRecord instanceof CompositeAuditRecord) return false;
         this.auditRecord = (AuditRecord) auditRecord;
         this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
 
@@ -106,7 +106,7 @@ public class StyleTable extends JPanel {
         localInfo.gotoTop();
     }
 
-    void save() {
+    public void saveState() {
         poolTable.saveState(false);
 
         prefs.putInt("splitPos1", split1.getDividerLocation());
