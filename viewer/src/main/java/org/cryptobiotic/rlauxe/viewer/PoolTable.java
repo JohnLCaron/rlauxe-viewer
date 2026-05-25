@@ -9,10 +9,7 @@ import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.core.ContestInfo;
 import org.cryptobiotic.rlauxe.audit.CardPool;
 import org.cryptobiotic.rlauxe.estimate.Vunder;
-import org.cryptobiotic.rlauxe.persist.AuditRecord;
-import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
-import org.cryptobiotic.rlauxe.persist.CompositeRecord;
-import org.cryptobiotic.rlauxe.persist.Publisher;
+import org.cryptobiotic.rlauxe.persist.*;
 import org.cryptobiotic.rlauxe.util.ContestTabulation;
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
@@ -30,7 +27,7 @@ import java.util.*;
 import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.persist.csv.CardPoolCsvKt.readCardPoolCsvFile;
 
-public class PoolTable extends JPanel {
+public class PoolTable extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(PoolTable.class);
 
     private final PreferencesExt prefs;
@@ -77,7 +74,7 @@ public class PoolTable extends JPanel {
         contestTable.setFontSize(size);
     }
 
-    boolean setAuditRecord(String auditRecordLocation) {
+    public boolean setAuditRecord(String auditRecordLocation) {
         logger.debug("PoolTable setAuditRecord "+ auditRecordLocation);
         poolTable.setBeans(emptyList());
         contestTable.setBeans(emptyList());
@@ -89,7 +86,7 @@ public class PoolTable extends JPanel {
             return false;
         }
 
-        if (auditRecord instanceof CompositeRecord) return false;
+        if (auditRecord instanceof CompositeAuditRecord) return false;
         this.auditRecord = (AuditRecord) auditRecord;
         this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
 
@@ -113,7 +110,7 @@ public class PoolTable extends JPanel {
         contestTable.setBeans(beanList);
     }
 
-    void save() {
+    public void saveState() {
         poolTable.saveState(false);
         contestTable.saveState(false);
 

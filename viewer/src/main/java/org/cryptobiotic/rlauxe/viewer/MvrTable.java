@@ -7,10 +7,7 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditableCardIF;
 import org.cryptobiotic.rlauxe.audit.Config;
-import org.cryptobiotic.rlauxe.persist.AuditRecord;
-import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
-import org.cryptobiotic.rlauxe.persist.CompositeRecord;
-import org.cryptobiotic.rlauxe.persist.Publisher;
+import org.cryptobiotic.rlauxe.persist.*;
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +22,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class MvrTable extends JPanel {
+public class MvrTable extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(MvrTable.class);
 
     private final PreferencesExt prefs;
@@ -71,7 +68,12 @@ public class MvrTable extends JPanel {
         localInfo.setFontSize(size);
     }
 
-    boolean setAuditRecord(String auditRecordLocation, Integer roundIdx) {
+    public boolean setAuditRecord(String location) {
+        clear();
+        return true;
+    }
+
+    public boolean setAuditRecord(String auditRecordLocation, Integer roundIdx) {
         logger.debug("MvrTable setAuditRecord "+ auditRecordLocation);
         mvrTable.setBeans(emptyList());
 
@@ -81,7 +83,7 @@ public class MvrTable extends JPanel {
             logger.info("CardTable failed on readFrom "+ auditRecordLocation);
             return false;
         }
-        if (auditRecord instanceof CompositeRecord) return false;
+        if (auditRecord instanceof CompositeAuditRecord) return false;
         this.auditRecord = (AuditRecord) auditRecord;
         this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
 
@@ -136,7 +138,7 @@ public class MvrTable extends JPanel {
         localInfo.gotoTop();
     }
 
-    void save() {
+    public void saveState() {
         mvrTable.saveState(false);
 
         prefs.putInt("splitPos1", split1.getDividerLocation());

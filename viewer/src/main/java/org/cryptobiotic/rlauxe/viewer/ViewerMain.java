@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.HashSet;
 
@@ -58,15 +59,17 @@ public class ViewerMain extends JPanel {
   String auditRecordDir = "none";
 
   JTabbedPane tabbedPane;
-  private final ContestsPanel contestsPanel;
+  private BelgiumAuditPanel belgiumPanel;
+  private ContestsPanel contestsPanel;
   private AuditRoundsTable auditRoundsPanel = null;
-  private final PoolTable poolPanel;
-  private final StyleTable stylePanel;
-  private final CardTable cardPanel;
-  private final MvrTable mvrPanel;
-  private final ContestPoolsTable contestPoolPanel;
-
+  private PoolTable poolPanel;
+  private StyleTable stylePanel;
+  private CardTable cardPanel;
+  private MvrTable mvrPanel;
+  private ContestPoolsTable contestPoolPanel;
   private CountyPanel countyPanel = null;
+
+  java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
   public ViewerMain(PreferencesExt prefs, float fontSize, ViewerProfile profile, String datadir) {
     // Popup info window
@@ -81,33 +84,48 @@ public class ViewerMain extends JPanel {
     ////////////////////////////////////////////
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-    contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
-    tabbedPane.addTab("Contests", contestsPanel);
+    if (profile.isBelgium()) {
+      belgiumPanel = new BelgiumAuditPanel((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
+      belgiumPanel.getActions(actionsPanel);
+      tabbedPane.addTab("BelgiumAudit", belgiumPanel);
+      activePanels.add(belgiumPanel);
 
-    if (!profile.isBelgium()) {
+    } else {
+      contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
+      tabbedPane.addTab("Contests", contestsPanel);
+      activePanels.add(contestsPanel);
+
       auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
       tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+      activePanels.add(auditRoundsPanel);
+
+      if (profile.isCorla()) {
+        countyPanel = new CountyPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("Counties", countyPanel);
+        activePanels.add(countyPanel);
+      }
+
+      stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Styles", stylePanel);
+      activePanels.add(stylePanel);
+
+
+      poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Pools", poolPanel);
+      activePanels.add(poolPanel);
+
+      contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("ContestPools", contestPoolPanel);
+      activePanels.add(contestPoolPanel);
+
+      cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Cards", cardPanel);
+      activePanels.add(cardPanel);
+
+      mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
+      tabbedPane.addTab("Mvrs", mvrPanel);
+      activePanels.add(mvrPanel);
     }
-
-    if (profile.isCorla()) {
-      countyPanel = new CountyPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Counties", countyPanel);
-    }
-
-    stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("Styles", stylePanel);
-
-    poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("Pools", poolPanel);
-
-    contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("ContestPools", contestPoolPanel);
-
-    cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("Cards", cardPanel);
-
-    mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
-    tabbedPane.addTab("Mvrs", mvrPanel);
 
     tabbedPane.setSelectedIndex(0);
 
@@ -122,10 +140,14 @@ public class ViewerMain extends JPanel {
 
       // actions on right side
       actionsPanel.removeAll();
-      if (c instanceof AuditRoundsTable auditRound) {
+      if (c instanceof BelgiumAuditPanel belgium) {
+        belgium.getActions(actionsPanel);
+      } else if (c instanceof ContestsPanel contests) {
+        contests.getActions(actionsPanel);
+      } else if (c instanceof AuditRoundsTable auditRound) {
         auditRound.getActions(actionsPanel, contestsPanel);
-      } else if (c instanceof CountyPanel countyPanel) {
-        countyPanel.getActions(actionsPanel);
+      } else if (c instanceof CountyPanel counties) {
+        counties.getActions(actionsPanel);
       }
       validate();
     });
@@ -198,7 +220,11 @@ public class ViewerMain extends JPanel {
     this.leftPanel.add(new JLabel("Audit Record: "), BorderLayout.WEST);
 
     // the right Panel
-    this.rightPanel.add(statusButton, BorderLayout.WEST);
+    if (profile.isBelgium()) {
+      this.rightPanel.add(statusButton, BorderLayout.WEST);
+    }
+    this.rightPanel.add(actionsPanel, BorderLayout.EAST);
+
 
     ////////////////////////////////////////////
 
@@ -237,7 +263,8 @@ public class ViewerMain extends JPanel {
   }
 
   void showInfo(Formatter f) {
-    contestsPanel.showInfo(f);
+    if (belgiumPanel != null) belgiumPanel.showInfo(f);
+    else contestsPanel.showInfo(f);
   }
 
   // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
@@ -245,40 +272,24 @@ public class ViewerMain extends JPanel {
   // Afterwards, the code calls SwingUtilities.updateComponentTreeUI() on the frame, and then packs the frame.
   // I believe you need to update the UIManager with a FontUIResource, not just a Font.
   void resizeFonts(float fontSize) {
-      contestsPanel.setFontSize(fontSize);
-      if (auditRoundsPanel != null) auditRoundsPanel.setFontSize(fontSize);
-      if (countyPanel != null) countyPanel.setFontSize(fontSize);
-      stylePanel.setFontSize(fontSize);
-      poolPanel.setFontSize(fontSize);
-      contestPoolPanel.setFontSize(fontSize);
-      cardPanel.setFontSize(fontSize);
-      mvrPanel.setFontSize(fontSize);
-      infoTA.setFontSize(fontSize);
+    for (var vpanel : activePanels) {
+      vpanel.setFontSize(fontSize);
+    }
+    infoTA.setFontSize(fontSize);
   }
 
   void setAuditRecord() {
-    contestsPanel.setAuditRecord(auditRecordDir);
-    if (auditRoundsPanel != null) auditRoundsPanel.setAuditRecord(auditRecordDir);
-    if (countyPanel != null) countyPanel.setAuditRecord(auditRecordDir);
-    cardPanel.setAuditRecord(auditRecordDir);
-    mvrPanel.setAuditRecord(auditRecordDir, 1);
-    stylePanel.setAuditRecord(auditRecordDir);
-    poolPanel.setAuditRecord(auditRecordDir);
-    contestPoolPanel.setAuditRecord(auditRecordDir);
-    mvrPanel.clear();
+    for (var vpanel : activePanels) {
+      vpanel.setAuditRecord(auditRecordDir);
+    }
   }
 
   public void exit() {
     logger.debug("exit ");
 
-    contestsPanel.save();
-    if (auditRoundsPanel != null) auditRoundsPanel.save();
-    if (countyPanel != null) countyPanel.save();
-    stylePanel.save();
-    poolPanel.save();
-    contestPoolPanel.save();
-    cardPanel.save();
-    mvrPanel.save();
+    for (var vpanel : activePanels) {
+      vpanel.saveState();
+    }
 
     fileChooser.save();
     auditRecordDirCB.save();

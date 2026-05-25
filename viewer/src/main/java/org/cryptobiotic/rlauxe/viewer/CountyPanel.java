@@ -30,7 +30,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.roundUp;
 
-public class CountyPanel extends JPanel {
+public class CountyPanel extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(CountyPanel.class);
 
     private final PreferencesExt prefs;
@@ -112,7 +112,7 @@ public class CountyPanel extends JPanel {
         countyTable.setFontSize(size);
     }
 
-    boolean setAuditRecord(String auditRecordLocation) {
+    public boolean setAuditRecord(String auditRecordLocation) {
         this.auditRecordLocation = auditRecordLocation;
         contestTable.setBeans(emptyList());
 
@@ -178,7 +178,7 @@ public class CountyPanel extends JPanel {
         return sb.toString();
     }
 
-    void save() {
+    public void saveState() {
         contestTable.saveState(false);
         countyTable.saveState(false);
 
