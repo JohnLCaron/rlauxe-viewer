@@ -38,7 +38,7 @@ public class ViewerMain extends JPanel {
   private static PreferencesExt prefs;
   private static XMLStore store;
   private static ViewerMain ui;
-  private static boolean done;
+  private RlauxeAboutWindow aboutWindow;
 
   private final JPanel leftPanel = new JPanel();
   private final JPanel rightPanel = new JPanel();
@@ -72,6 +72,8 @@ public class ViewerMain extends JPanel {
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
   public ViewerMain(PreferencesExt prefs, float fontSize, ViewerProfile profile, String datadir) {
+    fontu = FontUtil.getStandardFont(fontSize);
+
     // Popup info window
     this.infoTA = new TextHistoryPane(true);
     infoTA.setFontSize(fontSize);
@@ -156,25 +158,6 @@ public class ViewerMain extends JPanel {
 
     //// buttons to the left of auditRecordDir ComboBox
 
-    //// TODO move to pulldown menu or something
-    // font resizing
-    fontu = FontUtil.getStandardFont(fontSize);
-    AbstractAction incrFontAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.incrFontSize().getSize2D());
-      }
-    };
-    BAMutil.setActionProperties(incrFontAction, "format-font-size-increase-icon.png", "Increase Font Size", false, '+', -1);
-    BAMutil.addActionToContainer(leftPanel, incrFontAction);
-
-    AbstractAction decrFontAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        resizeFonts(fontu.decrFontSize().getSize2D());
-      }
-    };
-    BAMutil.setActionProperties(decrFontAction, "format-font-size-decrease-icon.png", "Decrease Font Size", false, '-', -1);
-    BAMutil.addActionToContainer(leftPanel, decrFontAction);
-
     // TODO put into seperate thread
     AbstractAction verifyAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
@@ -246,6 +229,10 @@ public class ViewerMain extends JPanel {
       }
     });
 
+    /////////////////////////////////////////////////////////////////////
+    JMenuBar mb = makeMenuBar();
+    frame.setJMenuBar(mb);
+
     ////////////////////////////////////////////////////////////////
     // top layout
     this.topPanel = new JPanel(new BorderLayout());
@@ -284,8 +271,8 @@ public class ViewerMain extends JPanel {
     }
   }
 
-  public void exit() {
-    logger.debug("exit ");
+  public void save() {
+    logger.debug("save");
 
     for (var vpanel : activePanels) {
       vpanel.saveState();
@@ -294,24 +281,86 @@ public class ViewerMain extends JPanel {
     fileChooser.save();
     auditRecordDirCB.save();
 
-   if (infoWindow != null) {
-        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
+    if (infoWindow != null) {
+      prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
     }
 
     Rectangle bounds = frame.getBounds();
     prefs.putBeanObject(FRAME_SIZE, bounds);
     prefs.putBean(FONT_SIZE, fontu.getFontSize());
+
     try {
       store.save();
     } catch (IOException ioe) {
       ioe.printStackTrace();
       logger.error("ViewerMain store.save() failed", ioe);
     }
+  }
 
-    done = true; // on some systems, still get a window close event
+  public void exit() {
+    logger.debug("exit");
+
+    save();
     logger.debug("ViewerMain exit");
 
     System.exit(0);
+  }
+
+  private JMenuBar makeMenuBar() {
+    JMenuBar mb = new JMenuBar();
+    JMenu sysMenu = new JMenu("System Menu");
+    mb.add(sysMenu);
+
+    //// TODO move to pulldown menu or something
+    // font resizing
+    AbstractAction incrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts( fontu.incrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(incrFontAction, "format-font-size-increase-icon.png", "Increase Font Size", false, '+', -1);
+    BAMutil.addActionToMenu(sysMenu, incrFontAction);
+
+    AbstractAction decrFontAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        resizeFonts(fontu.decrFontSize().getSize2D());
+      }
+    };
+    BAMutil.setActionProperties(decrFontAction, "format-font-size-decrease-icon.png", "Decrease Font Size", false, '-', -1);
+    BAMutil.addActionToMenu(sysMenu, decrFontAction);
+
+    AbstractAction saveAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui.save();
+      }
+    };
+    BAMutil.setActionProperties(saveAction, "Save", "Save Preferences to Disk", false, 'S', -1);
+    BAMutil.addActionToMenu(sysMenu, saveAction);
+
+    AbstractAction aboutAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent evt) {
+        if (aboutWindow == null) {
+          JFrame parentFrame = (JFrame) ui.getTopLevelAncestor();
+          aboutWindow = new RlauxeAboutWindow(parentFrame);
+        }
+        aboutWindow.setVisible(true);
+      }
+    };
+    BAMutil.setActionProperties(aboutAction, null, "About", false, 'A', 0);
+    BAMutil.addActionToMenu(sysMenu, aboutAction);
+
+    AbstractAction exitAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui.exit();
+      }
+    };
+    BAMutil.setActionProperties(exitAction, "Exit", "Exit Viewer", false, 'X', -1);
+    BAMutil.addActionToMenu(sysMenu, exitAction);
+
+    return mb;
   }
 
   ///////////////////////\///////////////////////
@@ -394,10 +443,14 @@ public class ViewerMain extends JPanel {
 
     frame.setIconImage(BAMutil.getImage("rlauxe-logo.png"));
     frame.addWindowListener(new WindowAdapter() {
+      /* @Override
+      public void windowActivated(WindowEvent e) {
+        RlauxeSplashScreen.getSharedInstance().setVisible(false);
+      } */
+
+      @Override
       public void windowClosing(WindowEvent e) {
-        if (!done) {
-          ui.exit();
-        }
+        ui.exit();
       }
     });
 
