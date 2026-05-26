@@ -193,7 +193,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
                     includeTargetedPlusContestsLessThan(100);
                 }
             };
-            BAMutil.setActionProperties(targetLessThanAction, "goal.png", "Include Targets and LessThan 50", false, 'T', -1);
+            BAMutil.setActionProperties(targetLessThanAction, "goal.png", "Include Targets and LessThan 100", false, 'T', -1);
             BAMutil.addActionToContainer(container, targetLessThanAction);
         }
 
@@ -528,13 +528,13 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
             return round.getNewmvrs();
         }
 
-        public int getMvrLimit() { return (round.getAuditorWantNewMvrs() != null) ? round.getAuditorWantNewMvrs() : -1; }
+        public int getMvrLimit() { return (round.getAuditorMaxNewMvrs() != null) ? round.getAuditorMaxNewMvrs() : -1; }
         public void setMvrLimit( int mvrLimit) {
-            logger.debug("setMvrLLimit={} current={}", mvrLimit, round.getAuditorWantNewMvrs());
-            var currentValue = (round.getAuditorWantNewMvrs() != null) ? round.getAuditorWantNewMvrs() : -1;
+            logger.debug("setMvrLLimit={} current={}", mvrLimit, round.getAuditorMaxNewMvrs());
+            var currentValue = (round.getAuditorMaxNewMvrs() != null) ? round.getAuditorMaxNewMvrs() : -1;
             if (currentValue != mvrLimit) {
-                if (mvrLimit < 0) round.setAuditorWantNewMvrs(null);
-                else round.setAuditorWantNewMvrs(mvrLimit);
+                if (mvrLimit < 0) round.setAuditorMaxNewMvrs(null);
+                else round.setAuditorMaxNewMvrs(mvrLimit);
                 samplingChanged = true;
             }
         }
@@ -658,10 +658,9 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
             ClcaAssertion minAssertion = contestUA.minClcaAssertion();
             if (minAssertion == null) return 1.0;
             double noerror = minAssertion.getNoerror();
-            double nomargin = mean2margin(noerror);
 
             Integer haveMvrs = getHaveMvrs();
-            return UtilsKt.estRiskStandardBet(contestUA.getNpop(), nomargin, haveMvrs);
+            return UtilsKt.estRiskStandardBet(contestUA.getNpop(), noerror, haveMvrs);
         }
 
         public String getNCounties() {

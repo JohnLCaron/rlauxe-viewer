@@ -93,8 +93,8 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         assertionTable.addPopupOption("Show Assertion", assertionTable.makeShowAction(infoTA, infoWindow, bean -> ((AssertionBean) bean).show()));
 
         candidateTable =
-                new BeanTable<>(CandidateBean.class, (PreferencesExt) prefs.node("candidateTable"), false, "Candidate Coalition", "Candidates", null);
-        candidateTable.addPopupOption("Show Candidate", candidateTable.makeShowAction(infoTA, infoWindow, bean -> ((CandidateBean) bean).show()));
+                new BeanTable<>(CandidateBean.class, (PreferencesExt) prefs.node("candidateTable"), false, "Party Coalition", "Parties", null);
+        candidateTable.addPopupOption("Show Party", candidateTable.makeShowAction(infoTA, infoWindow, bean -> ((CandidateBean) bean).show()));
 
 
         setFontSize(fontSize);
@@ -565,8 +565,8 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
         static {
             beanProperties.add(new BeanTable.TableBeanProperty("type", "assorter type"));
-            beanProperties.add(new BeanTable.TableBeanProperty("winner", "assertion winner candidate"));
-            beanProperties.add(new BeanTable.TableBeanProperty("loser", "assertion loser candidate"));
+            beanProperties.add(new BeanTable.TableBeanProperty("winner", "assertion winner party"));
+            beanProperties.add(new BeanTable.TableBeanProperty("loser", "assertion loser party"));
             beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion difficulty description"));
             beanProperties.add(new BeanTable.TableBeanProperty("difficulty", "assertion difficulty measure (IRV only)"));
 
