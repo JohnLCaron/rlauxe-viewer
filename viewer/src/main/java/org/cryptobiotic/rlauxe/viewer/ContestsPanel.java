@@ -440,7 +440,9 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         // TODO maybe not needed
         public String getStatus() {
-            return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
+            return (lastRound == null || contestUA.getPreAuditStatus() != TestH0Status.InProgress)
+                    ? Naming.status(contestUA.getPreAuditStatus())
+                    : Naming.status(lastRound.getStatus());
         }
 
         public Boolean getTarget() {
