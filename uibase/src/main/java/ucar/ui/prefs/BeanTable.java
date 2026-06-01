@@ -89,7 +89,8 @@ public class BeanTable<T> extends JPanel {
   public JTable jtable;
   public TableBeanModel tableModel;
 
-  protected boolean debug, debugSelected, debugBean;
+  protected boolean debug, debugSelected;
+  protected boolean debugBean = false;
   protected boolean debugEditing = false;
 
   public BeanTable(Class<T> bc, PreferencesExt pstore, boolean canAddDelete) {
@@ -653,7 +654,7 @@ public class BeanTable<T> extends JPanel {
     }
   }
 
-  /** Does the reflection on the bean objects */
+  /** Do the reflection on the bean objects */
   public class TableBeanModel extends AbstractTableModel {
     public List<PropertyDescriptor> properties = new ArrayList<>();
     private Method canedit;
@@ -742,8 +743,8 @@ public class BeanTable<T> extends JPanel {
           Method m = md.getMethod();
           if (m.getName().equals("canedit")) {
             try {
-              boolean wtf = (Boolean) m.invoke(innerbean, (Object[]) null); // see if method retuen boolean
-              this.canedit = m;
+              boolean canedit = (Boolean) m.invoke(innerbean, (Object[]) null); // see if method returns boolean
+              this.canedit = canedit ? m : null;
               if (debugEditing) System.out.printf("BeanTable canedit: %s ", innerbean.getClass().getName());
             } catch (Exception e2) {
               e2.printStackTrace();
@@ -874,8 +875,10 @@ public class BeanTable<T> extends JPanel {
         Object[] params = new Object[1];
         params[0] = value;
         Method m = properties.get(col).getWriteMethod();
-        if (m != null)
+        if (m != null) {
           m.invoke(bean, params);
+          if (debugEditing) System.out.println("invoke " + m);
+        }
       } catch (Exception ee) {
         ee.printStackTrace();
       }

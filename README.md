@@ -48,27 +48,32 @@ on how to build all of the case study datasets.
 
 ### From the command line
 
-`cd devhome/rlauxe-viewer
+`
+cd devhome/rlauxe-viewer
 `
 
 For Belgium elections:
 
-`java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit
+`
+java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit
 `
 
 For Colorado elections:
 
-`java -jar viewer/build/libs/viewer-uber.jar -corlaAudit
+`
+java -jar viewer/build/libs/viewer-uber.jar -corlaAudit
 `
 
 For all audits:
 
-`java -jar viewer/build/libs/viewer-uber.jar
+`
+java -jar viewer/build/libs/viewer-uber.jar
 `
 
 For any of these, you can optionally set the default directory where Audit Records are kept, eg:
 
-`java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit -datadir /my/rlauxe/audits
+`
+java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit -datadir /my/rlauxe/audits
 `
 
 which is where the "Audit Record Chooser" widget will start from.

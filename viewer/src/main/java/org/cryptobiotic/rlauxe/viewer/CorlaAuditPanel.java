@@ -5,7 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AssertionRound;
+import org.cryptobiotic.rlauxe.audit.AuditRound;
 import org.cryptobiotic.rlauxe.audit.AuditRoundIF;
 import org.cryptobiotic.rlauxe.audit.Config;
 import org.cryptobiotic.rlauxe.audit.ContestRound;
@@ -13,14 +13,14 @@ import org.cryptobiotic.rlauxe.betting.TestH0Status;
 import org.cryptobiotic.rlauxe.betting.UtilsKt;
 import org.cryptobiotic.rlauxe.bridge.Naming;
 import org.cryptobiotic.rlauxe.core.Assertion;
+import org.cryptobiotic.rlauxe.core.AssorterIF;
 import org.cryptobiotic.rlauxe.core.ClcaAssertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import org.cryptobiotic.rlauxe.dhondt.*;
-import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
-import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord;
-import org.cryptobiotic.rlauxe.persist.SampleLimit;
-import org.cryptobiotic.rlauxe.viewer.ViewerMain.ViewerProfile;
+import org.cryptobiotic.rlauxe.persist.CountyAudit;
+import org.cryptobiotic.rlauxe.persist.CountyContestData;
+import org.cryptobiotic.rlauxe.persist.CountyData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
@@ -39,44 +39,45 @@ import java.util.*;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.resampleAndSaveResults;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
+import static org.cryptobiotic.rlauxe.util.UtilsKt.roundUp;
 
-public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
-    static private final Logger logger = LoggerFactory.getLogger(BelgiumAuditPanel.class);
+public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
+    static private final Logger logger = LoggerFactory.getLogger(CorlaAuditPanel.class);
 
     private final PreferencesExt prefs;
-    private final ViewerProfile profile;
-    AuditData auditData;
-    AllSeats allSeats;
-    CandidateBean coalitionTotal;
-    Map<Integer, String> partyNames;
 
-    private final BeanTable<BelgiumAuditPanel.ContestBean> contestTable;
-    private final BeanTable<BelgiumAuditPanel.AssertionBean> assertionTable;
-    private final BeanTable<BelgiumAuditPanel.CandidateBean> candidateTable;
+    CountyBean countyTotal;
+    Map<String, CountyBean> countyMap = emptyMap();
+
+    private final BeanTable<CorlaAuditPanel.ContestBean> contestTable;
+    private final BeanTable<CorlaAuditPanel.AssertionBean> assertionTable;
+    private final BeanTable<CorlaAuditPanel.CountyBean> countyTable;
 
     private final JSplitPane split1, split2;
 
     private String auditRecordLocation = "none";
-    private CompositeAuditRecord auditRecord;
+    private CountyAudit countyAudit;
     private Config config;
-    private AuditRoundIF lastAuditRound; // may be null
+    private AuditRoundIF lastAuditRound; // may not be null
+    private Double auditRiskLimit;
+    private Boolean samplingChanged = false;
 
-    public BelgiumAuditPanel(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize,
-                             JButton statusButton, ViewerProfile profile) {
+    public CorlaAuditPanel(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
-        this.profile = profile;
-        auditData = new AuditData(statusButton); // so each panel gets its own AuditData, but for all audit records.
+        /* auditData = new AuditData(statusButton); // so each panel gets its own AuditData, but for all audit records.
         statusButton.addActionListener(e -> {
             Formatter f = new Formatter();
             showCoalitionReport(f);
             infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
             infoTA.setText(f.toString());
             infoWindow.show();
-        });
+        }); */
 
         contestTable =
-                new BeanTable<>(BelgiumAuditPanel.ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false, "Contests", "Contests", null);
+                new BeanTable<>(CorlaAuditPanel.ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false, "Contests", "Contests", null);
         contestTable.addListSelectionListener(e -> {
             ContestBean contest = contestTable.getSelectedBean();
             if (contest != null) {
@@ -92,43 +93,22 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
                 new BeanTable<>(AssertionBean.class, (PreferencesExt) prefs.node("assertionTable"), false, "Assertions", "Assertions", null);
         assertionTable.addPopupOption("Show Assertion", assertionTable.makeShowAction(infoTA, infoWindow, bean -> ((AssertionBean) bean).show()));
 
-        candidateTable =
-                new BeanTable<>(CandidateBean.class, (PreferencesExt) prefs.node("candidateTable"), false, "Party Coalition", "Parties", null);
-        candidateTable.addPopupOption("Show Party", candidateTable.makeShowAction(infoTA, infoWindow, bean -> ((CandidateBean) bean).show()));
-
+        countyTable =
+                new BeanTable<>(CountyBean.class, (PreferencesExt) prefs.node("countyTable"), false, "Counties", "County", null);
+        // countyTable.addPopupOption("Show County", countyTable.makeShowAction(infoTA, infoWindow, bean -> ((CountyBean) bean).show()));
 
         setFontSize(fontSize);
 
         // layout of tables
         split1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, assertionTable);
         split1.setDividerLocation(prefs.getInt("splitPos1", 400));
-        split2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, candidateTable);
+        split2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, countyTable);
         split2.setDividerLocation(prefs.getInt("splitPos2", 800));
 
         setLayout(new BorderLayout());
         add(split2, BorderLayout.CENTER);
 
-        logger.debug("BelgiumAuditPanel init");
-    }
-
-    public void getActions(JPanel container) {
-        if (profile.isBelgium()) {
-            AbstractAction limitAction = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    applySampleLimits();
-                }
-            };
-            BAMutil.setActionProperties(limitAction, "speedometer.png", "reread sample limits", false, 'L', -1);
-            BAMutil.addActionToContainer(container, limitAction);
-            /*
-            AbstractAction saveAction = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    saveConfig();
-                }
-            };
-            BAMutil.setActionProperties(saveAction, "saveConfig.png", "Save these limits", false, 'S', -1);
-            BAMutil.addActionToContainer(container, saveAction); */
-        }
+        logger.debug("CorlaAuditPanel init");
     }
 
     /*
@@ -145,7 +125,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             JOptionPane.showMessageDialog(null, e.getMessage());
             logger.error("AuditRoundsTable.resample failed", e);
         }
-    } */
+    }
 
     public void applySampleLimits() {
         List<SampleLimit> limits = auditRecord.readSampleLimits(); // should this be global ?
@@ -166,19 +146,19 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         auditData.updateStatus();
         // updateCandidateTable();
         repaint();
-    }
+    } */
 
     public void setFontSize(float size) {
         contestTable.setFontSize(size);
         assertionTable.setFontSize(size);
-        candidateTable.setFontSize(size);
+        countyTable.setFontSize(size);
     }
 
     public boolean setAuditRecord(String auditRecordLocation) {
         this.auditRecordLocation = auditRecordLocation;
         contestTable.setBeans(emptyList());
 
-        logger.debug("setAuditRecord " + auditRecordLocation+ " with profile "+ profile);
+        logger.debug("setAuditRecord " + auditRecordLocation);
 
         try {
             this.auditRecordLocation = auditRecordLocation;
@@ -188,48 +168,53 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
                 logger.info("first round was not started"); // TODO plan B
                 return false;
             }
-            if (!(record instanceof CompositeAuditRecord)) {
-                logger.info("must be CompositeAuditRecord");
+            if (!(record instanceof CountyAudit)) {
+                logger.info("must be CountyAudit");
                 return false;
             }
-            this.auditRecord = (CompositeAuditRecord) record;
-            this.lastAuditRound = auditRecord.getRounds().getLast();
+            this.countyAudit = (CountyAudit) record;
+            this.lastAuditRound = countyAudit.getRounds().getLast();
 
-            this.config = auditRecord.getConfig();
-            ContestBean.alpha = config.getRiskLimit();
+            this.config = countyAudit.getConfig();
+            this.auditRiskLimit = config.getRiskLimit();
 
-            List<ContestBean> beanList = new ArrayList<>();
+            java.util.Map<Integer, ContestRound> contestRoundMap = new HashMap<>();
             for (var contestRound : lastAuditRound.getContestRounds()) {
-                if (contestRound.getContestUA().getPreAuditStatus().equals(TestH0Status.InProgress)) {
-                    var bean = new ContestBean(contestRound);
-                    bean.auditData = auditData;
-                    beanList.add(bean);
-                }
+                contestRoundMap.put(contestRound.getId(), contestRound);
+            }
+
+            java.util.List<ContestBean> beanList = new ArrayList<>();
+            for (var cwa : countyAudit.getContests()) {
+                var cr = contestRoundMap.get(cwa.getId());
+                var bean = new ContestBean(cwa, cr);
+                beanList.add(bean);
             }
             // sort contests by payoff
             beanList.sort(Comparator.comparing(ContestBean::getPayoff));
             contestTable.setBeans(beanList);
 
-            auditData.setNewBeans(beanList);
-            applySampleLimits(); // read in sample limits and apply them
-
-            // candidates
-            partyNames = auditRecord.readPartyNames();
-            List<SampleLimit> sampleLimits = auditRecord.readSampleLimits();
-            allSeats = ContestSeatsKt.makeContestAndCandidateSeats(this.lastAuditRound, sampleLimits);
-            List<CandidateBean> candBeans = new ArrayList<>();
-            for (var candidateSeat : allSeats.getCandidateSums()) {
-                if (candidateSeat.getMaxSeats() > 0) {
-                    var bean = new CandidateBean(candidateSeat);
-                    candBeans.add(bean);
-                }
+            /////////////////////
+            int countUniformMvrs = 0;
+            CountyBean statewide = null;
+            java.util.List<CountyBean> countyList = new ArrayList<>();
+            java.util.Map<String, CountyBean> _countyMap= new HashMap<>();
+            for (var countyData : countyAudit.getCountyData()) {
+                var bean = new CountyBean(countyData);
+                if (bean.getName().equals("Statewide")) statewide = bean;
+                else countUniformMvrs += bean.getNmvrsUniform(); // statewide now included in counties, so dont count twice
+                countyList.add(bean);
+                _countyMap.put(bean.getName(), bean);
             }
-            coalitionTotal = makeCandidatesTotal(candBeans);
-            candBeans.add(coalitionTotal);
+            countyMap = _countyMap;
 
-            // sort candidates by reportedSeats
-            candBeans.sort(Comparator.comparing(CandidateBean::getReportedSeats).reversed());
-            candidateTable.setBeans(candBeans);
+            var npop = (statewide == null) ? 0 : statewide.npop;
+            countyTotal = new CountyBean(new CountyData("=Total", countUniformMvrs, npop));
+            countMvrsByCounty();
+            countyList.add(countyTotal);
+
+            // sort counties by nmvrs
+            countyList.sort(Comparator.comparing(CountyBean::getNmvrsConsistent).reversed());
+            countyTable.setBeans(countyList);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -240,10 +225,11 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         return true;
     }
 
-    void setSelectedContest(BelgiumAuditPanel.ContestBean contestBean) {
+    void setSelectedContest(ContestBean contestBean) {
+
         List<AssertionBean> beanList = new ArrayList<>();
-        for (AssertionRound ar : contestBean.lastRound.getAssertionRounds()) {
-            var bean = new AssertionBean(contestBean, ar);
+        for (ClcaAssertion cassert : contestBean.contestUA.getClcaAssertions()) {
+            var bean = new AssertionBean(contestBean, cassert);
             beanList.add(bean);
         }
 
@@ -257,29 +243,194 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
     public void saveState() {
         contestTable.saveState(false);
         assertionTable.saveState(false);
-        candidateTable.saveState(false);
+        countyTable.saveState(false);
 
         prefs.putInt("splitPos1", split1.getDividerLocation());
         prefs.putInt("splitPos2", split2.getDividerLocation());
     }
 
-    /// ///////////////////////////////////////////////////////////////
+    public void getActions(JPanel container) {
+        AbstractAction startAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                resample();
+            }
+        };
+        BAMutil.setActionProperties(startAction, "ambition.png", "Resample", false, 'S', -1);
+        BAMutil.addActionToContainer(container, startAction);
 
-    void showCoalitionReport(Formatter f) {
-        f.format("%s", coalitionTotal.show());
+        /* TODO put into separate thread
+        AbstractAction runAuditRoundAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                callRunRound();
+                contestsPanel.resetAuditRecord();
+            }
+        };
+        BAMutil.setActionProperties(runAuditRoundAction, "hamster.png", "Run Audit Round", false, 'R', -1);
+        BAMutil.addActionToContainer(container, runAuditRoundAction); */
+
+        AbstractAction targetAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                includeTargetedOnly();
+            }
+        };
+        BAMutil.setActionProperties(targetAction, "goal.png", "Include Targets Only", false, 'T', -1);
+        BAMutil.addActionToContainer(container, targetAction);
+
+        AbstractAction targetPlusAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                includeTargetedPlus();
+            }
+        };
+        BAMutil.setActionProperties(targetPlusAction, "goal.png", "Include Targets plus", false, 'T', -1);
+        BAMutil.addActionToContainer(container, targetPlusAction);
+
+        AbstractAction targetLessThanAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                includeTargetedPlusContestsLessThan(100); // TODO allow user to set maxMvrs
+            }
+        };
+        BAMutil.setActionProperties(targetLessThanAction, "goal.png", "Include Targets and LessThan 100", false, 'T', -1);
+        BAMutil.addActionToContainer(container, targetLessThanAction);
+
+        AbstractAction includeAllAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) { setInclude(true); }
+        };
+        BAMutil.setActionProperties(includeAllAction, "add.png", "Include All Contests", false, 'T', -1);
+        BAMutil.addActionToContainer(container, includeAllAction);
+
+        AbstractAction excludeAllAction = new AbstractAction() {
+            public void actionPerformed(ActionEvent e) { setInclude(false); }
+        };
+        BAMutil.setActionProperties(excludeAllAction, "exemption.png", "Exclude All Contests", false, 'T', -1);
+        BAMutil.addActionToContainer(container, excludeAllAction);
     }
 
     //// Actions
-    void showInfo(Formatter f) {
-        if (this.auditRecord == null) return;
 
-        f.format("Audit record at %s%n%n", auditRecord.getLocation());
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    void resample() {
+        try {
+            java.util.List<ContestWithAssertions> cuas = new ArrayList<>();
+            for (ContestRound cr : this.lastAuditRound.getContestRounds()) {
+                cuas.add(cr.getContestUA());
+            }
+
+            int nrounds = countyAudit.getRounds().size();
+            if (nrounds == 0) return;
+
+            logger.info(String.format("call resampleAndSaveResults"));
+
+            resampleAndSaveResults(countyAudit, (AuditRound) lastAuditRound);
+            countMvrsByCounty();
+
+            contestTable.refresh();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+            logger.error("AuditRoundsTable.resample failed", e);
+        }
+    }
+
+    /* void callRunRound() {
+        try {
+            logger.info("begin runRound");
+            if (samplingChanged && lastAuditRound != null)
+                resampleAndSaveResults(countyAudit, (AuditRound) lastAuditRound);
+
+            runRound(countyAudit.getLocation(), null, null);
+
+            logger.info("return from runRound");
+            setAuditRecord(countyAudit.getLocation()); // reread in
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+            logger.error("AuditRoundsTable.runAuditRound failed", e);
+        }
+    } */
+
+    // all include or exclude
+    void setInclude(Boolean include) {
+        for (ContestRound contestRound: lastAuditRound.getContestRounds()) {
+            contestRound.setIncluded(include);
+        }
+        samplingChanged = true;
+        contestTable.refresh();
+    }
+
+    // set targeted to be included
+    void includeTargetedOnly() {
+        for (ContestBean bean : contestTable.getBeans()) {
+            if (bean.contestRound != null) {
+                bean.contestRound.setIncluded(bean.targeted());
+            }
+        }
+        samplingChanged = true;
+        contestTable.refresh();
+    }
+
+    // targeted and statewide
+    Boolean includeTargetedPlus() {
+        includeTargetedOnly();
+
+        // statewide, congress, contests starting with "state" and estMvrs < 150
+        for (ContestBean bean : contestTable.getBeans()) {
+            if (bean.getEstMvrs() > 150) continue;
+            if (!bean.getStatus().equals(TestH0Status.InProgress.name())) continue;
+            if (bean.contestRound == null) continue;
+
+            if (bean.statewide()) bean.contestRound.setIncluded(true);
+            if (bean.getName().startsWith("Representative to the")) bean.contestRound.setIncluded(true);
+            if (bean.getName().startsWith("State")) bean.contestRound.setIncluded(true);
+        }
+
+        samplingChanged = true;
+        contestTable.refresh();
+        return true;
+    }
+
+    // targeted and contests with estMvrs < needMvrs
+    Boolean includeTargetedPlusContestsLessThan(Integer maxMvrs) {
+        includeTargetedOnly();
+
+        for (ContestBean bean : contestTable.getBeans()) {
+            if (bean.contestRound == null) continue;
+            if (bean.getEstMvrs() <= maxMvrs && bean.getStatus().equals(TestH0Status.InProgress.name()))
+                bean.contestRound.setIncluded(true);
+        }
+
+        samplingChanged = true;
+        contestTable.refresh();
+        return true;
+    }
+
+    void countMvrsByCounty() {
+        int countMvrs = 0;
+        var mvrCounts = countyAudit.countMvrsByCounty();
+        for (var countyData : mvrCounts.values()) {
+            var countyBean = countyMap.get(countyData.getCountyName());
+            if (countyBean != null) {
+                countyBean.nmvrsConsistent = countyData.getNmvrs();
+                countMvrs += countyData.getNmvrs();
+            } else {
+                logger.warn( "cant find countyName '" + countyData.getCountyName() +"'");
+            }
+        }
+        if (countyTotal != null) {
+            countyTotal.nmvrsConsistent = countMvrs;
+        }
+        countyTable.refresh();
+    }
+
+    void showInfo(Formatter f) {
+        if (this.countyAudit == null) return;
+
+        f.format("Audit record at %s%n%n", countyAudit.getLocation());
         f.format("%s%n", this.config);
         if (this.lastAuditRound == null) return;
 
         f.format("AuditRounds");
         int totalExtra = 0;
-        for (AuditRoundIF round : auditRecord.getRounds()) {
+        for (AuditRoundIF round : countyAudit.getRounds()) {
             if (round.getAuditWasDone()) {
                 int roundIdx = round.getRoundIdx();
                 int nmvrs = round.getSamplePrns().size();
@@ -291,8 +442,6 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         }
         f.format("%n  total extraBallotsUsed = %d %n", totalExtra);
         f.format("  total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
-
-        f.format("%s", CandSeatRanges.Companion.showMergedSeatRanges(this.lastAuditRound));
     }
 
     public String printContests() {
@@ -312,6 +461,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         return sb.toString();
     }
 
+    /*
     static public class AuditData {
         JButton status;
         Integer useMvrs = 0;
@@ -359,11 +509,10 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             }
             return total;
         }
-    }
+    } */
 
     public class ContestBean {
         static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
-        static Double alpha = .03;
 
         static {
             beanProperties.add(new BeanTable.TableBeanProperty("id", "contest identifier"));
@@ -395,31 +544,53 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "(haveMvrs-estMvrs)"));
         }
 
+
         // editable properties
-        static public String editableProperties() { return "mvrLimit"; }
-        // static public String hiddenProperties() { return "mvrLimit"; }
+        static public String editableProperties() { return "include risk"; }
 
-        public boolean canedit() { return true; }
-        public int getMvrLimit() { return mvrLimit; }
-        public void setMvrLimit( int limit) {
-            this.mvrLimit = limit;
-            if (limit < 0) lastRound.setHaveSampleSize(orgSampleSize); else lastRound.setHaveSampleSize(limit);
-            if (auditData != null) auditData.updateStatus(); // also update this row I hope
-        }
-
-        AuditData auditData;
-        Integer mvrLimit = -1;
-        ContestRound lastRound;
         ContestWithAssertions contestUA;
+        ContestRound contestRound; // may be null
+
+        Double risk = auditRiskLimit;
+        Integer mvrLimit = -1;
         Integer orgSampleSize;
 
         public ContestBean() {
         }
 
-        ContestBean(ContestRound contestRound) {
-            this.lastRound = contestRound;
-            this.contestUA = contestRound.getContestUA();
-            orgSampleSize = lastRound.getHaveSampleSize();
+        ContestBean(ContestWithAssertions contestUA, ContestRound contestRound) {
+            this.contestUA = contestUA;
+            this.contestRound = contestRound;
+            orgSampleSize = -1; // lastRound.getHaveSampleSize();
+        }
+
+        public boolean canedit() {
+            return true;
+        }
+
+        public boolean isInclude() {
+            return contestRound != null && contestRound.getIncluded();
+        }
+        public void setInclude(boolean include) {
+            if (contestRound == null) return;
+            boolean oldState = contestRound.getIncluded();
+            if (oldState != include) {
+                contestRound.setIncluded(include);
+                samplingChanged = true;
+            }
+        }
+
+        // editable properties have to be primitive
+        public void setRisk(double risk) {
+            // TODO if change risk, put into contestRound. Ok, but not actually saving the new risk.
+            this.risk = risk;
+            var estMvrs = getEstMvrs();
+            contestRound.setEstMvrs(estMvrs);
+            setInclude(true);
+            samplingChanged = true;
+        }
+        public double getRisk() {
+            return risk;
         }
 
         public String getName() {
@@ -436,39 +607,49 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             double noerror = minAssertion.getNoerror();
 
             Integer haveMvrs = getHaveMvrs();
-            return UtilsKt.estRiskStandardBet(contestUA.getNpop(), noerror, haveMvrs);
+            return UtilsKt.estRiskStandardBet(contestUA.population(), noerror, haveMvrs);
         }
 
-        public Integer getEstMvrs() { return lastRound.getEstNewMvrs(); }
-
-        /*
         public Integer getEstMvrs() {
-            if (contestUA.getHasStyle()) {
-                return ((lastRound == null)) ? 0 : lastRound.getEstMvrs();
-            }
+            ClcaAssertion minAssertion = contestUA.minClcaAssertion();
+            if (minAssertion == null) return 0;
+            double noerror = minAssertion.getNoerror();
 
-            Double margin = contestUA.minMargin();
-            if (margin == null) return 0;
-            return roundUp(UtilsKt.estSamplesFromMarginUpper(2.0 / 1.03905, margin, alpha));
-        } */
+            return UtilsKt.estSampleSizeStandardBet(contestUA.population(), noerror, risk);
+        }
 
         public Integer getHaveMvrs() {
-            if (mvrLimit >= 0) return mvrLimit;
-            return lastRound.getHaveSampleSize();
-
-            /* TODO
-            if (contestUA.getHasStyle()) {
-                return ((lastRound == null)) ? 0 : lastRound.getHaveSampleSize();
-            }
-
-            var have = contestUA.getContest().info().getMetadata().get("CORLAhaveMvrs");
-            return (have == null) ? 0 : Integer.parseInt(have); */
+            return (contestRound == null) ? 0 : contestRound.getHaveSampleSize();
         }
 
-        public String getNoError() {
-            Assertion minAssertion = contestUA.minAssertion();
-            if (minAssertion == null) return "N/A";
-            return dfn(minAssertion.getAssorter().noerror(contestUA.getHasStyle()), 5);
+        /* public Integer getHaveMvrs() {
+            if (mvrLimit >= 0) return mvrLimit;
+            return getEstMvrs();
+        } */
+
+        public String getNCounties() {
+            var CORLAcounties =  contestUA.getContest().info().getMetadata().get("CORLAcounties");
+            if (CORLAcounties == null) return "N/A";
+            var toks = CORLAcounties.split(",");
+            if (toks.length == 1) return toks[0];
+            return String.format("%02d", toks.length);
+        }
+
+        public String getTarget() {
+            return targeted() ? "YES" : "";
+        }
+
+        boolean targeted() {
+            var reason = contestUA.getContest().info().getMetadata().get("CORLAauditReason");
+            if (reason == null) return false;
+            return reason.equals("state_wide_contest") || reason.equals("county_wide_contest");
+        }
+
+        public boolean statewide() {
+            var CORLAcounties =  contestUA.getContest().info().getMetadata().get("CORLAcounties");
+            if (CORLAcounties == null) return false;
+            var toks = CORLAcounties.split(",");
+            return  (toks.length > 60);
         }
 
         public String getPayoff() {
@@ -487,20 +668,12 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             return getHaveMvrs() - getEstMvrs();
         }
 
-        public Integer getMvrsUsed() {
-            return (lastRound == null) ? 0 : lastRound.maxSamplesUsed();
-        }
-
-        public Integer getNc() {
-            return contestUA.getNc();
-        }
-
         public Integer getNCand() {
             return contestUA.getNcandidates();
         }
 
-        public Integer getNpop() {
-            return contestUA.getNpop();
+        public Integer getPopSize() {
+            return contestUA.population();
         }
 
         public Integer getPhantoms() {
@@ -512,9 +685,8 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             return min == null ? 0.0 : min;
         }
 
-        // TODO maybe not needed
         public String getStatus() {
-            return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
+            return Naming.status(contestUA.getPreAuditStatus());
         }
 
         public String getType() {
@@ -537,6 +709,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
         public Integer getVoteDiff() {
             Assertion minAssertion = contestUA.minAssertion();
+            if (minAssertion == null) return 0;
             return contestUA.getContest().marginInVotes(minAssertion.getAssorter());
         }
 
@@ -549,9 +722,6 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             StringBuilder sb = new StringBuilder();
             sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, ContestBean.beanProperties)));
             sb.append("\n%s%n".formatted(cua.show()));
-            if (cua.getContest() instanceof DHondtContest dhcontest) {
-                sb.append(dhcontest.showRelaxedAssertions(this.lastRound));
-            }
             return sb.toString();
         }
     }
@@ -578,204 +748,143 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         ContestBean contestBean;
-        AssertionRound assertionRound;
         ContestWithAssertions cua;
         ClcaAssertion cassertion;
-        Assertion assertion;
+        AssorterIF assorter;
         Map<Integer, String> candidates;
-        OneAuditClcaAssorter oaAssorter;
 
         public AssertionBean() {
         }
 
-        AssertionBean(ContestBean contestBean, AssertionRound assertionRound) {
+        AssertionBean(ContestBean contestBean, ClcaAssertion cassertion) {
             this.contestBean = contestBean;
             this.cua = contestBean.contestUA;
-            this.assertionRound = assertionRound;
-            this.assertion = assertionRound.getAssertion();
+            this.cassertion = cassertion;
+            this.assorter = cassertion.getAssorter();
             this.candidates = cua.getContest().info().getCandidateIdToName();
-            if (assertion instanceof ClcaAssertion ca) {
-                this.cassertion = ca;
-                if (ca.getCassorter() instanceof OneAuditClcaAssorter) {
-                    this.oaAssorter = (OneAuditClcaAssorter) ca.getCassorter();
-                }
-            }
         }
 
         public String getType() {
-            return assertion.getAssorter().getClass().getSimpleName();
+            return assorter.getClass().getSimpleName();
         }
 
         public String getWinner() {
-            if (assertion.getAssorter() instanceof DHondtAssorter dassorter) {
+            if (assorter instanceof DHondtAssorter dassorter) {
                 return dassorter.winnerNameRound();
             }
-            int winner = assertion.getAssorter().winner();
+            int winner = assorter.winner();
             return candidates.get(winner);
         }
 
         public String getLoser() {
-            if (assertion.getAssorter() instanceof DHondtAssorter dassorter) {
+            if (assorter instanceof DHondtAssorter dassorter) {
                 return dassorter.loserNameRound();
             }
-            int loser = assertion.getAssorter().loser();
+            int loser = assorter.loser();
             return candidates.get(loser);
         }
 
         public String getDesc() {
-            return assertion.getAssorter().hashcodeDesc();
-            // return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
+            return assorter.hashcodeDesc();
+            // return cua.getContest().showAssertionDifficulty(assorter);
         }
 
         public Double getEstRisk() {
             double noerror = cassertion.getNoerror();
             Integer haveMvrs = contestBean.getHaveMvrs();
-            return UtilsKt.estRiskStandardBet(cua.getNpop(), noerror, haveMvrs);
+            return UtilsKt.estRiskStandardBet(cua.population(), noerror, haveMvrs);
         }
 
-        public Integer getEstMvrs() { return assertionRound.getEstNewMvrs(); }
+        public Integer getEstMvrs() {
+            double noerror = cassertion.getNoerror();
+            return UtilsKt.estSampleSizeStandardBet(contestBean.contestUA.population(), noerror, contestBean.getRisk());
+        }
 
         public double getMargin() {
-            return (cassertion != null) ? cassertion.getCassorter().getAssorterMargin() : assertion.getAssorter().dilutedMargin();
+            return cassertion.getCassorter().getAssorterMargin();
         }
 
         public String getDifficulty() {
-            return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
-
-        /* if (assertion.getAssorter() instanceof RaireAssorter) {
-            RaireAssertion rassertion = ((RaireAssorter) assertion.getAssorter()).getRassertion();
-            return Math.round(rassertion.getDifficulty());
-        } else if (cua.getContest() instanceof DHondtContest) {
-            return Math.round(((DHondtContest) cua.getContest()).difficulty(assertion.getAssorter()));
-        }
-        return -1; */
+            return cua.getContest().showAssertionDifficulty(assorter);
         }
 
         public double getRecountMargin() {
-            return cua.getContest().recountMargin(assertion.getAssorter());
+            return cua.getContest().recountMargin(assorter);
         }
 
         public double getMean() {
-            return assertion.getAssorter().dilutedMean();
+            return assorter.dilutedMean();
         }
 
         // could use payoff
         public String getNoError() {
-            return dfn(assertion.getAssorter().noerror(cua.getHasStyle()), 5);
+            return dfn(assorter.noerror(cua.getHasStyle()), 5);
         }
 
         public String getPayoff() {
-            double noerror = assertion.getAssorter().noerror(cua.getHasStyle());
+            double noerror = assorter.noerror(cua.getHasStyle());
             return dfn(UtilsKt.payoff(2.0 / 1.03905, noerror), 6);
         }
 
         public double getUpper() {
-            return assertion.getAssorter().upperBound();
+            return assorter.upperBound();
         }
 
         public String show() {
             StringBuilder sb = new StringBuilder();
             sb.append("%n%s%n".formatted(assertionTable.tableModel.showBean(this, AssertionBean.beanProperties)));
 
-            var assertion = this.assertion;
-            sb.append(assertion.show());
-            sb.append("\n   difficulty: %s".formatted(this.cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
-            if (this.oaAssorter != null)
-                sb.append("%n oaAssortRates = %s".formatted(this.oaAssorter.getOaAssortRates().toString()));
+            sb.append(cassertion.show());
+            sb.append("\n   difficulty: %s".formatted(this.cua.getContest().showAssertionDifficulty(assorter)));
 
             return sb.toString();
         }
     }
 
 
-    public class CandidateBean {
-        CandidateSeats cand;
-        boolean include = true;
-        boolean isTotal = false;
-        Coalition2 coal;
+    public class CountyBean {
+        String countyName;
+        Integer npop;
+        Integer nmvrsUniform;
+        Integer nmvrsConsistent = 0;
 
-        public CandidateBean() {
+        public CountyBean() {
         }
 
-        CandidateBean(CandidateSeats candSeatRange) {
-            this.cand = candSeatRange;
+        CountyBean(CountyData countyData) {
+            this.countyName = countyData.getCountyName();
+            this.npop = countyData.getNpop();
+            this.nmvrsUniform = countyData.getNmvrs();
         }
 
-        // editable properties
-        static public String editableProperties() { return "include"; }
-        public boolean canedit() { return true; } // do we need?
-
-        public boolean isInclude() { return include; }
-        public void setInclude(boolean include) {
-            this.include = include;
-            updateCandidateTotal();
-            candidateTable.repaint();
-        }
-
-        public String getPartyName() {return cand.getCandName();}
-        public int getPartyId() {return cand.getCandId(); }
-        public int getMinSeats() {return cand.getMinSeats(); }
-        public int getReportedSeats() {return cand.getReportedSeats(); }
-        public int getMaxSeats() {return cand.getMaxSeats(); }
-        public int getNFailures() {return cand.getFailures().size(); }
-        /* public String getFailures() {
-            var sb = new StringBuilder();
-            for (var failure : cand.getFailures()) {
-                sb.append(String.format("%s, ", failure.getAssorter().hashcodeDesc()));
-            }
-            return sb.toString();
-        } */
-        public String getInCoalition() { return (include && !isTotal && getMaxSeats() > 0) ? "YES" : ""; }
-
-
-        String show() {
-            // only the coalition total bean has a coalition attached
-            if (coal != null) return coal.toString();
-            else return cand.toString();
-        }
+        public String getName() {return countyName;}
+        public Integer getNpop() { return npop; }
+        public Integer getNmvrsUniform() { return nmvrsUniform; }
+        public Integer getNmvrsConsistent() { return nmvrsConsistent; }
+        public Integer getDiff() { return nmvrsUniform - nmvrsConsistent; }
+        public Integer getUniformInvRate() { return (nmvrsUniform == 0) ? 0 : roundUp((double) getNpop() / nmvrsUniform); }
+        public Integer getConsistentInvRate() { return (nmvrsConsistent == 0) ? 0 : roundUp((double) getNpop() / nmvrsConsistent); }
     }
 
-    CandidateBean makeCandidatesTotal(List<CandidateBean> beans) {
-        var candidates = new HashSet<Integer>();
-        for (var bean : beans) {
-            candidates.add(bean.getPartyId());
+    public class CountyContestBean {
+        CountyContestData countyContestData;
+        Integer npop;
+        Integer nmvrsUniform;
+        Integer nmvrsConsistent = 0;
+
+        public CountyContestBean() {
         }
-        Coalition2 allcoal = allSeats.calcCoalition(candidates, partyNames);
 
-        var cand = new CandidateSeats(0, "-- coalition --");
-        cand.setReportedSeats(allcoal.reportedSeats());
-        cand.setMinSeats(allcoal.minSeats());
-        cand.setMaxSeats(allcoal.maxSeats());
-        cand.getFailures().addAll(allcoal.getFailures());
-
-        var totalBean = new CandidateBean(cand);
-        totalBean.isTotal = true;
-        totalBean.include = false;
-        totalBean.coal = allcoal;
-
-        return totalBean;
-    }
-
-    void updateCandidateTotal(List<CandidateBean> beans, CandidateBean totalBean) {
-        var candidates = new HashSet<Integer>();
-        for (var bean : beans) {
-            if (bean.include && !bean.equals(totalBean)) {
-                candidates.add(bean.getPartyId());
-            }
+        CountyContestBean(CountyContestData countyContestData) {
+            this.countyContestData = countyContestData;
         }
-        Coalition2 coal = allSeats.calcCoalition(candidates, partyNames);
-        var cand = new CandidateSeats(0, "-- coalition --");
-        cand.setReportedSeats(coal.reportedSeats());
-        cand.setMinSeats(coal.minSeats());
-        cand.setMaxSeats(coal.maxSeats());
-        cand.getFailures().addAll(coal.getFailures());
 
-        totalBean.coal = coal;
-        totalBean.cand = cand;
-    }
-
-    void updateCandidateTotal() {
-        updateCandidateTotal(candidateTable.getBeans(), coalitionTotal);
+        public String getContestName() { return countyContestData.getContestName(); }
+        public Integer getVoteDiff() { return countyContestData.getVoteDiff(); }
+        public String getVotes() { return countyContestData.getVotes().toString(); }
+        public Integer getNpop() { return npop; }
+        //public Integer getNmvrsUniform() { return nmvrsUniform; }
+        //public Integer getNmvrsConsistent() { return nmvrsConsistent; }
     }
 
 }
