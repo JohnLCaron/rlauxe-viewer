@@ -14,14 +14,12 @@ import org.cryptobiotic.rlauxe.viewer.ContestsPanel.ContestBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ucar.ui.prefs.BeanTable;
-import ucar.ui.widget.BAMutil;
 import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
 import ucar.util.prefs.PreferencesExt;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -80,13 +78,17 @@ public class CountyPanel extends JPanel implements ViewerPanelIF {
         logger.debug("corlaPanel init");
     }
 
+    void setSelectedTab() {
+        readSample(); // TODO does this mean we dont need the button ??
+    }
 
     public void getActions(JPanel container) {
+        /*
         AbstractAction readSampleMvrs = new AbstractAction() {
             public void actionPerformed(ActionEvent e) { readSample();}
         };
         BAMutil.setActionProperties(readSampleMvrs, "count.png", "Count mvrs used", false, 'S', -1);
-        BAMutil.addActionToContainer(container, readSampleMvrs);
+        BAMutil.addActionToContainer(container, readSampleMvrs); */
     }
 
     void readSample() {

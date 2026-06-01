@@ -139,13 +139,22 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
             var contestMap = new HashMap<Integer, ContestsPanel.ContestBean>();
             java.util.List<ContestsPanel.ContestBean> beanList = new ArrayList<>();
+
+            java.util.Map<Integer, ContestRound> contestRoundMap = new HashMap<>();
             for (var contestRound : lastAuditRound.getContestRounds()) {
-                if (contestRound.getContestUA().getPreAuditStatus().equals(TestH0Status.InProgress)) {
-                    var bean = new ContestsPanel.ContestBean(contestRound);
-                    beanList.add(bean);
-                    contestMap.put(contestRound.getId(), bean);
-                }
+                contestRoundMap.put(contestRound.getId(), contestRound);
             }
+
+            for (var cwa : auditRecord.getContests()) {
+                var cr = contestRoundMap.get(cwa.getId());
+                var bean = new ContestsPanel.ContestBean(cwa, cr);
+                beanList.add(bean);
+                contestMap.put(cwa.getId(), bean);
+            }
+            contestTable.setBeans(beanList);
+
+            // sort contests by payoff
+            beanList.sort(Comparator.comparing(ContestBean::getPayoff));
             contestTable.setBeans(beanList);
 
             if (!auditRecord.getRounds().isEmpty()) {
@@ -170,9 +179,11 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
     void setSelectedContest(ContestsPanel.ContestBean contestBean) {
         java.util.List<ContestsPanel.AssertionBean> beanList = new ArrayList<>();
-        for (AssertionRound ar : contestBean.lastRound.getAssertionRounds()) {
-            var bean = new ContestsPanel.AssertionBean(contestBean, ar);
-            beanList.add(bean);
+        if (contestBean.contestRound != null) {
+            for (AssertionRound ar : contestBean.contestRound.getAssertionRounds()) {
+                var bean = new ContestsPanel.AssertionBean(contestBean, ar);
+                beanList.add(bean);
+            }
         }
         assertionTable.setBeans(beanList);
 
@@ -197,10 +208,9 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
     //// Actions
     void showInfo(Formatter f) {
-        // if (this.auditRecordLocation.equals("none")) { return; }
+        if (this.auditRecord == null) return;
 
         f.format("Audit record at %s%n%n", auditRecord.getLocation());
-        f.format("%s%n%n", this.auditRecord.getConfig().getElection());
         f.format("%s%n", this.config);
         if (this.lastAuditRound == null) return;
 
@@ -218,13 +228,6 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         }
         f.format("%n  total extraBallotsUsed = %d %n", totalExtra);
         f.format("  total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
-
-        f.format("  total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
-
-        // just in case this is the limited belgium election
-        if (auditRecord instanceof CompositeAuditRecord) {
-            f.format("%s", CandSeatRanges.Companion.showMergedSeatRanges(this.lastAuditRound));
-        }
     }
 
     public String showContest(ContestBean contestBean) {
@@ -232,8 +235,8 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         StringBuilder sb = new StringBuilder();
         sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(contestBean, ContestBean.beanProperties)));
         sb.append("\n%s%n".formatted(cua.show()));
-        if (cua.getContest() instanceof DHondtContest dhcontest) {
-            sb.append(dhcontest.showRelaxedAssertions(contestBean.lastRound));
+        if (cua.getContest() instanceof DHondtContest dhcontest && contestBean.contestRound != null) {
+            sb.append(dhcontest.showRelaxedAssertions(contestBean.contestRound));
         }
         return sb.toString();
     }
@@ -317,17 +320,17 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         } */
 
         Integer mvrLimit = -1;
-        ContestRound lastRound;
+        ContestRound contestRound;
         ContestWithAssertions contestUA;
         Integer orgSampleSize;
 
         public ContestBean() {
         }
 
-        ContestBean(ContestRound contestRound) {
-            this.lastRound = contestRound;
-            this.contestUA = contestRound.getContestUA();
-            orgSampleSize = lastRound.getHaveSampleSize();
+        ContestBean(ContestWithAssertions cwa, ContestRound contestRound) {
+            this.contestUA = cwa;
+            this.contestRound = contestRound;
+            orgSampleSize = (contestRound != null) ? contestRound.getHaveSampleSize() : 0;
         }
 
         public String getName() {
@@ -347,7 +350,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             return UtilsKt.estRiskStandardBet(contestUA.getNpop(), noerror, haveMvrs);
         }
 
-        public Integer getEstMvrs() { return lastRound.getEstNewMvrs(); }
+        public Integer getEstMvrs() { return (contestRound == null) ? 0 : contestRound.getEstNewMvrs(); }
 
         /*
         public Integer getEstMvrs() {
@@ -362,7 +365,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         public Integer getHaveMvrs() {
             if (mvrLimit >= 0) return mvrLimit;
-            return lastRound.getHaveSampleSize();
+            return (contestRound == null) ? 0 : contestRound.getHaveSampleSize();
 
             /* TODO
             if (contestUA.getHasStyle()) {
@@ -392,12 +395,12 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         }
 
         public Integer getMvrsExtras() {
-            if (lastRound == null) return 0;
-            if (!lastRound.getDone()) return 0;
-            if (!lastRound.getIncluded()) return 0;
+            if (contestRound == null) return 0;
+            if (!contestRound.getDone()) return 0;
+            if (!contestRound.getIncluded()) return 0;
             else {
-                return (lastRound.getEstMvrs() < lastRound.maxSamplesUsed()) ? 0 :
-                        (lastRound.getEstMvrs() - lastRound.maxSamplesUsed());
+                return (contestRound.getEstMvrs() < contestRound.maxSamplesUsed()) ? 0 :
+                        (contestRound.getEstMvrs() - contestRound.maxSamplesUsed());
             }
         }
 
@@ -406,7 +409,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         }
 
         public Integer getMvrsUsed() {
-            return (lastRound == null) ? 0 : lastRound.maxSamplesUsed();
+            return (contestRound == null) ? 0 : contestRound.maxSamplesUsed();
         }
 
         public Integer getNc() {
@@ -440,9 +443,9 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         // TODO maybe not needed
         public String getStatus() {
-            return (lastRound == null || contestUA.getPreAuditStatus() != TestH0Status.InProgress)
+            return (contestRound == null || contestUA.getPreAuditStatus() != TestH0Status.InProgress)
                     ? Naming.status(contestUA.getPreAuditStatus())
-                    : Naming.status(lastRound.getStatus());
+                    : Naming.status(contestRound.getStatus());
         }
 
         public Boolean getTarget() {

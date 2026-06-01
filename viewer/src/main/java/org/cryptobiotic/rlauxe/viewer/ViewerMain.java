@@ -43,7 +43,6 @@ public class ViewerMain extends JPanel {
   private final JPanel leftPanel = new JPanel();
   private final JPanel rightPanel = new JPanel();
   private final JPanel actionsPanel = new JPanel();
-  private final JPanel componentActions = new JPanel();
   private final FontUtil.StandardFont fontu;
 
   TextHistoryPane infoTA;
@@ -67,7 +66,7 @@ public class ViewerMain extends JPanel {
   private CardTable cardPanel;
   private MvrTable mvrPanel;
   private ContestPoolsTable contestPoolPanel;
-  private CountyPanel countyPanel = null;
+  private CorlaAuditPanel corlaPanel = null;
 
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
@@ -87,46 +86,49 @@ public class ViewerMain extends JPanel {
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     if (profile.isBelgium()) {
+
       belgiumPanel = new BelgiumAuditPanel((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
       belgiumPanel.getActions(actionsPanel);
       tabbedPane.addTab("BelgiumAudit", belgiumPanel);
       activePanels.add(belgiumPanel);
 
+    } else if (profile.isCorla()) {
+      logger.debug("start CorlaAuditPanel");
+
+      corlaPanel = new CorlaAuditPanel((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
+      corlaPanel.getActions(actionsPanel);
+      tabbedPane.addTab("CorlaAudit", corlaPanel);
+      activePanels.add(corlaPanel);
+      logger.debug("end CorlaAuditPanel");
+
     } else {
-      contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
-      tabbedPane.addTab("Contests", contestsPanel);
-      activePanels.add(contestsPanel);
+        contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
+        tabbedPane.addTab("Contests", contestsPanel);
+        activePanels.add(contestsPanel);
 
-      auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
-      tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-      activePanels.add(auditRoundsPanel);
+        auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
+        tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+        activePanels.add(auditRoundsPanel);
 
-      if (profile.isCorla()) {
-        countyPanel = new CountyPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
-        tabbedPane.addTab("Counties", countyPanel);
-        activePanels.add(countyPanel);
-      }
+        stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("Styles", stylePanel);
+        activePanels.add(stylePanel);
 
-      stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Styles", stylePanel);
-      activePanels.add(stylePanel);
+        poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("Pools", poolPanel);
+        activePanels.add(poolPanel);
 
+        contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("ContestPools", contestPoolPanel);
+        activePanels.add(contestPoolPanel);
 
-      poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Pools", poolPanel);
-      activePanels.add(poolPanel);
+        cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("Cards", cardPanel);
+        activePanels.add(cardPanel);
 
-      contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("ContestPools", contestPoolPanel);
-      activePanels.add(contestPoolPanel);
-
-      cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Cards", cardPanel);
-      activePanels.add(cardPanel);
-
-      mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
-      tabbedPane.addTab("Mvrs", mvrPanel);
-      activePanels.add(mvrPanel);
+        mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
+        tabbedPane.addTab("Mvrs", mvrPanel);
+        activePanels.add(mvrPanel);
     }
 
     tabbedPane.setSelectedIndex(0);
@@ -134,16 +136,23 @@ public class ViewerMain extends JPanel {
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
       if (this.auditRecordDir.equals("none")) return;
+
       if (c instanceof CardTable cardTable) {
           cardTable.setSelectedTab();
+
       } else if (c instanceof MvrTable mvrTable) {
          mvrTable.setSelectedTab();
+
+      } else if (c instanceof CountyPanel counties) {
+        counties.setSelectedTab();
       }
 
       // actions on right side
       actionsPanel.removeAll();
       if (c instanceof BelgiumAuditPanel belgium) {
         belgium.getActions(actionsPanel);
+      } else if (c instanceof CorlaAuditPanel corla) {
+        corla.getActions(actionsPanel);
       } else if (c instanceof ContestsPanel contests) {
         contests.getActions(actionsPanel);
       } else if (c instanceof AuditRoundsTable auditRound) {
@@ -251,6 +260,7 @@ public class ViewerMain extends JPanel {
 
   void showInfo(Formatter f) {
     if (belgiumPanel != null) belgiumPanel.showInfo(f);
+    else if (corlaPanel != null) corlaPanel.showInfo(f);
     else contestsPanel.showInfo(f);
   }
 
@@ -298,11 +308,8 @@ public class ViewerMain extends JPanel {
   }
 
   public void exit() {
-    logger.debug("exit");
-
+    logger.info("------------- ViewerMain exiting ----------------------");
     save();
-    logger.debug("ViewerMain exit");
-
     System.exit(0);
   }
 
@@ -407,7 +414,7 @@ public class ViewerMain extends JPanel {
   }
 
   public static void main(String[] args) {
-      logger.info("------------- ViewerMain started ----------------------");
+      logger.info("------------- ViewerMain starting ----------------------");
 
     ViewerProfile profile = ViewerProfile.RlauxeViewer;
     String datadir = null;
