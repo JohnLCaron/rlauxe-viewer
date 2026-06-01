@@ -569,8 +569,7 @@ public class BeanTable<T> extends JPanel {
           ++newViewIndex; // Don't increment for hidden columns.
         }
       } catch (IllegalArgumentException e) {
-        logger.warn(String.format("Column named \"%s\" was present in the preferences file but not the dataset.",
-            propCol.getName()), e);
+        logger.info(String.format("Column named \"%s\" was present in the preferences file but not the dataset.", propCol.getName()));
       }
     }
   }

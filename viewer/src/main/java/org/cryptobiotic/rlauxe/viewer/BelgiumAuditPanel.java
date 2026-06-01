@@ -419,7 +419,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             return (have == null) ? 0 : Integer.parseInt(have); */
         }
 
-        public String getNoError() {
+        public String getNoerror() {
             Assertion minAssertion = contestUA.minAssertion();
             if (minAssertion == null) return "N/A";
             return dfn(minAssertion.getAssorter().noerror(contestUA.getHasStyle()), 5);
@@ -580,7 +580,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         // could use payoff
-        public String getNoError() {
+        public String getNoerror() {
             return dfn(assertion.getAssorter().noerror(cua.getHasStyle()), 5);
         }
 
