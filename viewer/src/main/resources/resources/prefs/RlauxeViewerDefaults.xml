@@ -2,35 +2,35 @@
 <preferences EXTERNAL_XML_VERSION='1.0'>
     <root type='user'>
         <map>
-            <bean key='FontSize' class='java.lang.Float' value='28.0'/>
+            <bean key='FontSize' class='java.lang.Float' value='24.0'/>
             <beanObject key='FrameSize'>
                 <object class="java.awt.Rectangle" id="Rectangle0">
                     <void class="java.awt.Rectangle" method="getField">
                         <string>x</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>908</int>
+                            <int>3972</int>
                         </void>
                     </void>
                     <void class="java.awt.Rectangle" method="getField">
                         <string>y</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>134</int>
+                            <int>228</int>
                         </void>
                     </void>
                     <void class="java.awt.Rectangle" method="getField">
                         <string>width</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>2830</int>
+                            <int>3375</int>
                         </void>
                     </void>
                     <void class="java.awt.Rectangle" method="getField">
                         <string>height</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>2026</int>
+                            <int>1897</int>
                         </void>
                     </void>
                 </object>
@@ -41,28 +41,28 @@
                         <string>x</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>699</int>
+                            <int>4779</int>
                         </void>
                     </void>
                     <void class="java.awt.Rectangle" method="getField">
                         <string>y</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>354</int>
+                            <int>333</int>
                         </void>
                     </void>
                     <void class="java.awt.Rectangle" method="getField">
                         <string>width</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>2830</int>
+                            <int>2042</int>
                         </void>
                     </void>
                     <void class="java.awt.Rectangle" method="getField">
                         <string>height</string>
                         <void method="set">
                             <object idref="Rectangle0"/>
-                            <int>1806</int>
+                            <int>1524</int>
                         </void>
                     </void>
                 </object>
@@ -140,28 +140,28 @@
                             <string>x</string>
                             <void method="set">
                                 <object idref="Rectangle0"/>
-                                <int>397</int>
+                                <int>395</int>
                             </void>
                         </void>
                         <void class="java.awt.Rectangle" method="getField">
                             <string>y</string>
                             <void method="set">
                                 <object idref="Rectangle0"/>
-                                <int>176</int>
+                                <int>110</int>
                             </void>
                         </void>
                         <void class="java.awt.Rectangle" method="getField">
                             <string>width</string>
                             <void method="set">
                                 <object idref="Rectangle0"/>
-                                <int>3343</int>
+                                <int>2511</int>
                             </void>
                         </void>
                         <void class="java.awt.Rectangle" method="getField">
                             <string>height</string>
                             <void method="set">
                                 <object idref="Rectangle0"/>
-                                <int>1964</int>
+                                <int>1551</int>
                             </void>
                         </void>
                     </object>
@@ -199,9 +199,9 @@
                     </object>
                 </beanObject>
                 <entry key='splitPos1' value='168'/>
-                <entry key='splitPos2' value='746'/>
-                <entry key='splitPos3' value='1271'/>
-                <entry key='splitPos4' value='1449'/>
+                <entry key='splitPos2' value='1195'/>
+                <entry key='splitPos3' value='1462'/>
+                <entry key='splitPos4' value='1650'/>
             </map>
             <node name='BallotTable'>
                 <map>
@@ -223,51 +223,109 @@
                     </beanCollection>
                 </map>
             </node>
+            <node name='FileManager'>
+                <map>
+                    <beanObject key='Bounds'>
+                        <object class="java.awt.Rectangle" id="Rectangle0">
+                            <void class="java.awt.Rectangle" method="getField">
+                                <string>x</string>
+                                <void method="set">
+                                    <object idref="Rectangle0"/>
+                                    <int>66</int>
+                                </void>
+                            </void>
+                            <void class="java.awt.Rectangle" method="getField">
+                                <string>y</string>
+                                <void method="set">
+                                    <object idref="Rectangle0"/>
+                                    <int>69</int>
+                                </void>
+                            </void>
+                            <void class="java.awt.Rectangle" method="getField">
+                                <string>width</string>
+                                <void method="set">
+                                    <object idref="Rectangle0"/>
+                                    <int>1173</int>
+                                </void>
+                            </void>
+                            <void class="java.awt.Rectangle" method="getField">
+                                <string>height</string>
+                                <void method="set">
+                                    <object idref="Rectangle0"/>
+                                    <int>642</int>
+                                </void>
+                            </void>
+                        </object>
+                    </beanObject>
+                    <beanObject key='ComboBoxList'>
+                        <object class="java.util.ArrayList">
+                        </object>
+                    </beanObject>
+                    <entry key='DefaultFilter' value='All Files'/>
+                </map>
+            </node>
+            <node name='SelectionTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
+                        <bean name='desc' visible='true' width='661'/>
+                        <bean name='round' visible='true' width='660'/>
+                        <bean name='status' visible='true' width='660'/>
+                    </beanCollection>
+                </map>
+            </node>
             <node name='assertionRoundTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='round' visible='true' width='302'/>
-                        <bean name='mvrs' visible='true' width='271'/>
-                        <bean name='mvrsUsed' visible='true' width='281'/>
-                        <bean name='newMvrs' visible='true' width='287'/>
-                        <bean name='newMvrsUsed' visible='true' width='287'/>
-                        <bean name='PValueLast' visible='true' width='322'/>
-                        <bean name='PValueMin' visible='true' width='329'/>
-                        <bean name='measuredErrorCounts' visible='true' width='363'/>
-                        <bean name='status' visible='true' width='363'/>
+                        <bean name='round' visible='true' width='366'/>
+                        <bean name='mvrs' visible='true' width='343'/>
+                        <bean name='mvrsUsed' visible='true' width='351'/>
+                        <bean name='newMvrs' visible='true' width='355'/>
+                        <bean name='newMvrsUsed' visible='true' width='355'/>
+                        <bean name='PValueLast' visible='true' width='380'/>
+                        <bean name='PValueMin' visible='true' width='384'/>
+                        <bean name='measuredErrorCounts' visible='true' width='408'/>
+                        <bean name='status' visible='true' width='408'/>
                     </beanCollection>
                 </map>
             </node>
             <node name='assertionTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='round' visible='true' width='163'/>
-                        <bean name='name' visible='true' width='378'/>
-                        <bean name='upper' visible='true' width='189'/>
-                        <bean name='margin' visible='true' width='230'/>
-                        <bean name='noError' visible='true' width='228'/>
-                        <bean name='recountMargin' visible='true' width='233'/>
-                        <bean name='estNewMvrs' visible='true' width='222'/>
-                        <bean name='mvrsUsed' visible='true' width='214'/>
-                        <bean name='prevMvrs' visible='true' width='236'/>
-                        <bean name='status' visible='true' width='219'/>
-                        <bean name='risk' visible='true' width='245'/>
-                        <bean name='completed' visible='true' width='244'/>
+                        <bean name='round' visible='true' width='246'/>
+                        <bean name='name' visible='true' width='461'/>
+                        <bean name='upper' visible='true' width='260'/>
+                        <bean name='margin' visible='true' width='286'/>
+                        <bean name='recountMargin' visible='true' width='287'/>
+                        <bean name='estNewMvrs' visible='true' width='285'/>
+                        <bean name='mvrsUsed' visible='true' width='273'/>
+                        <bean name='prevMvrs' visible='true' width='290'/>
+                        <bean name='status' visible='true' width='273'/>
+                        <bean name='risk' visible='true' width='302'/>
+                        <bean name='completed' visible='true' width='301'/>
+                        <bean name='noerror' visible='true' width='82'/>
                     </beanCollection>
+                </map>
+            </node>
+            <node name='auditRecordDirCB'>
+                <map>
+                    <beanObject key='ComboBoxList'>
+                        <object class="java.util.ArrayList">
+                        </object>
+                    </beanObject>
                 </map>
             </node>
             <node name='auditStateTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='round' visible='true' width='496'/>
-                        <bean name='auditWasDone' visible='true' width='507'/>
-                        <bean name='auditIsComplete' visible='true' width='320'/>
-                        <bean name='totalMvrs' visible='true' width='184'/>
-                        <bean name='mvrsInRound' visible='true' width='205'/>
-                        <bean name='newMvrs' visible='true' width='169'/>
-                        <bean name='mvrsUsed' visible='true' width='412'/>
-                        <bean name='mvrsExtra' visible='true' width='325'/>
-                        <bean name='mvrLimit' visible='true' width='181'/>
+                        <bean name='round' visible='true' width='603'/>
+                        <bean name='auditWasDone' visible='true' width='613'/>
+                        <bean name='auditIsComplete' visible='true' width='670'/>
+                        <bean name='totalMvrs' visible='false' width='75'/>
+                        <bean name='mvrsInRound' visible='false' width='75'/>
+                        <bean name='newMvrs' visible='false' width='75'/>
+                        <bean name='mvrsUsed' visible='true' width='588'/>
+                        <bean name='mvrsExtra' visible='true' width='538'/>
+                        <bean name='mvrLimit' visible='true' width='332'/>
                     </beanCollection>
                 </map>
             </node>
@@ -276,44 +334,44 @@
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
                         <bean name='target' visible='false' width='75'/>
                         <bean name='round' visible='false' width='75'/>
-                        <bean name='id' visible='true' width='127'/>
-                        <bean name='name' visible='true' width='323'/>
-                        <bean name='NCounties' visible='false' width='75'/>
+                        <bean name='id' visible='true' width='196'/>
+                        <bean name='NCounties' visible='true' width='303'/>
+                        <bean name='name' visible='true' width='405'/>
                         <bean name='type' visible='false' width='75'/>
                         <bean name='phantoms' visible='false' width='75'/>
                         <bean name='estPct' visible='false' width='75'/>
-                        <bean name='nc' visible='true' width='220'/>
-                        <bean name='margin' visible='true' width='241'/>
-                        <bean name='estMvrs' visible='true' width='182'/>
-                        <bean name='haveMvrs' visible='true' width='182'/>
+                        <bean name='nc' visible='true' width='246'/>
+                        <bean name='margin' visible='true' width='273'/>
+                        <bean name='estMvrs' visible='true' width='267'/>
+                        <bean name='haveMvrs' visible='false' width='75'/>
                         <bean name='mvrsExtra' visible='false' width='75'/>
                         <bean name='haveNewMvrs' visible='false' width='75'/>
                         <bean name='estNewMvrs' visible='false' width='75'/>
                         <bean name='maxIndex' visible='false' width='75'/>
-                        <bean name='mvrLimit' visible='true' width='163'/>
-                        <bean name='mvrsUsed' visible='true' width='174'/>
-                        <bean name='estRisk' visible='true' width='136'/>
+                        <bean name='mvrsUsed' visible='true' width='276'/>
                         <bean name='oneshotEst' visible='false' width='75'/>
-                        <bean name='risk' visible='true' width='184'/>
-                        <bean name='include' visible='true' width='233'/>
-                        <bean name='done' visible='true' width='317'/>
-                        <bean name='status' visible='true' width='317'/>
+                        <bean name='risk' visible='true' width='256'/>
+                        <bean name='estRisk' visible='false' width='75'/>
+                        <bean name='include' visible='true' width='281'/>
+                        <bean name='done' visible='true' width='316'/>
+                        <bean name='status' visible='true' width='263'/>
+                        <bean name='mvrLimit' visible='true' width='262'/>
                     </beanCollection>
                 </map>
             </node>
             <node name='estRoundTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='round' visible='true' width='233'/>
-                        <bean name='strategy' visible='true' width='306'/>
-                        <bean name='startingRates' visible='true' width='282'/>
-                        <bean name='startingPvalue' visible='true' width='219'/>
-                        <bean name='simulatedDistribution' visible='true' width='638'/>
-                        <bean name='simMvrs' visible='true' width='233'/>
-                        <bean name='simNewMvrs' visible='true' width='222'/>
-                        <bean name='calcNewMvrs' visible='true' width='255'/>
-                        <bean name='lastIndex' visible='true' width='208'/>
-                        <bean name='simPercentile' visible='true' width='207'/>
+                        <bean name='round' visible='true' width='303'/>
+                        <bean name='strategy' visible='true' width='353'/>
+                        <bean name='startingRates' visible='true' width='337'/>
+                        <bean name='startingPvalue' visible='true' width='291'/>
+                        <bean name='simulatedDistribution' visible='true' width='585'/>
+                        <bean name='simMvrs' visible='true' width='302'/>
+                        <bean name='simNewMvrs' visible='true' width='294'/>
+                        <bean name='calcNewMvrs' visible='true' width='317'/>
+                        <bean name='lastIndex' visible='true' width='283'/>
+                        <bean name='simPercentile' visible='true' width='283'/>
                     </beanCollection>
                 </map>
             </node>
@@ -321,7 +379,7 @@
         <node name='AuditTable'>
             <map>
                 <entry key='splitPos1' value='176'/>
-                <entry key='splitPos2' value='551'/>
+                <entry key='splitPos2' value='1256'/>
                 <entry key='splitPos3' value='1443'/>
             </map>
             <node name='assertionRoundTable'>
@@ -340,19 +398,19 @@
             <node name='assertionTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='type' visible='true' width='342'/>
-                        <bean name='winner' visible='true' width='344'/>
-                        <bean name='loser' visible='true' width='267'/>
-                        <bean name='desc' visible='false' width='75'/>
-                        <bean name='difficulty' visible='true' width='598'/>
-                        <bean name='upper' visible='true' width='194'/>
-                        <bean name='margin' visible='true' width='208'/>
-                        <bean name='noError' visible='true' width='220'/>
-                        <bean name='payoff' visible='true' width='208'/>
-                        <bean name='estMvrs' visible='true' width='217'/>
-                        <bean name='estRisk' visible='true' width='580'/>
-                        <bean name='recountMargin' visible='false' width='75'/>
-                        <bean name='mean' visible='false' width='75'/>
+                        <bean name='type' visible='true' width='263'/>
+                        <bean name='winner' visible='true' width='302'/>
+                        <bean name='loser' visible='true' width='257'/>
+                        <bean name='desc' visible='true' width='465'/>
+                        <bean name='difficulty' visible='true' width='616'/>
+                        <bean name='upper' visible='true' width='168'/>
+                        <bean name='recountMargin' visible='true' width='250'/>
+                        <bean name='mean' visible='true' width='166'/>
+                        <bean name='estMvrs' visible='true' width='184'/>
+                        <bean name='estRisk' visible='true' width='177'/>
+                        <bean name='margin' visible='true' width='180'/>
+                        <bean name='payoff' visible='true' width='195'/>
+                        <bean name='noerror' visible='true' width='127'/>
                     </beanCollection>
                 </map>
             </node>
@@ -371,99 +429,30 @@
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
                         <bean name='target' visible='false' width='75'/>
-                        <bean name='id' visible='true' width='112'/>
+                        <bean name='id' visible='true' width='182'/>
                         <bean name='NCounties' visible='false' width='75'/>
-                        <bean name='name' visible='true' width='306'/>
-                        <bean name='type' visible='false' width='75'/>
-                        <bean name='npop' visible='false' width='75'/>
-                        <bean name='nc' visible='true' width='208'/>
+                        <bean name='name' visible='true' width='490'/>
+                        <bean name='type' visible='true' width='234'/>
+                        <bean name='npop' visible='true' width='258'/>
+                        <bean name='nc' visible='true' width='247'/>
                         <bean name='undervotes' visible='false' width='75'/>
-                        <bean name='phantoms' visible='false' width='75'/>
-                        <bean name='voteDiff' visible='true' width='179'/>
+                        <bean name='voteDiff' visible='true' width='208'/>
                         <bean name='winners' visible='false' width='75'/>
                         <bean name='votes' visible='false' width='75'/>
                         <bean name='uvPct' visible='false' width='75'/>
                         <bean name='NCand' visible='false' width='75'/>
+                        <bean name='phantoms' visible='true' width='199'/>
                         <bean name='recountMargin' visible='false' width='75'/>
-                        <bean name='status' visible='false' width='75'/>
                         <bean name='mvrsUsed' visible='false' width='75'/>
-                        <bean name='margin' visible='true' width='157'/>
-                        <bean name='noError' visible='true' width='182'/>
-                        <bean name='payoff' visible='true' width='272'/>
-                        <bean name='estMvrs' visible='true' width='251'/>
-                        <bean name='haveMvrs' visible='true' width='375'/>
-                        <bean name='mvrLimit' visible='true' width='262'/>
-                        <bean name='mvrsExtra' visible='true' width='437'/>
-                        <bean name='estRisk' visible='true' width='437'/>
+                        <bean name='estMvrs' visible='true' width='206'/>
+                        <bean name='haveMvrs' visible='true' width='211'/>
+                        <bean name='mvrsExtra' visible='true' width='211'/>
+                        <bean name='estRisk' visible='true' width='200'/>
                         <bean name='mvrsExtras' visible='false' width='75'/>
-                    </beanCollection>
-                </map>
-            </node>
-        </node>
-        <node name='BelgiumAuditTable'>
-            <map>
-                <entry key='splitPos1' value='470'/>
-                <entry key='splitPos2' value='1211'/>
-            </map>
-            <node name='assertionTable'>
-                <map>
-                    <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='type' visible='true' width='254'/>
-                        <bean name='winner' visible='true' width='255'/>
-                        <bean name='loser' visible='true' width='254'/>
-                        <bean name='desc' visible='true' width='444'/>
-                        <bean name='difficulty' visible='true' width='615'/>
-                        <bean name='margin' visible='true' width='156'/>
-                        <bean name='upper' visible='true' width='155'/>
-                        <bean name='noError' visible='true' width='166'/>
-                        <bean name='payoff' visible='true' width='157'/>
-                        <bean name='estMvrs' visible='true' width='174'/>
-                        <bean name='estRisk' visible='true' width='173'/>
-                        <bean name='mean' visible='false' width='75'/>
-                        <bean name='recountMargin' visible='false' width='75'/>
-                    </beanCollection>
-                </map>
-            </node>
-            <node name='candidateTable'>
-                <map>
-                    <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='partyName' visible='true' width='424'/>
-                        <bean name='partyId' visible='true' width='261'/>
-                        <bean name='include' visible='true' width='272'/>
-                        <bean name='inCoalition' visible='true' width='322'/>
-                        <bean name='minSeats' visible='true' width='414'/>
-                        <bean name='reportedSeats' visible='true' width='537'/>
-                        <bean name='maxSeats' visible='true' width='358'/>
-                        <bean name='NFailures' visible='true' width='217'/>
-                    </beanCollection>
-                </map>
-            </node>
-            <node name='contestTable'>
-                <map>
-                    <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='id' visible='true' width='185'/>
-                        <bean name='name' visible='true' width='304'/>
-                        <bean name='NCand' visible='false' width='75'/>
-                        <bean name='npop' visible='true' width='207'/>
-                        <bean name='nc' visible='true' width='208'/>
-                        <bean name='voteDiff' visible='true' width='207'/>
-                        <bean name='margin' visible='true' width='207'/>
-                        <bean name='noError' visible='true' width='217'/>
-                        <bean name='payoff' visible='true' width='212'/>
-                        <bean name='estMvrs' visible='true' width='212'/>
-                        <bean name='haveMvrs' visible='true' width='212'/>
-                        <bean name='mvrLimit' visible='true' width='214'/>
-                        <bean name='mvrsExtra' visible='true' width='210'/>
-                        <bean name='estRisk' visible='true' width='208'/>
-                        <bean name='mvrsUsed' visible='false' width='75'/>
-                        <bean name='phantoms' visible='false' width='75'/>
-                        <bean name='recountMargin' visible='false' width='75'/>
-                        <bean name='status' visible='false' width='75'/>
-                        <bean name='type' visible='false' width='75'/>
-                        <bean name='undervotes' visible='false' width='75'/>
-                        <bean name='uvPct' visible='false' width='75'/>
-                        <bean name='votes' visible='false' width='75'/>
-                        <bean name='winners' visible='false' width='75'/>
+                        <bean name='margin' visible='true' width='185'/>
+                        <bean name='payoff' visible='true' width='221'/>
+                        <bean name='status' visible='true' width='298'/>
+                        <bean name='noerror' visible='false' width='75'/>
                     </beanCollection>
                 </map>
             </node>
@@ -475,17 +464,17 @@
             <node name='cardTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='index' visible='true' width='225'/>
-                        <bean name='id' visible='true' width='506'/>
-                        <bean name='location' visible='true' width='357'/>
-                        <bean name='cardIndex' visible='true' width='282'/>
-                        <bean name='prn' visible='true' width='302'/>
+                        <bean name='index' visible='true' width='270'/>
+                        <bean name='id' visible='true' width='467'/>
+                        <bean name='location' visible='true' width='363'/>
+                        <bean name='cardIndex' visible='true' width='312'/>
+                        <bean name='prn' visible='true' width='323'/>
                         <bean name='contests' visible='false' width='75'/>
-                        <bean name='votes' visible='true' width='342'/>
-                        <bean name='poolId' visible='true' width='292'/>
-                        <bean name='phantom' visible='true' width='305'/>
-                        <bean name='cardStyle' visible='true' width='284'/>
-                        <bean name='possibleContests' visible='true' width='283'/>
+                        <bean name='votes' visible='true' width='352'/>
+                        <bean name='poolId' visible='true' width='316'/>
+                        <bean name='phantom' visible='true' width='326'/>
+                        <bean name='cardStyle' visible='true' width='311'/>
+                        <bean name='possibleContests' visible='true' width='310'/>
                     </beanCollection>
                 </map>
             </node>
@@ -498,35 +487,35 @@
             <node name='contestPoolTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='poolId' visible='true' width='303'/>
-                        <bean name='poolName' visible='true' width='399'/>
-                        <bean name='NCards' visible='true' width='280'/>
-                        <bean name='NVotes' visible='true' width='337'/>
-                        <bean name='undervotes' visible='true' width='333'/>
-                        <bean name='missing' visible='true' width='340'/>
+                        <bean name='poolId' visible='true' width='337'/>
+                        <bean name='poolName' visible='true' width='405'/>
+                        <bean name='NCards' visible='true' width='320'/>
+                        <bean name='NVotes' visible='true' width='361'/>
+                        <bean name='undervotes' visible='true' width='359'/>
+                        <bean name='missing' visible='true' width='363'/>
                         <bean name='votes' visible='true' width='418'/>
-                        <bean name='poolTotalCards' visible='true' width='347'/>
-                        <bean name='singleStyle' visible='true' width='419'/>
+                        <bean name='poolTotalCards' visible='true' width='368'/>
+                        <bean name='singleStyle' visible='true' width='417'/>
                     </beanCollection>
                 </map>
             </node>
             <node name='contestTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='contestId' visible='true' width='567'/>
-                        <bean name='isIrv' visible='true' width='691'/>
-                        <bean name='voteForN' visible='true' width='710'/>
-                        <bean name='NPools' visible='true' width='1208'/>
+                        <bean name='contestId' visible='true' width='676'/>
+                        <bean name='isIrv' visible='true' width='764'/>
+                        <bean name='voteForN' visible='true' width='779'/>
+                        <bean name='NPools' visible='true' width='1129'/>
                     </beanCollection>
                 </map>
             </node>
             <node name='cvrTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='contests' visible='true' width='634'/>
-                        <bean name='index' visible='true' width='600'/>
-                        <bean name='poolId' visible='true' width='634'/>
-                        <bean name='votes' visible='true' width='1310'/>
+                        <bean name='contests' visible='true' width='725'/>
+                        <bean name='index' visible='true' width='700'/>
+                        <bean name='poolId' visible='true' width='724'/>
+                        <bean name='votes' visible='true' width='1201'/>
                     </beanCollection>
                 </map>
             </node>
@@ -543,6 +532,47 @@
         <node name='Debug'>
             <map/>
         </node>
+        <node name='FileManager'>
+            <map>
+                <beanObject key='Bounds'>
+                    <object class="java.awt.Rectangle" id="Rectangle0">
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>x</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>1102</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>y</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>289</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>width</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>1236</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>height</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>524</int>
+                            </void>
+                        </void>
+                    </object>
+                </beanObject>
+                <beanObject key='ComboBoxList'>
+                    <object class="java.util.ArrayList">
+                    </object>
+                </beanObject>
+                <entry key='DefaultFilter' value='All Files'/>
+            </map>
+        </node>
         <node name='MvrTable'>
             <map>
                 <entry key='splitPos1' value='1437'/>
@@ -550,16 +580,16 @@
             <node name='cardTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='index' visible='true' width='258'/>
-                        <bean name='location' visible='true' width='340'/>
-                        <bean name='cardIndex' visible='true' width='320'/>
-                        <bean name='prn' visible='true' width='323'/>
-                        <bean name='contests' visible='true' width='365'/>
-                        <bean name='votes' visible='true' width='569'/>
-                        <bean name='poolId' visible='true' width='261'/>
-                        <bean name='phantom' visible='true' width='268'/>
-                        <bean name='cardStyle' visible='true' width='240'/>
-                        <bean name='id' visible='true' width='234'/>
+                        <bean name='index' visible='true' width='294'/>
+                        <bean name='location' visible='true' width='350'/>
+                        <bean name='cardIndex' visible='true' width='339'/>
+                        <bean name='prn' visible='true' width='338'/>
+                        <bean name='contests' visible='true' width='367'/>
+                        <bean name='votes' visible='true' width='512'/>
+                        <bean name='poolId' visible='true' width='294'/>
+                        <bean name='phantom' visible='true' width='300'/>
+                        <bean name='cardStyle' visible='true' width='279'/>
+                        <bean name='id' visible='true' width='277'/>
                     </beanCollection>
                 </map>
             </node>
@@ -571,27 +601,44 @@
             <node name='contestTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='contestId' visible='true' width='382'/>
-                        <bean name='isIrv' visible='true' width='373'/>
-                        <bean name='voteForN' visible='true' width='401'/>
-                        <bean name='NVotes' visible='true' width='398'/>
-                        <bean name='undervotes' visible='true' width='390'/>
-                        <bean name='missing' visible='true' width='350'/>
-                        <bean name='votes' visible='true' width='534'/>
-                        <bean name='NCards' visible='true' width='350'/>
+                        <bean name='contestId' visible='true' width='407'/>
+                        <bean name='isIrv' visible='true' width='400'/>
+                        <bean name='voteForN' visible='true' width='423'/>
+                        <bean name='NVotes' visible='true' width='420'/>
+                        <bean name='undervotes' visible='true' width='415'/>
+                        <bean name='missing' visible='true' width='385'/>
+                        <bean name='votes' visible='true' width='513'/>
+                        <bean name='NCards' visible='true' width='387'/>
                     </beanCollection>
                 </map>
             </node>
             <node name='poolTable'>
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
-                        <bean name='name' visible='true' width='323'/>
-                        <bean name='id' visible='true' width='214'/>
-                        <bean name='ncards' visible='true' width='322'/>
-                        <bean name='contests' visible='true' width='1744'/>
-                        <bean name='ncontests' visible='true' width='288'/>
-                        <bean name='singleStyle' visible='true' width='287'/>
+                        <bean name='name' visible='true' width='412'/>
+                        <bean name='id' visible='true' width='334'/>
+                        <bean name='ncards' visible='true' width='412'/>
+                        <bean name='contests' visible='true' width='1418'/>
+                        <bean name='ncontests' visible='true' width='387'/>
+                        <bean name='singleStyle' visible='true' width='387'/>
                         <bean name='className' visible='false' width='75'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='PopulationTable'>
+            <map>
+                <entry key='splitPos1' value='683'/>
+            </map>
+            <node name='poolTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
+                        <bean name='className' visible='true' width='518'/>
+                        <bean name='name' visible='true' width='483'/>
+                        <bean name='id' visible='true' width='478'/>
+                        <bean name='ncontests' visible='true' width='653'/>
+                        <bean name='contests' visible='true' width='652'/>
+                        <bean name='exactContests' visible='true' width='652'/>
                     </beanCollection>
                 </map>
             </node>
@@ -616,14 +663,22 @@
                 <map>
                     <beanCollection key='propertyCol' class='ucar.ui.prefs.BeanTable$PropertyCol'>
                         <bean name='className' visible='false' width='75'/>
-                        <bean name='name' visible='true' width='366'/>
-                        <bean name='id' visible='true' width='253'/>
-                        <bean name='contests' visible='true' width='1889'/>
-                        <bean name='ncontests' visible='true' width='335'/>
-                        <bean name='exactContests' visible='true' width='335'/>
+                        <bean name='name' visible='true' width='479'/>
+                        <bean name='id' visible='true' width='399'/>
+                        <bean name='contests' visible='true' width='1558'/>
+                        <bean name='ncontests' visible='true' width='457'/>
+                        <bean name='exactContests' visible='true' width='457'/>
                     </beanCollection>
                 </map>
             </node>
+        </node>
+        <node name='auditRecordDirCB'>
+            <map>
+                <beanObject key='ComboBoxList'>
+                    <object class="java.util.ArrayList">
+                    </object>
+                </beanObject>
+            </map>
         </node>
     </root>
 </preferences>

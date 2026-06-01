@@ -89,47 +89,44 @@ public class ViewerMain extends JPanel {
 
       belgiumPanel = new BelgiumAuditPanel((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
       belgiumPanel.getActions(actionsPanel);
-      tabbedPane.addTab("BelgiumAudit", belgiumPanel);
+      tabbedPane.addTab("Contests", belgiumPanel);
       activePanels.add(belgiumPanel);
 
     } else if (profile.isCorla()) {
-      logger.debug("start CorlaAuditPanel");
-
       corlaPanel = new CorlaAuditPanel((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
       corlaPanel.getActions(actionsPanel);
-      tabbedPane.addTab("CorlaAudit", corlaPanel);
+      tabbedPane.addTab("Contests", corlaPanel);
       activePanels.add(corlaPanel);
-      logger.debug("end CorlaAuditPanel");
 
     } else {
-        contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
-        tabbedPane.addTab("Contests", contestsPanel);
-        activePanels.add(contestsPanel);
-
-        auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
-        tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-        activePanels.add(auditRoundsPanel);
-
-        stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
-        tabbedPane.addTab("Styles", stylePanel);
-        activePanels.add(stylePanel);
-
-        poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
-        tabbedPane.addTab("Pools", poolPanel);
-        activePanels.add(poolPanel);
-
-        contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
-        tabbedPane.addTab("ContestPools", contestPoolPanel);
-        activePanels.add(contestPoolPanel);
-
-        cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
-        tabbedPane.addTab("Cards", cardPanel);
-        activePanels.add(cardPanel);
-
-        mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
-        tabbedPane.addTab("Mvrs", mvrPanel);
-        activePanels.add(mvrPanel);
+      contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
+      tabbedPane.addTab("Contests", contestsPanel);
+      activePanels.add(contestsPanel);
     }
+
+      auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
+      tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+      activePanels.add(auditRoundsPanel);
+
+      stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Styles", stylePanel);
+      activePanels.add(stylePanel);
+
+      poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Pools", poolPanel);
+      activePanels.add(poolPanel);
+
+      contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("ContestPools", contestPoolPanel);
+      activePanels.add(contestPoolPanel);
+
+      cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Cards", cardPanel);
+      activePanels.add(cardPanel);
+
+      mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
+      tabbedPane.addTab("Mvrs", mvrPanel);
+      activePanels.add(mvrPanel);
 
     tabbedPane.setSelectedIndex(0);
 
@@ -143,8 +140,6 @@ public class ViewerMain extends JPanel {
       } else if (c instanceof MvrTable mvrTable) {
          mvrTable.setSelectedTab();
 
-      } else if (c instanceof CountyPanel counties) {
-        counties.setSelectedTab();
       }
 
       // actions on right side
@@ -157,9 +152,8 @@ public class ViewerMain extends JPanel {
         contests.getActions(actionsPanel);
       } else if (c instanceof AuditRoundsTable auditRound) {
         auditRound.getActions(actionsPanel, contestsPanel);
-      } else if (c instanceof CountyPanel counties) {
-        counties.getActions(actionsPanel);
       }
+
       validate();
     });
 
@@ -306,9 +300,9 @@ public class ViewerMain extends JPanel {
     }
   }
 
-  public void exit() {
+  public void exit(Boolean save) {
     logger.info("------------- ViewerMain exiting ----------------------");
-    save();
+    if (save) save();
     System.exit(0);
   }
 
@@ -360,11 +354,20 @@ public class ViewerMain extends JPanel {
     AbstractAction exitAction = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ui.exit();
+        ui.exit(true);
       }
     };
     BAMutil.setActionProperties(exitAction, "Exit", "Exit Viewer", false, 'X', -1);
     BAMutil.addActionToMenu(sysMenu, exitAction);
+
+    AbstractAction exitNoSaveAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        ui.exit(false);
+      }
+    };
+    BAMutil.setActionProperties(exitNoSaveAction, "Exit", "Exit Viewer NO Save", false, 'X', -1);
+    BAMutil.addActionToMenu(sysMenu, exitNoSaveAction);
 
     return mb;
   }
@@ -413,7 +416,7 @@ public class ViewerMain extends JPanel {
   }
 
   public static void main(String[] args) {
-      logger.info("------------- ViewerMain starting ----------------------");
+    logger.info("------------- ViewerMain starting ----------------------");
 
     ViewerProfile profile = ViewerProfile.RlauxeViewer;
     String datadir = null;
@@ -426,9 +429,14 @@ public class ViewerMain extends JPanel {
 
     // prefs storage
     try {
-      String storeName = profile.isCorla() ? "CorlaViewer.xml" : profile.isBelgium() ? "BelgiumViewer.xml" : "RlauxeViewer.xml";
+      String storeName = profile.isCorla() ? "CorlaViewer.xml" :
+                          profile.isBelgium() ? "BelgiumViewer.xml" :
+                          "RlauxeViewer.xml";
+
       String prefStore = XMLStore.makeStandardFilename(".rlauxe", storeName);
-      XMLStore storedDefaults = profile.isBelgium() ? XMLStore.createFromResource("/resources/prefs/BelgiumViewerDefaults.xml", null) : null;
+      XMLStore storedDefaults = profile.isCorla() ? XMLStore.createFromResource("/resources/prefs/CorlaViewerDefaults.xml", null) :
+                                profile.isBelgium() ? XMLStore.createFromResource("/resources/prefs/BelgiumViewerDefaults.xml", null) :
+                                                   XMLStore.createFromResource("/resources/prefs/RlauxeViewerDefaults.xml", null);
 
       store = XMLStore.createFromFile(prefStore, storedDefaults);
       prefs = store.getPreferences();
@@ -455,7 +463,7 @@ public class ViewerMain extends JPanel {
 
       @Override
       public void windowClosing(WindowEvent e) {
-        ui.exit();
+        ui.exit(true);
       }
     });
 

@@ -62,7 +62,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             }
         });
         contestTable.addPopupOption("Show Contest", contestTable.makeShowAction(infoTA, infoWindow,
-                bean -> showContest((ContestsPanel.ContestBean) bean)));
+                bean -> ((ContestsPanel.ContestBean) bean).show()));
         contestTable.addPopupOption("Print Contests", contestTable.makeShowAction(infoTA, infoWindow,
                 bean -> printContests()));
 
@@ -70,7 +70,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
                 new BeanTable<>(AssertionBean.class, (PreferencesExt) prefs.node("assertionTable"), false, "Assertion", "Assertion", null);
 
         assertionTable.addPopupOption("Show Assertion", assertionTable.makeShowAction(infoTA, infoWindow,
-                bean -> showAssertion((AssertionBean) bean)));
+                bean -> ((AssertionBean) bean).show()));
 
         setFontSize(fontSize);
 
@@ -209,35 +209,13 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         f.format("  total Mvrs = %d%n", this.lastAuditRound.getNmvrs());
     }
 
-    public String showContest(ContestBean contestBean) {
-        return showContestG(contestBean, contestTable.tableModel, contestBean.contestUA, contestBean.contestRound);
-    }
-
     public String printContests() {
         return printContestsG(contestTable.getBeans(), contestTable.tableModel);
     }
 
-    public String showAssertion(AssertionBean assertionBean) {
-        var assn = (assertionBean.cassertion != null) ? assertionBean.cassertion : assertionBean.assertion;
-        return showAssertionG(assertionBean, assertionTable.tableModel, assertionBean.cua, assn);
-    }
-
-    static public class ContestBean {
+    public class ContestBean {
         static Double alpha = .03;
 
-        /* editable properties
-        static public String editableProperties() { return "mvrLimit"; }
-        // static public String hiddenProperties() { return "mvrLimit"; }
-
-        public boolean canedit() { return true; }
-        public int getMvrLimit() { return mvrLimit; }
-        public void setMvrLimit( int limit) {
-            this.mvrLimit = limit;
-            if (limit < 0) lastRound.setHaveSampleSize(orgSampleSize); else lastRound.setHaveSampleSize(limit);
-            if (auditData != null) auditData.updateStatus(); // also update this row I hope
-        } */
-
-        Integer mvrLimit = -1;
         ContestRound contestRound;
         ContestWithAssertions contestUA;
         Integer orgSampleSize;
@@ -270,28 +248,8 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         public Integer getEstMvrs() { return (contestRound == null) ? 0 : contestRound.getEstNewMvrs(); }
 
-        /*
-        public Integer getEstMvrs() {
-            if (contestUA.getHasStyle()) {
-                return ((lastRound == null)) ? 0 : lastRound.getEstMvrs();
-            }
-
-            Double margin = contestUA.minMargin();
-            if (margin == null) return 0;
-            return roundUp(UtilsKt.estSamplesFromMarginUpper(2.0 / 1.03905, margin, alpha));
-        } */
-
         public Integer getHaveMvrs() {
-            if (mvrLimit >= 0) return mvrLimit;
             return (contestRound == null) ? 0 : contestRound.getHaveSampleSize();
-
-            /* TODO
-            if (contestUA.getHasStyle()) {
-                return ((lastRound == null)) ? 0 : lastRound.getHaveSampleSize();
-            }
-
-            var have = contestUA.getContest().info().getMetadata().get("CORLAhaveMvrs");
-            return (have == null) ? 0 : Integer.parseInt(have); */
         }
 
         public String getNoerror() {
@@ -312,16 +270,6 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             return margin == null ? 0.0 : margin;
         }
 
-        public Integer getMvrsExtras() {
-            if (contestRound == null) return 0;
-            if (!contestRound.getDone()) return 0;
-            if (!contestRound.getIncluded()) return 0;
-            else {
-                return (contestRound.getEstMvrs() < contestRound.maxSamplesUsed()) ? 0 :
-                        (contestRound.getEstMvrs() - contestRound.maxSamplesUsed());
-            }
-        }
-
         public Integer getMvrsExtra() {
             return getHaveMvrs() - getEstMvrs();
         }
@@ -336,14 +284,6 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         public Integer getNCand() {
             return contestUA.getNcandidates();
-        }
-
-        public String getNCounties() {
-            var CORLAcounties =  contestUA.getContest().info().getMetadata().get("CORLAcounties");
-            if (CORLAcounties == null) return "N/A";
-            var toks = CORLAcounties.split(",");
-            if (toks.length == 1) return toks[0];
-            return String.format("%02d", toks.length);
         }
 
         public Integer getNpop() {
@@ -364,12 +304,6 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             return (contestRound == null || contestUA.getPreAuditStatus() != TestH0Status.InProgress)
                     ? Naming.status(contestUA.getPreAuditStatus())
                     : Naming.status(contestRound.getStatus());
-        }
-
-        public Boolean getTarget() {
-            var reason = contestUA.getContest().info().getMetadata().get("CORLAauditReason");
-            if (reason == null) return false;
-            return reason.equals("state_wide_contest") || reason.equals("county_wide_contest");
         }
 
         public String getType() {
@@ -399,37 +333,14 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             return contestUA.getContest().winners().toString();
         }
 
+        public String show() {
+            return showContestG(this, contestTable.tableModel, this.contestUA, this.contestRound);
+        }
+
         /*
                 public Integer getPoolPct() {
             var pct =  contestUA.getContest().info().getMetadata().get("PoolPct");
             return (pct == null) ? 0 : Integer.parseInt(pct);
-        }
-        public Integer getCardDiff() {
-            var votes = contestUA.getContest().info().getMetadata().get("CORLApoolTotalCards"); // change to CORLApoolTotalCards
-            var poolCards = (votes == null) ? 0 : Integer.parseInt(votes);
-            return contestUA.getNc() - (contestUA.getContest().Nundervotes() + contestUA.getContest().nvotes()) / contestUA.getContest().info().getVoteForN();
-        }
-
-        public Integer getPoolDiff() {
-            var votes = contestUA.getContest().info().getMetadata().get("CORLApoolTotalCards");
-            var poolCards = (votes == null) ? 0 : Integer.parseInt(votes);
-            return contestUA.getNc() - poolCards;
-        }
-
-        public Integer getVotePoolDiff() {
-            var votes = contestUA.getContest().info().getMetadata().get("CORLApoolTotalVotes");
-            var poolVotes = (votes == null) ? 0 : Integer.parseInt(votes);
-            return contestUA.getContest().nvotes() - poolVotes;
-        }
-
-        public Integer getStateMvrs() {
-            var nmvrss = contestUA.getContest().info().getMetadata().get("CORLAstatewideNmvrs");
-            return (nmvrss == null) ? 0 : Integer.parseInt(nmvrss);
-        }
-
-        public Integer getCountyMvrs() {
-            var nmvrss = contestUA.getContest().info().getMetadata().get("CORLAcountyMvrs");
-            return (nmvrss == null) ? 0 : Integer.parseInt(nmvrss);
         }
 
         public Integer getOneshotEst() {
@@ -438,7 +349,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         } */
     }
 
-    static public class AssertionBean {
+    public class AssertionBean {
         ContestBean contestBean;
         AssertionRound assertionRound;
         ContestWithAssertions cua;
@@ -503,14 +414,6 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         public String getDifficulty() {
             return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
-
-        /* if (assertion.getAssorter() instanceof RaireAssorter) {
-            RaireAssertion rassertion = ((RaireAssorter) assertion.getAssorter()).getRassertion();
-            return Math.round(rassertion.getDifficulty());
-        } else if (cua.getContest() instanceof DHondtContest) {
-            return Math.round(((DHondtContest) cua.getContest()).difficulty(assertion.getAssorter()));
-        }
-        return -1; */
         }
 
         public double getRecountMargin() {
@@ -533,6 +436,11 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         public double getUpper() {
             return assertion.getAssorter().upperBound();
+        }
+
+        public String show() {
+            var assn = (this.cassertion != null) ? this.cassertion : this.assertion;
+            return showAssertionG(this, assertionTable.tableModel, this.cua, assn);
         }
     }
 

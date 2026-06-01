@@ -9,7 +9,6 @@ import org.cryptobiotic.rlauxe.audit.*;
 import org.cryptobiotic.rlauxe.betting.TestH0Status;
 import org.cryptobiotic.rlauxe.betting.UtilsKt;
 import org.cryptobiotic.rlauxe.core.*;
-import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF;
@@ -107,7 +106,6 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         });
         contestTable.addPopupOption("Show ContestRound", contestTable.makeShowAction(infoTA, infoWindow,
                 bean -> ((ContestRoundBean)bean).show()));
-        contestTable.addPopupOption("Include Targeted Plus", contestTable.makeActionOnCurrentBean( (e) -> includeTargetedPlus()));
         contestTable.addPopupOption("Include All Contests", contestTable.makeActionOnCurrentBean( (e) -> setInclude(true)));
         contestTable.addPopupOption("Exclude All Contests", contestTable.makeActionOnCurrentBean( (e) -> setInclude(false)));
 
@@ -169,32 +167,6 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         };
         BAMutil.setActionProperties(runAuditRoundAction, "hamster.png", "Run Audit Round", false, 'R', -1);
         BAMutil.addActionToContainer(container, runAuditRoundAction);
-
-        if (profile.isCorla()) {
-            AbstractAction targetAction = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    includeTargetedOnly();
-                }
-            };
-            BAMutil.setActionProperties(targetAction, "goal.png", "Include Targets Only", false, 'T', -1);
-            BAMutil.addActionToContainer(container, targetAction);
-
-            AbstractAction targetPlusAction = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    includeTargetedPlus();
-                }
-            };
-            BAMutil.setActionProperties(targetPlusAction, "goal.png", "Include Targets plus", false, 'T', -1);
-            BAMutil.addActionToContainer(container, targetPlusAction);
-
-            AbstractAction targetLessThanAction = new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    includeTargetedPlusContestsLessThan(100);
-                }
-            };
-            BAMutil.setActionProperties(targetLessThanAction, "goal.png", "Include Targets and LessThan 100", false, 'T', -1);
-            BAMutil.addActionToContainer(container, targetLessThanAction);
-        }
 
         AbstractAction includeAllAction = new AbstractAction() {
             public void actionPerformed(ActionEvent e) { setInclude(true); }
@@ -264,63 +236,6 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         for (ContestRound contestRound: lastAuditRound.getContestRounds()) {
             contestRound.setIncluded(include);
         }
-        samplingChanged = true;
-        contestTable.refresh();
-        return true;
-    }
-
-    Boolean includeTargetedOnly() {
-        // targeted and low margins
-        for (ContestRoundBean bean : contestTable.getBeans()) {
-            bean.contestRound.setIncluded(bean.getTarget());
-        }
-
-        samplingChanged = true;
-        contestTable.refresh();
-        return true;
-    }
-
-    Boolean includeTargetedPlus() {
-        // targeted and low margins
-        for (ContestRoundBean bean : contestTable.getBeans()) {
-            bean.contestRound.setIncluded(bean.getTarget());
-            // if (bean.getMargin() > .2) bean.contestRound.setIncluded(true);
-        }
-
-        /*
-        List<ContestBean> sortedList = contestTable.getBeans().stream()
-                .filter( p -> !p.getTarget())
-                .sorted(Comparator.comparing(ContestBean::getEstMvrs))
-                .toList();
-
-        // low margins
-        for (ContestBean bean : sortedList) {
-            // logger.debug("{}: est={} sum={}", bean.contestUA.getId(), bean.getEstMvrs(), countMvrs);
-            if (countMvrs + bean.getEstMvrs() > 5000) break;
-            bean.contestRound.setIncluded(true);
-            countMvrs += bean.getEstMvrs();
-        } */
-
-        // statewide, congress, contests starting with state with est < 150
-        for (ContestRoundBean bean : contestTable.getBeans()) {
-            if (bean.getEstMvrs() > 150) continue;
-            if (bean.statewide()) bean.contestRound.setIncluded(true);
-            if (bean.getName().startsWith("Representative to the")) bean.contestRound.setIncluded(true);
-            if (bean.getName().startsWith("State")) bean.contestRound.setIncluded(true);
-        }
-
-        samplingChanged = true;
-        contestTable.refresh();
-        return true;
-    }
-
-    Boolean includeTargetedPlusContestsLessThan(Integer needMvrs) {
-        // targeted and est < need
-        for (ContestRoundBean bean : contestTable.getBeans()) {
-            bean.contestRound.setIncluded(bean.getTarget());
-            if (bean.getEstMvrs() < needMvrs) bean.contestRound.setIncluded(true);
-        }
-
         samplingChanged = true;
         contestTable.refresh();
         return true;
@@ -734,7 +649,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
             return assertion.getAssorter().shortName();
         }
 
-        public double getNoError() {return assertion.getAssorter().noerror(contestRoundBean.contestUA.getHasStyle()); }
+        public double getNoerror() {return assertion.getAssorter().noerror(contestRoundBean.contestUA.getHasStyle()); }
         public double getUpper() {return assertion.getAssorter().upperBound(); }
 
         public Integer getPrevMvrs() {return assertionRound.getEstMvrs() - assertionRound.getEstNewMvrs();}
