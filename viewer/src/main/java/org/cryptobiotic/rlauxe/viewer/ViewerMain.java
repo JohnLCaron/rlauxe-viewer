@@ -254,7 +254,6 @@ public class ViewerMain extends JPanel {
     add(topPanel, BorderLayout.NORTH);
     add(tabbedPane, BorderLayout.CENTER);
 
-    System.out.println("ViewerMain started");
     logger.debug("ViewerMain started");
   }
 
@@ -435,7 +434,6 @@ public class ViewerMain extends JPanel {
       prefs = store.getPreferences();
       Debug.setStore(prefs.node("Debug"));
     } catch (IOException e) {
-      System.out.println("XMLStore Creation failed " + e);
       logger.error("ViewerMain store.create() failed", e);
     }
 

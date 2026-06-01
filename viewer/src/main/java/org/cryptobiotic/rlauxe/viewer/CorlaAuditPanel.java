@@ -32,9 +32,6 @@ import ucar.util.prefs.PreferencesExt;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 
@@ -43,6 +40,7 @@ import static java.util.Collections.emptyMap;
 import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.resampleAndSaveResults;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.roundUp;
+import static org.cryptobiotic.rlauxe.viewer.BeanProperties.*;
 
 public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(CorlaAuditPanel.class);
@@ -110,43 +108,6 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
 
         logger.debug("CorlaAuditPanel init");
     }
-
-    /*
-    public void saveConfig() {
-        try {
-            if (this.lastAuditRound == null) {
-                JOptionPane.showMessageDialog(null, "There is no audit round to save");
-                return;
-            }
-
-            saveAuditRound(auditRecord, lastAuditRound);
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-            logger.error("AuditRoundsTable.resample failed", e);
-        }
-    }
-
-    public void applySampleLimits() {
-        List<SampleLimit> limits = auditRecord.readSampleLimits(); // should this be global ?
-        for (ContestBean bean : contestTable.getBeans()) {
-            boolean foundit = false;
-            for (SampleLimit limit : limits) {
-                if (bean.getId().equals(limit.getId())) {
-                    bean.mvrLimit = limit.getLimit();
-                    bean.lastRound.setHaveSampleSize(limit.getLimit());
-                    foundit = true;
-                    logger.debug("read contest limit {}", limit);
-                }
-            }
-            if (!foundit) {
-                bean.lastRound.setHaveSampleSize(bean.orgSampleSize);
-            }
-        }
-        auditData.updateStatus();
-        // updateCandidateTable();
-        repaint();
-    } */
 
     public void setFontSize(float size) {
         contestTable.setFontSize(size);
@@ -331,23 +292,6 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
         }
     }
 
-    /* void callRunRound() {
-        try {
-            logger.info("begin runRound");
-            if (samplingChanged && lastAuditRound != null)
-                resampleAndSaveResults(countyAudit, (AuditRound) lastAuditRound);
-
-            runRound(countyAudit.getLocation(), null, null);
-
-            logger.info("return from runRound");
-            setAuditRecord(countyAudit.getLocation()); // reread in
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-            logger.error("AuditRoundsTable.runAuditRound failed", e);
-        }
-    } */
-
     // all include or exclude
     void setInclude(Boolean include) {
         for (ContestRound contestRound: lastAuditRound.getContestRounds()) {
@@ -445,106 +389,10 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
     }
 
     public String printContests() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(contestTable.tableModel.beanTableHeader(ContestBean.beanProperties));
-        for (var bean : contestTable.getBeans()) {
-            sb.append(contestTable.tableModel.beanCsv(bean, ContestBean.beanProperties));
-        }
-        var file = "/home/stormy/rla/temp/contests.csv";
-        try (FileOutputStream fout = new FileOutputStream(file);
-             OutputStreamWriter writer = new OutputStreamWriter(fout, StandardCharsets.UTF_8)) {
-            writer.write(sb.toString());
-            writer.flush();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return sb.toString();
+        return printContestsG(contestTable.getBeans(), contestTable.tableModel);
     }
 
-    /*
-    static public class AuditData {
-        JButton status;
-        Integer useMvrs = 0;
-        Integer contestedSeats = 0;
-        List<ContestBean> beans;
-
-        AuditData(JButton status) {
-            this.status = status;
-        }
-
-        void updateStatus() {
-            useMvrs = countMvrs();
-            contestedSeats = countContestsSeats();
-            SwingUtilities.invokeLater(() -> {
-                status.setText(String.format("mvrs=%d failures=%d", useMvrs, contestedSeats));
-                status.repaint();
-            });
-        }
-
-        void setNewBeans(List<ContestBean> beans) {
-            this.beans = beans;
-            useMvrs = countMvrs();
-            contestedSeats = countContestsSeats();
-            SwingUtilities.invokeLater(() -> {
-                status.setText(String.format("mvrs=%d failures=%d", useMvrs, contestedSeats));
-            });
-        }
-
-        Integer countMvrs() {
-            var total = 0;
-            for (ContestBean bean : beans) {
-                total += bean.getHaveMvrs();
-            }
-            return total;
-        }
-
-        Integer countContestsSeats() {
-            var total = 0;
-            for (ContestBean bean : beans) {
-                var contest = bean.contestUA.getContest();
-                if (contest instanceof DHondtContest dhcontest) {
-                    var count = dhcontest.showContestedSeats(bean.lastRound).getFirst();
-                    total += count;
-                }
-            }
-            return total;
-        }
-    } */
-
     public class ContestBean {
-        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
-
-        static {
-            beanProperties.add(new BeanTable.TableBeanProperty("id", "contest identifier"));
-            beanProperties.add(new BeanTable.TableBeanProperty("name", "contest name"));
-            beanProperties.add(new BeanTable.TableBeanProperty("type", "contest type"));
-            beanProperties.add(new BeanTable.TableBeanProperty("NCand", "number of candidates"));
-            beanProperties.add(new BeanTable.TableBeanProperty("winners", "list of winning candidates"));
-            beanProperties.add(new BeanTable.TableBeanProperty("nc", "trusted upper bound on contest ncards"));
-            beanProperties.add(new BeanTable.TableBeanProperty("npop", "population size for diluted margin"));
-            beanProperties.add(new BeanTable.TableBeanProperty("phantoms", "number of phantom votes"));
-            beanProperties.add(new BeanTable.TableBeanProperty("votes", "reported vote count"));
-            beanProperties.add(new BeanTable.TableBeanProperty("undervotes", "reported undervote count"));
-            beanProperties.add(new BeanTable.TableBeanProperty("uvPct", "percent undervote count"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("voteDiff", "(winner-loser) votes (smallest assertion)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("margin", "voteDiff / Nc or Npop (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("dilutedMargin", "voteDiff/Npop (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("payoff", "payoff factor for each mvr that agrees with the cvr"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("poolPct", "percent of cards in pools"));
-            beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("target", "is a Corla targeted contest"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimate number of mvrs needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estRisk", "estimated maximum risk %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("haveMvrs", "number of mvrs that were sampled for this contest"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "(haveMvrs-estMvrs)"));
-        }
-
-
         // editable properties
         static public String editableProperties() { return "include risk"; }
 
@@ -718,35 +566,11 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         public String show() {
-            ContestWithAssertions cua = this.contestUA;
-            StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, ContestBean.beanProperties)));
-            sb.append("\n%s%n".formatted(cua.show()));
-            return sb.toString();
+            return showContestG(this, contestTable.tableModel, this.contestUA, this.contestRound);
         }
     }
 
     public class AssertionBean {
-        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
-
-        static {
-            beanProperties.add(new BeanTable.TableBeanProperty("type", "assorter type"));
-            beanProperties.add(new BeanTable.TableBeanProperty("winner", "assertion winner party"));
-            beanProperties.add(new BeanTable.TableBeanProperty("loser", "assertion loser party"));
-            beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion difficulty description"));
-            beanProperties.add(new BeanTable.TableBeanProperty("difficulty", "assertion difficulty measure (IRV only)"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("upper", "assorter upper bound"));
-            beanProperties.add(new BeanTable.TableBeanProperty("margin", "voteDiff / Nc or Npop (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("noError", "noerror assort value"));
-            beanProperties.add(new BeanTable.TableBeanProperty("payoff", "payoff factor for each mvr that agrees with the cvr"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimate number of mvrs needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estRisk", "estimated maximum risk %"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("mean", "diluted mean"));
-            beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner"));
-        }
-
         ContestBean contestBean;
         ContestWithAssertions cua;
         ClcaAssertion cassertion;
@@ -831,13 +655,7 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         public String show() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(assertionTable.tableModel.showBean(this, AssertionBean.beanProperties)));
-
-            sb.append(cassertion.show());
-            sb.append("\n   difficulty: %s".formatted(this.cua.getContest().showAssertionDifficulty(assorter)));
-
-            return sb.toString();
+            return showAssertionG(this, assertionTable.tableModel, this.cua, this.cassertion);
         }
     }
 
@@ -883,8 +701,6 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
         public Integer getVoteDiff() { return countyContestData.getVoteDiff(); }
         public String getVotes() { return countyContestData.getVotes().toString(); }
         public Integer getNpop() { return npop; }
-        //public Integer getNmvrsUniform() { return nmvrsUniform; }
-        //public Integer getNmvrsConsistent() { return nmvrsConsistent; }
     }
 
 }
