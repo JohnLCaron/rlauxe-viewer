@@ -175,7 +175,7 @@ public class CountyPanel extends JPanel implements ViewerPanelIF {
 
     public String showContest(ContestBean contestBean) {
         StringBuilder sb = new StringBuilder();
-        sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(contestBean, ContestBean.beanProperties)));
+        sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(contestBean, BeanProperties.contests)));
         sb.append("\n%s%n".formatted(contestBean.contestUA.show()));
         return sb.toString();
     }

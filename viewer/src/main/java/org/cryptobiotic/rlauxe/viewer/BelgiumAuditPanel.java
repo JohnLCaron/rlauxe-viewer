@@ -32,14 +32,12 @@ import ucar.util.prefs.PreferencesExt;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
+import static org.cryptobiotic.rlauxe.viewer.BeanProperties.*;
 
 public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(BelgiumAuditPanel.class);
@@ -154,13 +152,13 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             for (SampleLimit limit : limits) {
                 if (bean.getId().equals(limit.getId())) {
                     bean.mvrLimit = limit.getLimit();
-                    bean.lastRound.setHaveSampleSize(limit.getLimit());
+                    bean.contestRound.setHaveSampleSize(limit.getLimit());
                     foundit = true;
                     logger.debug("read contest limit {}", limit);
                 }
             }
             if (!foundit) {
-                bean.lastRound.setHaveSampleSize(bean.orgSampleSize);
+                bean.contestRound.setHaveSampleSize(bean.orgSampleSize);
             }
         }
         auditData.updateStatus();
@@ -242,7 +240,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
     void setSelectedContest(BelgiumAuditPanel.ContestBean contestBean) {
         List<AssertionBean> beanList = new ArrayList<>();
-        for (AssertionRound ar : contestBean.lastRound.getAssertionRounds()) {
+        for (AssertionRound ar : contestBean.contestRound.getAssertionRounds()) {
             var bean = new AssertionBean(contestBean, ar);
             beanList.add(bean);
         }
@@ -296,20 +294,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
     }
 
     public String printContests() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(contestTable.tableModel.beanTableHeader(ContestBean.beanProperties));
-        for (var bean : contestTable.getBeans()) {
-            sb.append(contestTable.tableModel.beanCsv(bean, ContestBean.beanProperties));
-        }
-        var file = "/home/stormy/rla/temp/contests.csv";
-        try (FileOutputStream fout = new FileOutputStream(file);
-             OutputStreamWriter writer = new OutputStreamWriter(fout, StandardCharsets.UTF_8)) {
-            writer.write(sb.toString());
-            writer.flush();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return sb.toString();
+        return printContestsG(contestTable.getBeans(), contestTable.tableModel);
     }
 
     static public class AuditData {
@@ -353,7 +338,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             for (ContestBean bean : beans) {
                 var contest = bean.contestUA.getContest();
                 if (contest instanceof DHondtContest dhcontest) {
-                    var count = dhcontest.showContestedSeats(bean.lastRound).getFirst();
+                    var count = dhcontest.showContestedSeats(bean.contestRound).getFirst();
                     total += count;
                 }
             }
@@ -362,38 +347,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
     }
 
     public class ContestBean {
-        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
         static Double alpha = .03;
-
-        static {
-            beanProperties.add(new BeanTable.TableBeanProperty("id", "contest identifier"));
-            beanProperties.add(new BeanTable.TableBeanProperty("name", "contest name"));
-            beanProperties.add(new BeanTable.TableBeanProperty("type", "contest type"));
-            beanProperties.add(new BeanTable.TableBeanProperty("NCand", "number of candidates"));
-            beanProperties.add(new BeanTable.TableBeanProperty("winners", "list of winning candidates"));
-            beanProperties.add(new BeanTable.TableBeanProperty("nc", "trusted upper bound on contest ncards"));
-            beanProperties.add(new BeanTable.TableBeanProperty("npop", "population size for diluted margin"));
-            beanProperties.add(new BeanTable.TableBeanProperty("phantoms", "number of phantom votes"));
-            beanProperties.add(new BeanTable.TableBeanProperty("votes", "reported vote count"));
-            beanProperties.add(new BeanTable.TableBeanProperty("undervotes", "reported undervote count"));
-            beanProperties.add(new BeanTable.TableBeanProperty("uvPct", "percent undervote count"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("voteDiff", "(winner-loser) votes (smallest assertion)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("margin", "voteDiff / Nc or Npop (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("dilutedMargin", "voteDiff/Npop (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("payoff", "payoff factor for each mvr that agrees with the cvr"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("poolPct", "percent of cards in pools"));
-            beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("target", "is a Corla targeted contest"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimate number of mvrs needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estRisk", "estimated maximum risk %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("haveMvrs", "number of mvrs that were sampled for this contest"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "(haveMvrs-estMvrs)"));
-        }
 
         // editable properties
         static public String editableProperties() { return "mvrLimit"; }
@@ -403,13 +357,13 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         public int getMvrLimit() { return mvrLimit; }
         public void setMvrLimit( int limit) {
             this.mvrLimit = limit;
-            if (limit < 0) lastRound.setHaveSampleSize(orgSampleSize); else lastRound.setHaveSampleSize(limit);
+            if (limit < 0) contestRound.setHaveSampleSize(orgSampleSize); else contestRound.setHaveSampleSize(limit);
             if (auditData != null) auditData.updateStatus(); // also update this row I hope
         }
 
         AuditData auditData;
         Integer mvrLimit = -1;
-        ContestRound lastRound;
+        ContestRound contestRound;
         ContestWithAssertions contestUA;
         Integer orgSampleSize;
 
@@ -417,9 +371,9 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         ContestBean(ContestRound contestRound) {
-            this.lastRound = contestRound;
+            this.contestRound = contestRound;
             this.contestUA = contestRound.getContestUA();
-            orgSampleSize = lastRound.getHaveSampleSize();
+            orgSampleSize = this.contestRound.getHaveSampleSize();
         }
 
         public String getName() {
@@ -439,7 +393,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             return UtilsKt.estRiskStandardBet(contestUA.getNpop(), noerror, haveMvrs);
         }
 
-        public Integer getEstMvrs() { return lastRound.getEstNewMvrs(); }
+        public Integer getEstMvrs() { return contestRound.getEstNewMvrs(); }
 
         /*
         public Integer getEstMvrs() {
@@ -454,7 +408,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
         public Integer getHaveMvrs() {
             if (mvrLimit >= 0) return mvrLimit;
-            return lastRound.getHaveSampleSize();
+            return contestRound.getHaveSampleSize();
 
             /* TODO
             if (contestUA.getHasStyle()) {
@@ -488,7 +442,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         public Integer getMvrsUsed() {
-            return (lastRound == null) ? 0 : lastRound.maxSamplesUsed();
+            return (contestRound == null) ? 0 : contestRound.maxSamplesUsed();
         }
 
         public Integer getNc() {
@@ -514,7 +468,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
         // TODO maybe not needed
         public String getStatus() {
-            return (lastRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(lastRound.getStatus());
+            return (contestRound == null) ? Naming.status(contestUA.getPreAuditStatus()) : Naming.status(contestRound.getStatus());
         }
 
         public String getType() {
@@ -537,6 +491,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
         public Integer getVoteDiff() {
             Assertion minAssertion = contestUA.minAssertion();
+            if (minAssertion == null) return 0;
             return contestUA.getContest().marginInVotes(minAssertion.getAssorter());
         }
 
@@ -545,38 +500,11 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         public String show() {
-            ContestWithAssertions cua = this.contestUA;
-            StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, ContestBean.beanProperties)));
-            sb.append("\n%s%n".formatted(cua.show()));
-            if (cua.getContest() instanceof DHondtContest dhcontest) {
-                sb.append(dhcontest.showRelaxedAssertions(this.lastRound));
-            }
-            return sb.toString();
+            return showContestG(this, contestTable.tableModel, this.contestUA, this.contestRound);
         }
     }
 
     public class AssertionBean {
-        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
-
-        static {
-            beanProperties.add(new BeanTable.TableBeanProperty("type", "assorter type"));
-            beanProperties.add(new BeanTable.TableBeanProperty("winner", "assertion winner party"));
-            beanProperties.add(new BeanTable.TableBeanProperty("loser", "assertion loser party"));
-            beanProperties.add(new BeanTable.TableBeanProperty("desc", "assertion difficulty description"));
-            beanProperties.add(new BeanTable.TableBeanProperty("difficulty", "assertion difficulty measure (IRV only)"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("upper", "assorter upper bound"));
-            beanProperties.add(new BeanTable.TableBeanProperty("margin", "voteDiff / Nc or Npop (smallest assertion) %"));
-            beanProperties.add(new BeanTable.TableBeanProperty("noError", "noerror assort value"));
-            beanProperties.add(new BeanTable.TableBeanProperty("payoff", "payoff factor for each mvr that agrees with the cvr"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimate number of mvrs needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estRisk", "estimated maximum risk %"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("mean", "diluted mean"));
-            beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner"));
-        }
-
         ContestBean contestBean;
         AssertionRound assertionRound;
         ContestWithAssertions cua;
@@ -641,14 +569,6 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
         public String getDifficulty() {
             return cua.getContest().showAssertionDifficulty(assertion.getAssorter());
-
-        /* if (assertion.getAssorter() instanceof RaireAssorter) {
-            RaireAssertion rassertion = ((RaireAssorter) assertion.getAssorter()).getRassertion();
-            return Math.round(rassertion.getDifficulty());
-        } else if (cua.getContest() instanceof DHondtContest) {
-            return Math.round(((DHondtContest) cua.getContest()).difficulty(assertion.getAssorter()));
-        }
-        return -1; */
         }
 
         public double getRecountMargin() {
@@ -674,16 +594,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         public String show() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(assertionTable.tableModel.showBean(this, AssertionBean.beanProperties)));
-
-            var assertion = this.assertion;
-            sb.append(assertion.show());
-            sb.append("\n   difficulty: %s".formatted(this.cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
-            if (this.oaAssorter != null)
-                sb.append("%n oaAssortRates = %s".formatted(this.oaAssorter.getOaAssortRates().toString()));
-
-            return sb.toString();
+            return showAssertionG(this, assertionTable.tableModel, this.cua, this.cassertion);
         }
     }
 

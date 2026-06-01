@@ -569,7 +569,7 @@ public class BeanTable<T> extends JPanel {
           ++newViewIndex; // Don't increment for hidden columns.
         }
       } catch (IllegalArgumentException e) {
-        logger.debug(String.format("Column named \"%s\" was present in the preferences file but not the dataset.",
+        logger.warn(String.format("Column named \"%s\" was present in the preferences file but not the dataset.",
             propCol.getName()), e);
       }
     }
@@ -1020,7 +1020,7 @@ public class BeanTable<T> extends JPanel {
           var modelIdx = vc.getModelIndex();
           var pc = propm.get(id.toString());
           if (pc == null) {
-            logger.debug("cant find pc=" + id);
+            logger.warn("cant find pc=" + id);
             continue;
           }
           maxName = Math.max(maxName, pc.name.length());

@@ -28,11 +28,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
-import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.*;
-import static org.cryptobiotic.rlauxe.util.UtilsKt.mean2margin;
+import static org.cryptobiotic.rlauxe.viewer.BeanProperties.showAssertionG;
+import static org.cryptobiotic.rlauxe.viewer.BeanProperties.showContestG;
 
 public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(AuditRoundsTable.class);
@@ -170,7 +170,6 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         BAMutil.setActionProperties(runAuditRoundAction, "hamster.png", "Run Audit Round", false, 'R', -1);
         BAMutil.addActionToContainer(container, runAuditRoundAction);
 
-        logger.info("profile {}", profile);
         if (profile.isCorla()) {
             AbstractAction targetAction = new AbstractAction() {
                 public void actionPerformed(ActionEvent e) {
@@ -559,32 +558,6 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
     }
 
     public class ContestRoundBean {
-        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
-        static {
-            beanProperties.add(new BeanTable.TableBeanProperty("round", "index of audit round"));
-            beanProperties.add(new BeanTable.TableBeanProperty("id", "contest identifier"));
-            beanProperties.add(new BeanTable.TableBeanProperty("name", "contest name"));
-            beanProperties.add(new BeanTable.TableBeanProperty("type", "contest type"));
-            beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin (smallest assertion)"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("risk", "measured risk"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estRisk", "estimated risk"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estMvrs", "estimated samples needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estPct", "estimated samples needed / contest Nc"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estNewMvrs", "estimated new samples needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsExtra", "number of mvrs audited but not needed"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("haveMvrs", "contest cards in sample"));
-            beanProperties.add(new BeanTable.TableBeanProperty("haveNewMvrs", "new contest cards in sample"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrLimit", "limit on number of mvrs to audit; set by auditor"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
-            beanProperties.add(new BeanTable.TableBeanProperty("include", "include the contest in this audit round"));
-            beanProperties.add(new BeanTable.TableBeanProperty("done", "contest has completed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("corlaEst", "estimate from Corla (super simple) algorithm"));
-        }
-
         ContestRound contestRound;
         ContestWithAssertions contestUA;
         int auditRound; // only last row can be edited
@@ -714,37 +687,19 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         } */
 
         public String show() {
+            return showContestG(this, contestTable.tableModel, this.contestUA, this.contestRound);
+            /*
             StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, beanProperties)));
+            sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, BeanProperties.contests)));
             sb.append("\n%s%n".formatted(contestUA.show()));
             if (contestUA.getContest() instanceof DHondtContest) {
                 sb.append(((DHondtContest) contestUA.getContest()).showRelaxedAssertions(contestRound));
             }
-            return sb.toString();
+            return sb.toString(); */
         }
     }
 
     public class AssertionBean {
-        static ArrayList<BeanTable.TableBeanProperty> beanProperties = new ArrayList<>();
-        static {
-            beanProperties.add(new BeanTable.TableBeanProperty("round", "index of audit round"));
-            beanProperties.add(new BeanTable.TableBeanProperty("name", "assertion name"));
-            beanProperties.add(new BeanTable.TableBeanProperty("noError", "noerror assort value (CLCA only)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("margin", "diluted margin"));
-            beanProperties.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner"));
-            beanProperties.add(new BeanTable.TableBeanProperty("upper", "assorter upper bound"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("prevMvrs", "mvrs from previous rounds"));
-            beanProperties.add(new BeanTable.TableBeanProperty("estNewMvrs", "estimated new samples needed"));
-            beanProperties.add(new BeanTable.TableBeanProperty("mvrsUsed", "mvrs used in this round"));
-            // beanProperties.add(new BeanTable.TableBeanProperty("calcMvrsNeeded", "calculated samples needed"));
-            // beanProperties.add(new BeanTable.TableBeanProperty("optimalBet", "optimalBet when there are no errors"));
-
-            beanProperties.add(new BeanTable.TableBeanProperty("status", "status of contest completion"));
-            beanProperties.add(new BeanTable.TableBeanProperty("risk", "measured risk (minimum PValue of audit)"));
-            beanProperties.add(new BeanTable.TableBeanProperty("completed", "round assertions was done"));
-        }
-
         AssertionRound assertionRound;
         ContestRoundBean contestRoundBean;
         Assertion assertion;
@@ -830,10 +785,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
 
         public String show() {
             StringBuilder sb = new StringBuilder();
-            sb.append("%n%s%n".formatted(assertionTable.tableModel.showBean(this, beanProperties)));
-
-            sb.append("%n assertion = %s".formatted(assertion.show()));
-            sb.append("%n difficulty = %s".formatted(contestRoundBean.contestUA.getContest().showAssertionDifficulty(assertion.getAssorter())));
+            sb.append("%n%s%n".formatted( showAssertionG(this, assertionTable.tableModel, contestRoundBean.contestUA, this.assertion)));
 
             if (assertionRound.getAuditResult() != null) sb.append("%n auditResult = %s".formatted(assertionRound.getAuditResult().toString()));
                 else sb.append("\n auditResult is null");
@@ -842,7 +794,6 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
 
             if (oaAssorter != null) {
                 sb.append("%n%n oaAssortRates = %s".formatted(oaAssorter.getOaAssortRates().toString()));
-                // sb.append("%n sumOneAuditTerm = %f".formatted(oaAssorter.getOaAssortRates().sumOneAuditTerm(optimalBet)));
             }
 
             return sb.toString();
