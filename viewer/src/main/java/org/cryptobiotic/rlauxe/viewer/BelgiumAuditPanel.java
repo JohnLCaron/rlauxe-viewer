@@ -214,7 +214,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             // candidates
             partyNames = auditRecord.readPartyNames();
             List<SampleLimit> sampleLimits = auditRecord.readSampleLimits();
-            allSeats = ContestSeatsKt.makeContestAndCandidateSeats(this.lastAuditRound, sampleLimits);
+            allSeats = CandidateSeatsKt.makeContestAndCandidateSeats(this.lastAuditRound, sampleLimits);
             List<CandidateBean> candBeans = new ArrayList<>();
             for (var candidateSeat : allSeats.getCandidateSums()) {
                 if (candidateSeat.getMaxSeats() > 0) {
@@ -351,7 +351,6 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
 
         // editable properties
         static public String editableProperties() { return "mvrLimit"; }
-        // static public String hiddenProperties() { return "mvrLimit"; }
 
         public boolean canedit() { return true; }
         public int getMvrLimit() { return mvrLimit; }

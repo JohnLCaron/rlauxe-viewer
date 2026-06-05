@@ -312,24 +312,25 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
         contestTable.refresh();
     }
 
-    // targeted and statewide
-    Boolean includeTargetedPlus() {
-        includeTargetedOnly();
+    // targeted plus some experimental algorithm using include and maxRisk
+    void includeTargetedPlus() {
 
-        // statewide, congress, contests starting with "state" and estMvrs < 150
         for (ContestBean bean : contestTable.getBeans()) {
-            if (bean.getEstMvrs() > 150) continue;
             if (!bean.getStatus().equals(TestH0Status.InProgress.name())) continue;
             if (bean.contestRound == null) continue;
 
-            if (bean.statewide()) bean.contestRound.setIncluded(true);
-            if (bean.getName().startsWith("Representative to the")) bean.contestRound.setIncluded(true);
-            if (bean.getName().startsWith("State")) bean.contestRound.setIncluded(true);
+            bean.setMaxRisk(auditRiskLimit); // also sets estMvrs
+            if (bean.targeted()) {
+                bean.setInclude(true);
+            } else {
+                if (bean.getEstMvrs() >= 500) bean.setInclude(false);
+                else if (bean.getEstMvrs() >= 150) bean.setMaxRisk(.10);
+                else if (bean.getEstMvrs() >= 50) bean.setMaxRisk(.05);
+            }
         }
 
         samplingChanged = true;
         contestTable.refresh();
-        return true;
     }
 
     // targeted and contests with estMvrs < needMvrs
@@ -394,12 +395,11 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
 
     public class ContestBean {
         // editable properties
-        static public String editableProperties() { return "include risk"; }
+        static public String editableProperties() { return "include maxRisk"; }
 
         ContestWithAssertions contestUA;
         ContestRound contestRound; // may be null
 
-        Double risk = auditRiskLimit;
         Integer mvrLimit = -1;
         Integer orgSampleSize;
 
@@ -429,16 +429,18 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
         }
 
         // editable properties have to be primitive
-        public void setRisk(double risk) {
-            // TODO if change risk, put into contestRound. Ok, but not actually saving the new risk.
-            this.risk = risk;
+        public void setMaxRisk(double risk) {
+            if (contestRound == null) return;
+            contestRound.setAuditorWantRisk(risk);
             var estMvrs = getEstMvrs();
             contestRound.setEstMvrs(estMvrs);
             setInclude(true);
             samplingChanged = true;
         }
-        public double getRisk() {
-            return risk;
+        public double getMaxRisk() {
+            if (contestRound == null) return 1.0;
+            var risk = contestRound.getAuditorWantRisk();
+            return (risk != null) ? risk : auditRiskLimit;
         }
 
         public String getName() {
@@ -463,17 +465,17 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
             if (minAssertion == null) return 0;
             double noerror = minAssertion.getNoerror();
 
-            return UtilsKt.estSampleSizeStandardBet(contestUA.population(), noerror, risk);
+            return UtilsKt.estSampleSizeStandardBet(contestUA.population(), noerror, getMaxRisk());
         }
 
         public Integer getHaveMvrs() {
             return (contestRound == null) ? 0 : contestRound.getHaveSampleSize();
         }
 
-        /* public Integer getHaveMvrs() {
-            if (mvrLimit >= 0) return mvrLimit;
-            return getEstMvrs();
-        } */
+        public Double getSamplePct() {
+            int pop = getPopSize();
+            return pop == 0 ? 0.0 : getEstMvrs()/(1.0 * pop);
+        }
 
         public String getNCounties() {
             var CORLAcounties =  contestUA.getContest().info().getMetadata().get("CORLAcounties");
@@ -621,7 +623,7 @@ public class CorlaAuditPanel extends JPanel implements ViewerPanelIF {
 
         public Integer getEstMvrs() {
             double noerror = cassertion.getNoerror();
-            return UtilsKt.estSampleSizeStandardBet(contestBean.contestUA.population(), noerror, contestBean.getRisk());
+            return UtilsKt.estSampleSizeStandardBet(contestBean.contestUA.population(), noerror, contestBean.getMaxRisk());
         }
 
         public double getMargin() {

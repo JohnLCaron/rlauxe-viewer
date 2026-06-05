@@ -32,18 +32,19 @@ public class BeanProperties {
         contests.add(new BeanTable.TableBeanProperty("uvPct", "percent undervote count"));
 
         contests.add(new BeanTable.TableBeanProperty("voteDiff", "(winner-loser) votes (smallest assertion)"));
-        contests.add(new BeanTable.TableBeanProperty("margin", "voteDiff / population size (smallest assertion) %"));
-        contests.add(new BeanTable.TableBeanProperty("dilutedMargin", "voteDiff/Npop (smallest assertion) %"));
-        contests.add(new BeanTable.TableBeanProperty("reportedMargin", "voteDiff/Nc (smallest assertion) %"));
-        contests.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner (smallest assertion) %"));
+        contests.add(new BeanTable.TableBeanProperty("margin", "voteDiff / population size (smallest assertion)"));
+        contests.add(new BeanTable.TableBeanProperty("dilutedMargin", "voteDiff/Npop (smallest assertion)"));
+        contests.add(new BeanTable.TableBeanProperty("reportedMargin", "voteDiff/Nc (smallest assertion)"));
+        contests.add(new BeanTable.TableBeanProperty("recountMargin", "(winner-loser)/winner (smallest assertion)"));
         contests.add(new BeanTable.TableBeanProperty("noerror", "assort value when mvr agrees with the cvr"));
         contests.add(new BeanTable.TableBeanProperty("payoff", "payoff factor for each mvr that agrees with the cvr"));
 
         contests.add(new BeanTable.TableBeanProperty("estMvrs", "estimated number of mvrs needed"));
-        contests.add(new BeanTable.TableBeanProperty("estRisk", "estimated risk %"));
+        contests.add(new BeanTable.TableBeanProperty("estRisk", "estimated risk"));
         contests.add(new BeanTable.TableBeanProperty("haveMvrs", "number of mvrs that were sampled for this contest"));
         contests.add(new BeanTable.TableBeanProperty("mvrsExtra", "(haveMvrs-estMvrs)"));
         contests.add(new BeanTable.TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"));
+        contests.add(new BeanTable.TableBeanProperty("samplePct", "estMvrs/population size"));
 
         // Corla
         contests.add(new BeanTable.TableBeanProperty("target", "is a Corla targeted contest"));

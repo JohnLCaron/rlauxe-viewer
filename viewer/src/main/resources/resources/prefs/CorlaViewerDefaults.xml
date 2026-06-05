@@ -493,8 +493,6 @@
                 </beanObject>
                 <beanObject key='ComboBoxList'>
                     <object class="java.util.ArrayList">
-                        <void method="add">
-                        </void>
                     </object>
                 </beanObject>
                 <entry key='DefaultFilter' value='All Files'/>

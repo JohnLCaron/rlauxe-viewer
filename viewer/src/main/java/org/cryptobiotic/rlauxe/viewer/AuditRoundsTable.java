@@ -533,7 +533,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         public Integer getNc() { return contestUA.getNc(); }
         public Integer getOneshotEst() { return oneshotMvrs.get(contestRound.getId()); }
         public Integer getPhantoms() { return contestUA.getNphantoms(); }
-        public Double getRisk() { return contestRound.risk(); }
+        public Double getRisk() { return contestRound.measuredRisk(); }
         public Integer getRound() {return contestRound.getRoundIdx();}
         public String getStatus() { return Naming.status(contestRound.getStatus()); }
         public String getType() {return contestUA.getChoiceFunction().toString();}
