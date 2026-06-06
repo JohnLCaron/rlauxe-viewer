@@ -96,9 +96,6 @@ public class BeanProperties {
         StringBuilder sb = new StringBuilder();
         sb.append("%n%s%n".formatted( tableModel.showBean(bean, BeanProperties.contests)));
         sb.append("\n%s%n".formatted(cua.show()));
-        if (cua.getContest() instanceof DHondtContest dhcontest && contestRound != null) {
-            sb.append(dhcontest.showRelaxedAssertions(contestRound));
-        }
         return sb.toString();
     }
 
