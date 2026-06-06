@@ -58,7 +58,7 @@ public class ViewerMain extends JPanel {
   String auditRecordDir = "none";
 
   JTabbedPane tabbedPane;
-  private BelgiumAuditPanel belgiumPanel;
+  private BelgiumAuditTable belgiumPanel;
   private ContestsPanel contestsPanel;
   private AuditRoundsTable auditRoundsPanel = null;
   private PoolTable poolPanel;
@@ -88,7 +88,7 @@ public class ViewerMain extends JPanel {
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     if (profile.isBelgium()) {
 
-      belgiumPanel = new BelgiumAuditPanel((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
+      belgiumPanel = new BelgiumAuditTable((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
       belgiumPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", belgiumPanel);
       activePanels.add(belgiumPanel);
@@ -289,7 +289,7 @@ public class ViewerMain extends JPanel {
     auditRecordDirCB.save();
 
     if (infoWindow != null) {
-      prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
+        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, infoWindow.getBounds());
     }
 
     Rectangle bounds = frame.getBounds();

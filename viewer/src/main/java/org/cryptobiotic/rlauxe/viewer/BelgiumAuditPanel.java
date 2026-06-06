@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
+import static org.cryptobiotic.rlauxe.dhondt.CandidateSeatsKt.makeAllSeats;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.dfn;
 import static org.cryptobiotic.rlauxe.viewer.BeanProperties.*;
 
@@ -214,7 +215,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
             // candidates
             partyNames = auditRecord.readPartyNames();
             List<SampleLimit> sampleLimits = auditRecord.readSampleLimits();
-            allSeats = CandidateSeatsKt.makeContestAndCandidateSeats(this.lastAuditRound, sampleLimits);
+            allSeats = makeAllSeats(this.lastAuditRound, sampleLimits);
             List<CandidateBean> candBeans = new ArrayList<>();
             for (var candidateSeat : allSeats.getCandidateSums()) {
                 if (candidateSeat.getMaxSeats() > 0) {
@@ -602,7 +603,7 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         CandidateSeats cand;
         boolean include = true;
         boolean isTotal = false;
-        Coalition2 coal;
+        Coalition coal;
 
         public CandidateBean() {
         }
@@ -650,13 +651,13 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
         for (var bean : beans) {
             candidates.add(bean.getPartyId());
         }
-        Coalition2 allcoal = allSeats.calcCoalition(candidates, partyNames);
+        Coalition allcoal = allSeats.calcCoalition(candidates, partyNames);
 
         var cand = new CandidateSeats(0, "-- coalition --");
         cand.setReportedSeats(allcoal.reportedSeats());
         cand.setMinSeats(allcoal.minSeats());
         cand.setMaxSeats(allcoal.maxSeats());
-        cand.getFailures().addAll(allcoal.getFailures());
+        cand.getFailures().addAll(allcoal.all());
 
         var totalBean = new CandidateBean(cand);
         totalBean.isTotal = true;
@@ -673,12 +674,12 @@ public class BelgiumAuditPanel extends JPanel implements ViewerPanelIF {
                 candidates.add(bean.getPartyId());
             }
         }
-        Coalition2 coal = allSeats.calcCoalition(candidates, partyNames);
+        Coalition coal = allSeats.calcCoalition(candidates, partyNames);
         var cand = new CandidateSeats(0, "-- coalition --");
         cand.setReportedSeats(coal.reportedSeats());
         cand.setMinSeats(coal.minSeats());
         cand.setMaxSeats(coal.maxSeats());
-        cand.getFailures().addAll(coal.getFailures());
+        cand.getFailures().addAll(coal.all());
 
         totalBean.coal = coal;
         totalBean.cand = cand;
