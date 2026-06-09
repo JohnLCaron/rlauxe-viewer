@@ -67,7 +67,7 @@ public class ViewerMain extends JPanel {
   private MvrTable mvrPanel;
   private ContestPoolsTable contestPoolPanel;
   private CorlaAuditTable corlaPanel = null;
-  private CountyPanel countyPanel = null;
+  private CountyTable countyPanel = null;
 
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
@@ -99,12 +99,14 @@ public class ViewerMain extends JPanel {
       tabbedPane.addTab("Contests", corlaPanel);
       activePanels.add(corlaPanel);
 
-      countyPanel = new CountyPanel((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
+      countyPanel = new CountyTable((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
       tabbedPane.addTab("Counties", countyPanel);
       activePanels.add(countyPanel);
 
     } else {
+
       contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
+      contestsPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", contestsPanel);
       activePanels.add(contestsPanel);
     }
@@ -137,20 +139,24 @@ public class ViewerMain extends JPanel {
 
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
+
+      logger.debug("ViewerMain.tabbedPanel.changed, component {}", c.getClass().getName());
+      actionsPanel.removeAll();
+
       if (this.auditRecordDir.equals("none")) return;
 
       if (c instanceof CardTable cardTable) {
-          cardTable.setSelectedTab();
-
+        cardTable.setSelectedTab();
       } else if (c instanceof MvrTable mvrTable) {
-         mvrTable.setSelectedTab();
+        mvrTable.setSelectedTab();
+      } else if (c instanceof CountyTable countyTable) {
+        countyTable.setSelectedTab();
       }
 
-      // actions on right side
-      actionsPanel.removeAll();
-      if (c instanceof BelgiumAuditPanel belgium) {
+      // actions on right side of Audit record chooser
+      if (c instanceof BelgiumAuditTable belgium) {
         belgium.getActions(actionsPanel);
-      } else if (c instanceof CorlaAuditPanel corla) {
+      } else if (c instanceof CorlaAuditTable corla) {
         corla.getActions(actionsPanel);
       } else if (c instanceof ContestsPanel contests) {
         contests.getActions(actionsPanel);

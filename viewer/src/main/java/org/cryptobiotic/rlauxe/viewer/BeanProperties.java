@@ -2,9 +2,7 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.ContestRound;
 import org.cryptobiotic.rlauxe.core.Assertion;
-import org.cryptobiotic.rlauxe.core.ClcaAssertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
-import org.cryptobiotic.rlauxe.dhondt.DHondtContest;
 import ucar.ui.prefs.BeanTable;
 
 import java.io.FileOutputStream;
@@ -15,7 +13,6 @@ import java.util.List;
 
 public class BeanProperties {
     static ArrayList<BeanTable.TableBeanProperty> contests = new ArrayList<>();
-
     static {
         contests.add(new BeanTable.TableBeanProperty("id", "contest identifier"));
         contests.add(new BeanTable.TableBeanProperty("name", "contest name"));
@@ -24,7 +21,7 @@ public class BeanProperties {
         contests.add(new BeanTable.TableBeanProperty("winners", "list of winning candidates"));
         contests.add(new BeanTable.TableBeanProperty("nc", "trusted upper bound on contest number of cards"));
         contests.add(new BeanTable.TableBeanProperty("npop", "population size (for diluted margin)"));
-        contests.add(new BeanTable.TableBeanProperty("popSize", "Nc (hasStyle) or Npop (noStyle)"));
+        contests.add(new BeanTable.TableBeanProperty("population", "Nc (hasStyle) or Npop (noStyle)"));
         contests.add(new BeanTable.TableBeanProperty("phantoms", "number of phantom cards"));
         contests.add(new BeanTable.TableBeanProperty("status", "status of contest"));
         contests.add(new BeanTable.TableBeanProperty("votes", "reported vote count"));
@@ -51,6 +48,15 @@ public class BeanProperties {
         contests.add(new BeanTable.TableBeanProperty("NCounties", "number of counties, or the county name if only one"));
         contests.add(new BeanTable.TableBeanProperty("corlaEst", "estimate from Corla (super simple) algorithm"));
 
+        // CountyTable.Contest
+        contests.add(new BeanTable.TableBeanProperty("contestId", "contest identifier"));
+        contests.add(new BeanTable.TableBeanProperty("contestName", "contest name"));
+        contests.add(new BeanTable.TableBeanProperty("countyPopulation", "contestRound.ballotCardCount"));
+        contests.add(new BeanTable.TableBeanProperty("contestPopulation", "contestRound.contestBallotCardCount"));
+        contests.add(new BeanTable.TableBeanProperty("corlaSample", "contestRound.estimatedSamplesToAudit"));
+        contests.add(new BeanTable.TableBeanProperty("corlaHaveMvrs", "estimated Corla uniform have mvrs"));
+        contests.add(new BeanTable.TableBeanProperty("corlaRisk", "estimated Corla uniform risk"));
+
         // AuditRound
         contests.add(new BeanTable.TableBeanProperty("round", "index of audit round"));
         contests.add(new BeanTable.TableBeanProperty("estNewMvrs", "estimated new samples needed"));
@@ -64,7 +70,6 @@ public class BeanProperties {
     }
 
     static ArrayList<BeanTable.TableBeanProperty> assertions = new ArrayList<>();
-
     static {
         assertions.add(new BeanTable.TableBeanProperty("type", "assorter type"));
         assertions.add(new BeanTable.TableBeanProperty("winner", "assertion winner candidate"));
