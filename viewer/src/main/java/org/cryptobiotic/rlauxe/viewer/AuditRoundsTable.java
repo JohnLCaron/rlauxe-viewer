@@ -179,6 +179,8 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         };
         BAMutil.setActionProperties(excludeAllAction, "exemption.png", "Exclude All Contests", false, 'T', -1);
         BAMutil.addActionToContainer(container, excludeAllAction);
+
+        logger.debug("AuditRoundsTable.getActions");
     }
 
     public void setFontSize(float size) {
