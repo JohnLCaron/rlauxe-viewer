@@ -68,6 +68,7 @@ public class ViewerMain extends JPanel {
   private ContestPoolsTable contestPoolPanel;
   private CorlaAuditTable corlaPanel = null;
   private CountyTable countyPanel = null;
+  private CountyPoolsTable countyPoolsPanel = null;
 
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
@@ -103,29 +104,29 @@ public class ViewerMain extends JPanel {
       tabbedPane.addTab("Counties", countyPanel);
       activePanels.add(countyPanel);
 
+      countyPoolsPanel = new CountyPoolsTable((PreferencesExt) prefs.node("CountyPoolsTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("CountyPools", countyPoolsPanel);
+      activePanels.add(countyPoolsPanel);
+
     } else {
 
       contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
       contestsPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", contestsPanel);
       activePanels.add(contestsPanel);
+
+      poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Pools", poolPanel);
+      activePanels.add(poolPanel);
+
+      stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Styles", stylePanel);
+      activePanels.add(stylePanel);
     }
 
-    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
-    tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-    activePanels.add(auditRoundsPanel);
-
-    stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("Styles", stylePanel);
-    activePanels.add(stylePanel);
-
-    poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("Pools", poolPanel);
-    activePanels.add(poolPanel);
-
-    contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("ContestPools", contestPoolPanel);
-    activePanels.add(contestPoolPanel);
+    //contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
+    //tabbedPane.addTab("ContestPools", contestPoolPanel);
+    //activePanels.add(contestPoolPanel);
 
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     tabbedPane.addTab("Cards", cardPanel);
@@ -134,6 +135,10 @@ public class ViewerMain extends JPanel {
     mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
     tabbedPane.addTab("Mvrs", mvrPanel);
     activePanels.add(mvrPanel);
+
+    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
+    tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+    activePanels.add(auditRoundsPanel);
 
     tabbedPane.setSelectedIndex(0);
 

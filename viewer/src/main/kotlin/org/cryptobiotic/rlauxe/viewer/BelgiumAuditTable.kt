@@ -575,6 +575,7 @@ class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
 
     companion object {
         var alpha: Double = .03
+
         @JvmStatic
         fun editableProperties() = "mvrLimit"
         @JvmStatic

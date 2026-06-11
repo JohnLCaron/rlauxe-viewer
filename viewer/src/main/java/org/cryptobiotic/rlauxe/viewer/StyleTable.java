@@ -29,7 +29,7 @@ public class StyleTable  extends JPanel  implements ViewerPanelIF{
 
     private final PreferencesExt prefs;
 
-    private final BeanTable<PopBean> poolTable;
+    private final BeanTable<StyleBean> poolTable;
     TextHistoryPane localInfo = new TextHistoryPane();
 
     private final JSplitPane split1;
@@ -40,10 +40,10 @@ public class StyleTable  extends JPanel  implements ViewerPanelIF{
     public StyleTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize) {
         this.prefs = prefs;
 
-        poolTable = new BeanTable<>(PopBean.class, (PreferencesExt) prefs.node("styleTable"), false,
+        poolTable = new BeanTable<>(StyleBean.class, (PreferencesExt) prefs.node("styleTable"), false,
                 "CardStyles", "CardStyle", null);
         poolTable.addListSelectionListener(e -> {
-            PopBean poolBean = poolTable.getSelectedBean();
+            StyleBean poolBean = poolTable.getSelectedBean();
             if (poolBean != null) {
                 setSelectedPool(poolBean);
             }
@@ -82,12 +82,12 @@ public class StyleTable  extends JPanel  implements ViewerPanelIF{
         this.mvrManager = new PersistedMvrManager(this.auditRecord, false);
 
         try {
-            List<PopBean> beanList = new ArrayList<>();
+            List<StyleBean> beanList = new ArrayList<>();
 
             var styles = mvrManager.styles();
             if (styles != null) {
                 for (var pop : styles) {
-                    beanList.add(new PopBean(pop));
+                    beanList.add(new StyleBean(pop));
                 }
             }
             poolTable.setBeans(beanList);
@@ -101,7 +101,7 @@ public class StyleTable  extends JPanel  implements ViewerPanelIF{
         return true;
     }
 
-    void setSelectedPool(PopBean bean) {
+    void setSelectedPool(StyleBean bean) {
         localInfo.setText(bean.show());
         localInfo.gotoTop();
     }
@@ -126,30 +126,32 @@ public class StyleTable  extends JPanel  implements ViewerPanelIF{
 
     //////////////////////////////////////////////////////////////////
 
-    static public class PopBean {
-        StyleIF pop;
+    static public class StyleBean {
+        StyleIF style;
 
-        public PopBean() {
+        public StyleBean() {
         }
 
-        PopBean(StyleIF pop) {
-            this.pop = pop;
+        StyleBean(StyleIF pop) {
+            this.style = pop;
         }
 
-        public String getName() {
-            return pop.name();
+        public String getStyleName() {
+            return style.name();
         }
 
         public Integer getId() {
-            return pop.id();
+            return style.id();
         }
 
+        public Integer getNcards() { return style.ncards(); }
+
         public boolean getExactContests() {
-            return pop.hasExactContests();
+            return style.hasExactContests();
         }
 
         public String getContests() {
-            int[] ids = pop.possibleContests();
+            int[] ids = style.possibleContests();
             StringBuilder sb = new StringBuilder();
             for (int id : ids) {
                 sb.append("%d,".formatted(id));
@@ -158,13 +160,13 @@ public class StyleTable  extends JPanel  implements ViewerPanelIF{
         }
 
         public Integer getNcontests() {
-            return pop.possibleContests().length;
+            return style.possibleContests().length;
         }
 
-        public String getClassName() { return pop.getClass().getSimpleName(); }
+        // public String getClassName() { return style.getClass().getSimpleName(); }
 
         public String show() {
-            return pop.toString();
+            return style.toString();
         }
     }
 

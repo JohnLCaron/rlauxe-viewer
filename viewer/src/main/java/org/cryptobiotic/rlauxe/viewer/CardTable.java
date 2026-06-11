@@ -51,8 +51,8 @@ public class CardTable extends JPanel implements ViewerPanelIF {
                 setSelectedCard(cardBean);
             }
         });
-        // poolTable.addPopupOption("Show Population", poolTable.makeShowAction(localInfo,
-        //    bean -> ((PoolBean) bean).show()));
+        //cardTable.addPopupOption("Show Population", cardTable.makeShowAction(localInfo,
+        //    bean -> ((cardTable) bean).show()));
 
         setFontSize(fontSize);
 
