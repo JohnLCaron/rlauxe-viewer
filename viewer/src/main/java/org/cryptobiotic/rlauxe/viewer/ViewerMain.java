@@ -118,15 +118,11 @@ public class ViewerMain extends JPanel {
       poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
       tabbedPane.addTab("Pools", poolPanel);
       activePanels.add(poolPanel);
-
-      stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Styles", stylePanel);
-      activePanels.add(stylePanel);
     }
 
-    //contestPoolPanel = new ContestPoolsTable((PreferencesExt) prefs.node("ContestPoolTable"), infoTA, infoWindow, fontSize);
-    //tabbedPane.addTab("ContestPools", contestPoolPanel);
-    //activePanels.add(contestPoolPanel);
+    stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
+    tabbedPane.addTab("Styles", stylePanel);
+    activePanels.add(stylePanel);
 
     cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
     tabbedPane.addTab("Cards", cardPanel);
@@ -167,6 +163,8 @@ public class ViewerMain extends JPanel {
         contests.getActions(actionsPanel);
       } else if (c instanceof AuditRoundsTable auditRound) {
         auditRound.getActions(actionsPanel, contestsPanel);
+      } else if (c instanceof CountyPoolsTable countyPools) {
+        countyPools.getActions(actionsPanel);
       }
 
       validate();
