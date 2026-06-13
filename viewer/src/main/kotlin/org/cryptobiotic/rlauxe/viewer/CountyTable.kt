@@ -71,7 +71,7 @@ class CountyTable(
         contestTable.addPopupOption(
             "Show Contest", contestTable.makeShowAction(
                 infoTA, infoWindow,
-                Function { bean: Any? -> showContest((bean as CountyContestBean)!!) })
+                Function { bean: Any? -> showContest((bean as CountyContestBean)) })
         )
 
         setFontSize(fontSize)

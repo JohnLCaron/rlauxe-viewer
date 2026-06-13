@@ -241,7 +241,7 @@ class CorlaAuditTable(
 
 
     // actions on right side of Audit record chooser
-    fun getActions(container: JPanel?) {
+    fun getActions(container: JPanel) {
         //  * Example for Toggle Action
         // *
         // * <pre>
@@ -329,7 +329,6 @@ class CorlaAuditTable(
         BAMutil.addActionToContainer(container, excludeAllAction)
 
         logger.debug("CorlaAuditTable.getActions")
-
     }
 
     // all include or exclude
