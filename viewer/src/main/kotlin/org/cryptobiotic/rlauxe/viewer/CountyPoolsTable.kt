@@ -236,7 +236,7 @@ class CountyPoolsTable(
     class CountyPoolsBean(val countyPool: CountyPools, val countyData: CountyData, ) {
         val countyName = countyPool.countyName
         val countyPoolId = countyPool.countyPoolId
-        val totalCards = countyPool.totalCards
+        val totalCards = countyPool.cardCount
 
         // val nmvrs = countyData.nmvrs
         val population = countyData.npop
