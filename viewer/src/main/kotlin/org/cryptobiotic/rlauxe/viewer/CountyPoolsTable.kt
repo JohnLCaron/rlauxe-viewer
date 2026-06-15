@@ -9,6 +9,7 @@ import org.cryptobiotic.rlauxe.core.ContestInfo
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CountyAudit
+import org.cryptobiotic.rlauxe.persist.CountyData
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.util.nfn
@@ -60,7 +61,7 @@ class CountyPoolsTable(
         )
         countyTable.addPopupOption(
             "Show CountyCardPool",
-            countyTable.makeShowAction(infoTA, infoWindow, Function { bean: Any? -> (bean as PartyBean).show() })
+            countyTable.makeShowAction(infoTA, infoWindow, Function { bean: Any? -> (bean as CountyPoolsBean).show() })
         )
         countyTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent? ->
             val selected = countyTable.getSelectedBean()
@@ -137,14 +138,15 @@ class CountyPoolsTable(
         this.countyRecord = auditRecord as CountyAudit
         this.mvrManager = PersistedMvrManager(this.countyRecord!!, false)
 
-        val pools = mvrManager!!.countyPools()
-        if (pools == null) return false
+        val countPools = mvrManager!!.countyPools()
+        if (countPools == null) return false
 
         this.infos = auditRecord.contests.associate { it.contest.info().id to it.contest.info() }
+        val countyData = countyRecord!!.countyData.associateBy { it.countyName }
 
         val beanList = mutableListOf<CountyPoolsBean>()
-        pools.forEach {
-            val bean = CountyPoolsBean(it)
+        countPools.forEach {
+            val bean = CountyPoolsBean(it, countyData[it.countyName]!!)
             beanList.add(bean)
         }
         countyTable.setBeans(beanList)
@@ -231,25 +233,28 @@ class CountyPoolsTable(
     //    val cardStyles: List<StyleIF>,
     //    // val cardStylesCount: List<Int>, // or CardStyleWithNCards ??
     //)
-    class CountyPoolsBean(val countyPool: CountyPools) {
-        val countyName: String
-        val countyPoolId: Int
-        val totalCards: Int
+    class CountyPoolsBean(val countyPool: CountyPools, val countyData: CountyData, ) {
+        val countyName = countyPool.countyName
+        val countyPoolId = countyPool.countyPoolId
+        val totalCards = countyPool.totalCards
+
+        // val nmvrs = countyData.nmvrs
+        val population = countyData.npop
+        val diff = population - totalCards
+        val diffPct = (population - totalCards) / population.toDouble()
+
         var mvrTabs: Map<Int, ContestTabulation> = emptyMap()
 
-        init {
-            this.countyName = countyPool.countyName
-            this.countyPoolId = countyPool.countyPoolId
-            this.totalCards = countyPool.totalCards
-        }
-
-        fun show(): String {
-            return countyPool.toString()
+        fun show() = buildString {
+            appendLine(countyPool.toString())
+            appendLine(countyData.toString())
+            val totalCards = countyPool.styles.sumOf { it.ncards() }
+            appendLine("sum of countyPool.styles.ncards() = ${totalCards} ")
         }
 
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "countyPool"
+            fun hiddenProperties() = "countyPool countyData mvrTabs"
         }
     }
 
