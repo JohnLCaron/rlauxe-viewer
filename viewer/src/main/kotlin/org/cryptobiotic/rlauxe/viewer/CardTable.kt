@@ -213,7 +213,7 @@ class CardTable(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(CardPanel::class.java)
+        private val logger: Logger = LoggerFactory.getLogger(CardTable::class.java)
     }
 
 }
