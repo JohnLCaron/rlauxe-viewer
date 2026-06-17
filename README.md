@@ -129,7 +129,7 @@ Change the order and size of the table headings, by clicking and dragging the ta
 
 ![image](docs/images/TableHeaders.png).
 
-Change the table sort order by clicking the table header of the firld you want to sort on. 
+Change the table sort order by clicking the table header of the field you want to sort on. 
 
 
 ## Showing the results of an audit
@@ -279,14 +279,14 @@ A new failure will keep recursing if it generates a different new failure. If it
 In this case, no other failures are generated, and these two assertions are the only ones shown in FlandreEast "Show Contest".
 
 When there are multiple failed assertions, say for Anvers which has 3 failed assertions, then for each failed assertion we compute the Alternate Contest 
-and all the failed assertions it creates. We keep track of failed assumptions for the entire contest; we stop recursing if we alredy have seen a particular failed assumption. Each of the 3 failed assertions for Anvers generates the same list of 4 failed assertions. So Anvers has 4 failed assertions altogether.
+and all the failed assertions it creates. We keep track of failed assertions for the entire contest; we stop recursing if we alredy have seen a particular failed assertion. Each of the 3 failed assertions for Anvers generates the same list of 4 failed assertions. So Anvers has 4 failed assertions altogether.
 
 (TODO: we have not tried combinations of failed assertions to see if new failures are found).
 
 Hainut is special in that its the only one in this example that has a Threshold assertion failure. However, the algorithm is the same: create an alternate contest
 and find the failed assertions. Recurse on those to see if new failures are found.
 
-(TODO: also not tested are combinations of failed threshold assertions (in the same contest) to see if new failures are found).
+(TODO: also not tested are combinations of multiple failed threshold assertions (in the same contest) to see if new failures are found).
 
 
 
