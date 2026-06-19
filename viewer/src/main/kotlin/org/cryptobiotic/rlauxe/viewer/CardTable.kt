@@ -5,7 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer
 
-import org.cryptobiotic.rlauxe.audit.AuditableCardIF
+import org.cryptobiotic.rlauxe.audit.AuditableCard
 import org.cryptobiotic.rlauxe.audit.StyleIF
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
@@ -167,7 +167,7 @@ class CardTable(
         prefs.putInt("splitPos1", split1.getDividerLocation())
     }
 
-    class CardBean(val card: AuditableCardIF, val sortedIndex: Int) {
+    class CardBean(val card: AuditableCard, val sortedIndex: Int) {
 
         val id: String
             get() = card.id()
@@ -190,7 +190,7 @@ class CardTable(
             get() = card.poolId()
 
         val cardStyle: String
-            get() = card.styleName()
+            get() = card.style()!!.name()
 
         val possibleContests: String = card.style()?.possibleContests().contentToString() ?: ""
 

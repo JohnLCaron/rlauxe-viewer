@@ -372,9 +372,8 @@ class CorlaAuditTable(
     // set targeted to be included
     fun includeTargetedOnly() {
         for (bean in contestTable.getBeans()) {
-            if (bean.contestRound != null) {
-                bean.contestRound!!.included = bean.targeted()
-            }
+            bean.setInclude(bean.targeted())
+            bean.setMaxRisk(.03)
         }
         samplingChanged = true
         contestTable.refresh()
@@ -382,17 +381,18 @@ class CorlaAuditTable(
 
     // targeted plus some experimental algorithm using include and maxRisk
     fun includeTargetedPlus() {
+        includeTargetedOnly()
+
         for (bean in contestTable.getBeans()) {
             if (bean.getStatus() != TestH0Status.InProgress.name) continue
             if (bean.contestRound == null) continue
 
-            bean.setMaxRisk( auditRiskLimit) // also sets estMvrs
-            if (bean.targeted()) {
-                bean.setInclude(true)
-            } else {
-                if (bean.getEstMvrs() >= 500) bean.setInclude(false)
-                else if (bean.getEstMvrs()  >= 150) bean.setMaxRisk(.10)
-                else if (bean.getEstMvrs()  >= 50) bean.setMaxRisk(.05)
+            if (!bean.targeted()) {
+                if (bean.getEstMvrs() < 500) {
+                    bean.setInclude(true)
+                    if (bean.getEstMvrs() >= 150) bean.setMaxRisk(.10)
+                    else if (bean.getEstMvrs() >= 50) bean.setMaxRisk(.05)
+                }
             }
         }
 
@@ -508,16 +508,16 @@ class CorlaAuditTable(
         fun getMaxRisk(): Double {
             if (contestRound == null) return 1.0
             val risk = contestRound!!.auditorWantRisk
-            return (if (risk != null) risk else auditRiskLimit)
+            return if (risk != null) risk else auditRiskLimit
         }
 
-        // TODO  editable properties have to be primitive
+        // TODO editable properties have to be primitive
         fun setMaxRisk(risk: Double) {
             if (contestRound == null) return
             contestRound!!.auditorWantRisk = risk
-            val estMvrs = this.getEstMvrs()
-            contestRound!!.estMvrs = estMvrs
-            this.setInclude(true)
+            // val estMvrs = this.getEstMvrs()
+            // contestRound!!.estMvrs = estMvrs
+            // this.setInclude(true)
             sampleChanged(true)
         }
 

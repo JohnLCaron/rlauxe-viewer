@@ -462,9 +462,11 @@ class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
     var contestUA: ContestWithAssertions
     var orgSampleSize: Int
     var nFailures: Int = 0
+    val contest: DHondtContest
 
     init {
         this.contestUA = contestRound.contestUA
+        this.contest = contestUA.contest as DHondtContest
         orgSampleSize = this.contestRound.haveSampleSize
     }
 
@@ -513,6 +515,8 @@ class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
 
     val nc: Int
         get() = contestUA.Nc
+
+    val nseats = contest.nseats
 
     val nCand: Int
         get() = contestUA.ncandidates
@@ -579,7 +583,7 @@ class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
         @JvmStatic
         fun editableProperties() = "mvrLimit"
         @JvmStatic
-        fun hiddenProperties() = "contestRound auditData contestUA orgSampleSize mvrLimitBack"
+        fun hiddenProperties() = "contestRound contest auditData contestUA orgSampleSize mvrLimitBack"
     }
 }
 

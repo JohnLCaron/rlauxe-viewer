@@ -5,7 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.audit.AuditableCardIF;
+import org.cryptobiotic.rlauxe.audit.AuditableCard;
 import org.cryptobiotic.rlauxe.audit.Config;
 import org.cryptobiotic.rlauxe.persist.*;
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
@@ -38,7 +38,7 @@ public class MvrTable extends JPanel implements ViewerPanelIF {
 
     private Boolean needsReading = true;
     private Config config;
-    private List<AuditableCardIF> mvrs;
+    private List<AuditableCard> mvrs;
 
     public MvrTable(PreferencesExt prefs, float fontSize) {
         this.prefs = prefs;
@@ -172,13 +172,13 @@ public class MvrTable extends JPanel implements ViewerPanelIF {
     //)
 
     public class CardBean {
-        AuditableCardIF card;
+        AuditableCard card;
         int index;
 
         public CardBean() {
         }
 
-        CardBean(AuditableCardIF card, int index) {
+        CardBean(AuditableCard card, int index) {
             this.card = card;
             this.index = index;
         }
@@ -208,7 +208,7 @@ public class MvrTable extends JPanel implements ViewerPanelIF {
             return sb.toString();
         }
         public Integer getPoolId() { return card.poolId(); }
-        public String getCardStyle() { return card.styleName(); }
+        public String getCardStyle() { return card.style().name(); }
         public String getVotes() {
             var votes = card.votes();
             if (votes == null) return "N/A";
