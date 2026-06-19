@@ -279,7 +279,7 @@ class CountyPoolsTable(
 
         val tabNCards = contestTab.ncards()
         val diffNCards = styleNCards - contestTab.ncards()
-        val truth = if (isMvrs) "approx" else "truth"
+        val source = if (isMvrs) "cvrs" else "auditcenter"
 
         fun getNCounties(): String {
             val CORLAcounties = info.metadata.get("CORLAcounties")
