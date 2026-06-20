@@ -53,6 +53,7 @@ class CountyPoolsTable(
     private var countyRecord: CountyAudit? = null
     var mvrManager: PersistedMvrManager? = null
     var infos: Map<Int, ContestInfo> = emptyMap()
+    var countyCvrMap: Map<Int, CountyPools> = emptyMap()
 
     init {
         countyTable = BeanTable(
@@ -90,9 +91,9 @@ class CountyPoolsTable(
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, countyTable, styleTable)
+        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, countyTable, contestTable)
         split1.setDividerLocation(prefs.getInt("splitPos1", 200))
-        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, contestTable)
+        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, styleTable)
         split2.setDividerLocation(prefs.getInt("splitPos2", 600))
 
         setLayout(BorderLayout())
@@ -107,7 +108,7 @@ class CountyPoolsTable(
             override fun actionPerformed(e: ActionEvent?) {
                 val selected = countyTable.getSelectedBean()
                 if (selected != null) {
-                    readMvrTabulation(selected)
+                    // readMvrTabulation(selected)
                 }
             }
         }
@@ -138,15 +139,21 @@ class CountyPoolsTable(
         this.countyRecord = auditRecord as CountyAudit
         this.mvrManager = PersistedMvrManager(this.countyRecord!!, false)
 
-        val countPools = mvrManager!!.countyPools()
-        if (countPools == null) return false
+        val countyPools = mvrManager!!.countyPools()
+        if (countyPools == null) return false
+        val countyCvrPools = mvrManager!!.countyCvrPools()
+        if (countyCvrPools != null)
+            this.countyCvrMap = countyCvrPools.associateBy { it.countyPoolId }
 
         this.infos = auditRecord.contests.associate { it.contest.info().id to it.contest.info() }
         val countyData = countyRecord!!.countyData.associateBy { it.countyName }
 
         val beanList = mutableListOf<CountyPoolsBean>()
-        countPools.forEach {
+        countyPools.forEach {
             val bean = CountyPoolsBean(it, countyData[it.countyName]!!)
+            val cvrPools = this.countyCvrMap[it.countyPoolId]
+            if (cvrPools != null)
+                bean.cvrTabs = cvrPools.contestTabs.associateBy { it.contestId }
             beanList.add(bean)
         }
         countyTable.setBeans(beanList)
@@ -174,23 +181,25 @@ class CountyPoolsTable(
         val beanList = mutableListOf<CountyPoolContestBean>()
         countyBean.countyPool.contestTabs.forEach { tab ->
             val info = this.infos[tab.contestId]!!
-            beanList.add( CountyPoolContestBean(countyBean, info, tab, styleNCards[tab.contestId] ?: 0, false))
-            val mvrTab = countyBean.mvrTabs[tab.contestId]
-            if (mvrTab != null) {
-                logger.debug("add ${name} MvrTab")
-                beanList.add(CountyPoolContestBean(countyBean, info, mvrTab, styleNCards[tab.contestId] ?: 0, true))
+            val auditcenterBean = CountyPoolContestBean(countyBean, info, tab, false)
+            beanList.add( auditcenterBean )
+            val cvrTab = countyBean.cvrTabs[tab.contestId]
+            if (cvrTab != null) {
+                val mvrBean = CountyPoolContestBean(countyBean, info, cvrTab, true)
+                mvrBean.acBean = auditcenterBean
+                beanList.add(mvrBean)
             }
         }
         contestTable.setBeans(beanList)
     }
 
-    fun readMvrTabulation(countyBean: CountyPoolsBean) {
+    /* fun readMvrTabulation(countyBean: CountyPoolsBean) {
         if (countyBean.mvrTabs.isEmpty()) {
             countyBean.mvrTabs = countyRecord!!.readCountyMvrsAndTabulate(countyBean.countyName)
             logger.debug("set ${countyBean.mvrTabs.size} MvrTabs on ${countyBean.countyName} ")
             setSelectedCounty(countyBean)
         }
-    }
+    } */
 
     override fun saveState() {
         countyTable.saveState(false)
@@ -243,7 +252,7 @@ class CountyPoolsTable(
         val diff = population - totalCards
         val diffPct = (population - totalCards) / population.toDouble()
 
-        var mvrTabs: Map<Int, ContestTabulation> = emptyMap()
+        var cvrTabs: Map<Int, ContestTabulation> = emptyMap()
 
         fun show() = buildString {
             appendLine(countyPool.toString())
@@ -254,15 +263,17 @@ class CountyPoolsTable(
 
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "countyPool countyData mvrTabs"
+            fun hiddenProperties() = "countyPool countyData cvrTabs"
         }
     }
 
-    class CountyPoolContestBean(val countyBean: CountyPoolsBean, val info: ContestInfo, val contestTab: ContestTabulation, val styleNCards: Int, val isMvrs: Boolean) {
+    // all the contests in this county
+    class CountyPoolContestBean(val countyBean: CountyPoolsBean, val info: ContestInfo, val contestTab: ContestTabulation, val isMvrs: Boolean) {
         val contestId: Int
         val contestName: String
         val countyPoolId = countyBean.countyPoolId
         val vunderTab: Vunder
+        var acBean: CountyPoolContestBean? = null
 
         init {
             contestId = contestTab.contestId
@@ -273,12 +284,18 @@ class CountyPoolsTable(
         val undervotes = vunderTab.undervotes  // vunder properly calculates when voteForN > 1
         val uvPct = undervotes / (contestTab.voteForN * contestTab.ncards()).toDouble()
         val voteForN = contestTab.voteForN
-        val nvotes = vunderTab.nvotes
         val missing = vunderTab.missing
         val votes = vunderTab.cands().toString()
 
-        val tabNCards = contestTab.ncards()
-        val diffNCards = styleNCards - contestTab.ncards()
+        val nvotes = vunderTab.nvotes
+        fun getDiffNvotes() : Int {
+            return if (acBean == null) -1 else (acBean!!.nvotes - vunderTab.nvotes)
+        }
+        fun getPctDiffNvotes() : String {
+            return if (acBean == null) "" else dfn((acBean!!.nvotes - vunderTab.nvotes) / acBean!!.nvotes.toDouble(), 4)
+        }
+
+        val ncards = contestTab.ncards()
         val source = if (isMvrs) "cvrs" else "auditcenter"
 
         fun getNCounties(): String {
@@ -291,7 +308,6 @@ class CountyPoolsTable(
 
         fun show() = buildString {
             append("${nfn(contestId, 3)}, ${trunc(contestName, 40)},    ${nfn(contestTab.ncards(), 6)}, ") // ${trunc(votes, 25)}, ")
-            append("    ${nfn(styleNCards, 6)},     ${nfn(diffNCards, 6)},")
             append("    ${nfn(nvotes, 6)},   ${nfn(undervotes, 6)},    ${dfn(uvPct, 2)}")
         }
 
@@ -299,7 +315,7 @@ class CountyPoolsTable(
             val header = " id,                                     name, tabNCards, styleNCards, diffNCards, nvotes, undervotes, uvPct"
 
             @JvmStatic
-            fun hiddenProperties() = "countyBean contestTab vunderTab info"
+            fun hiddenProperties() = "countyBean contestTab vunderTab info acBean"
         }
     }
 }
