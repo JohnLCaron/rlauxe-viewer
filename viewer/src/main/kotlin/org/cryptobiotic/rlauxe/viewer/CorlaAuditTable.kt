@@ -8,12 +8,18 @@ import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.AssorterIF
 import org.cryptobiotic.rlauxe.core.ClcaAssertion
+import org.cryptobiotic.rlauxe.core.ContestInfo
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
+import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyAudit
 import org.cryptobiotic.rlauxe.persist.CountyData
+import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
+import org.cryptobiotic.rlauxe.util.nfn
+import org.cryptobiotic.rlauxe.util.trunc
+import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ucar.ui.prefs.BeanTable
@@ -31,6 +37,8 @@ import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
+import kotlin.collections.associateBy
+import kotlin.text.split
 
 class CorlaAuditTable(
     private val prefs: PreferencesExt,
@@ -44,6 +52,7 @@ class CorlaAuditTable(
     private val contestTable: BeanTable<ContestBean>
     private val assertionTable: BeanTable<AssertionBean>
     private val countyTable: BeanTable<CountyBean>
+    private val contestCountyTable: BeanTable<ContestCountyPoolBean>
 
     private val split1: JSplitPane
     private val split2: JSplitPane
@@ -52,19 +61,15 @@ class CorlaAuditTable(
     private var countyAudit: CountyAudit? = null
     private var config: Config? = null
     private var lastAuditRound: AuditRoundIF? = null // may not be null
+    private var infos: Map<Int, ContestInfo> = emptyMap()
+    private var countyPools: List<CountyPools> = emptyList()
+    private var countyCvrPools: Map<String, CountyPools> = emptyMap()
+
     private var auditRiskLimit: Double = .03
     private var samplingChanged = false
     private var onlyShowInprogressContests = false
 
     init {
-        /* auditData = new AuditData(statusButton); // so each panel gets its own AuditData, but for all audit records.
-       statusButton.addActionListener(e -> {
-           Formatter f = new Formatter();
-           showCoalitionReport(f);
-           infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
-           infoTA.setText(f.toString());
-           infoWindow.show();
-       }); */
         contestTable =
             BeanTable<ContestBean>(
                 ContestBean::class.java,
@@ -112,13 +117,22 @@ class CorlaAuditTable(
             null
         )
 
+        contestCountyTable = BeanTable<ContestCountyPoolBean>(
+            ContestCountyPoolBean::class.java,
+            prefs.node("contestCountyPoolBean") as PreferencesExt?,
+            false,
+            "County subtotals for selected Contest",
+            "CountyContests",
+            null
+        )
+
         // countyTable.addPopupOption("Show County", countyTable.makeShowAction(infoTA, infoWindow, bean -> ((CountyBean) bean).show()));
         setFontSize(fontSize)
 
         // layout of tables
         split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, assertionTable)
         split1.setDividerLocation(prefs.getInt("splitPos1", 400))
-        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, countyTable)
+        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, contestCountyTable)
         split2.setDividerLocation(prefs.getInt("splitPos2", 800))
 
         setLayout(BorderLayout())
@@ -131,6 +145,7 @@ class CorlaAuditTable(
         contestTable.setFontSize(size)
         assertionTable.setFontSize(size)
         countyTable.setFontSize(size)
+        contestCountyTable.setFontSize(size)
     }
 
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
@@ -157,6 +172,16 @@ class CorlaAuditTable(
             this.lastAuditRound = countyAudit!!.rounds.last()
             this.config = countyAudit!!.config
             this.auditRiskLimit = config!!.riskLimit
+
+            val mvrManager = PersistedMvrManager(this.countyAudit!!, false)
+            val countyPools = mvrManager.countyPools()
+            if (countyPools == null) return false
+            this.countyPools = countyPools
+            val countyCvrPools = mvrManager.countyCvrPools()
+            if (countyCvrPools != null)
+                this.countyCvrPools = countyCvrPools.associateBy { it.countyName }
+
+            this.infos = countyAudit!!.contests.associate { it.contest.info().id to it.contest.info() }
 
             loadAuditRecord()
 
@@ -225,12 +250,31 @@ class CorlaAuditTable(
         // sort assertions by payoff
         beanList.sortBy{ it.getPayoff() }
         assertionTable.setBeans(beanList)
+
+        val beans = mutableListOf<ContestCountyPoolBean>()
+        this.countyPools.forEach { countyPool : CountyPools ->
+            val countyContestTab = countyPool.contestMap[contestBean.getId()]
+            if (countyContestTab != null) {
+                val info = this.infos[contestBean.getId()]!!
+                val auditcenterBean = ContestCountyPoolBean(countyPool, countyContestTab, info, false)
+                beans.add(auditcenterBean)
+                val cvrPool = countyCvrPools[countyPool.countyName]
+                val cvrTab = cvrPool?.contestMap[contestBean.getId()]
+                if (cvrTab != null) {
+                    val mvrBean = ContestCountyPoolBean(cvrPool,cvrTab, info, true)
+                    mvrBean.acBean = auditcenterBean
+                    beans.add(mvrBean)
+                }
+            }
+        }
+        contestCountyTable.setBeans(beans)
     }
 
     override fun saveState() {
         contestTable.saveState(false)
         assertionTable.saveState(false)
         countyTable.saveState(false)
+        contestCountyTable.saveState(false)
 
         prefs.putInt("splitPos1", split1.getDividerLocation())
         prefs.putInt("splitPos2", split2.getDividerLocation())
@@ -465,13 +509,9 @@ class CorlaAuditTable(
         }
     }
 
-    fun showContest(bean: ContestBean): String {
-        return BeanProperties.showContestG(
-            bean,
-            contestTable.tableModel,
-            bean.contestUA,
-            bean.contestRound
-        )
+    fun showContest(bean: ContestBean) = buildString {
+        append(BeanProperties.showContestG(bean, contestTable.tableModel, bean.contestUA, bean.contestRound))
+        append(bean.showSums(contestCountyTable.getBeans()))
     }
 
     fun printContests(): String {
@@ -608,6 +648,31 @@ class CorlaAuditTable(
 
         fun getNCand() = contestUA.ncandidates
 
+        fun getCvrNcards() : Int {
+            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards")
+            if (CvrNcards == null) return 0
+            return CvrNcards.toInt()
+        }
+
+        fun getDiffNcards() : Int {
+            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards")
+            if (CvrNcards == null) return 0
+            val ncvrs = CvrNcards.toInt()
+            return contestUA.Nc - ncvrs
+        }
+
+        fun getDiffNvotes() : Int {
+            val CvrNvotes = contestUA.contest.info().metadata.get("CvrNvotes")
+            if (CvrNvotes == null) return 0
+            val nvotes = CvrNvotes.toInt()
+            return contestUA.contest.nvotes() - nvotes
+        }
+
+         // Nc - cvrs.ncards / Nc = % phantoms ?
+         fun getPctPhantoms() : Double {
+             return getDiffNcards() / contestUA.Nc.toDouble()
+         }
+
         fun getPopulation() = contestUA.population()
 
         fun getPhantoms() = contestUA.Nphantoms
@@ -638,6 +703,17 @@ class CorlaAuditTable(
             }
 
         fun getWinners() = contestUA.contest.winners().toString()
+
+        fun showSums(beans: List<ContestCountyPoolBean>) = buildString {
+            val acSum = ContestTabulation(contestUA.contest.info())
+            val cvrSum = ContestTabulation(contestUA.contest.info())
+            beans.forEach { bean ->
+                if (bean.isCvrs) cvrSum.sum(bean.contestTab)
+                else acSum.sum(bean.contestTab)
+            }
+            appendLine("ac   = $acSum")
+            appendLine("cvrs = $cvrSum")
+        }
 
         companion object {
             val auditRiskLimit: Double = .03
@@ -719,5 +795,47 @@ class CorlaAuditTable(
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(CorlaAuditTable::class.java)
+    }
+
+    // all the counties for this contest
+    class ContestCountyPoolBean(val pool: CountyPools, val contestTab: ContestTabulation, val info: ContestInfo, val isCvrs: Boolean) {
+        val countyName: String
+        val contestId: Int
+        val vunderTab: Vunder
+        var acBean: ContestCountyPoolBean? = null
+
+        init {
+            countyName = pool.countyName
+            contestId = contestTab.contestId
+            vunderTab = contestTab.votesAndUndervotes(pool.countyPoolId, contestTab.ncards(), true)
+        }
+
+        val undervotes = vunderTab.undervotes  // vunder properly calculates when voteForN > 1
+        // val uvPct = undervotes / (contestTab.voteForN * contestTab.ncards()).toDouble()
+        val missing = vunderTab.missing
+        val votes = vunderTab.cands().toString()
+
+        val nvotes = vunderTab.nvotes
+        fun getDiffNvotes() : Int {
+            return if (acBean == null) -1 else (acBean!!.nvotes - vunderTab.nvotes)
+        }
+        fun getPctDiffNvotes() : String {
+            return if (acBean == null) "" else dfn((acBean!!.nvotes - vunderTab.nvotes) / acBean!!.nvotes.toDouble(), 4)
+        }
+
+        val ncards = contestTab.ncards()
+        val source = if (isCvrs) "cvrs" else "auditcenter"
+
+        fun show() = buildString {
+            append("${nfn(contestId, 3)}, ${trunc(countyName, 12)},    ${nfn(contestTab.ncards(), 6)}, ") // ${trunc(votes, 25)}, ")
+            append("    ${nfn(nvotes, 6)},   ${nfn(undervotes, 6)},    ${getDiffNvotes()}")
+        }
+
+        companion object {
+            val header = " id,    countyName, tabNCards, styleNCards, diffNCards, nvotes, undervotes, diffVotes"
+
+            @JvmStatic
+            fun hiddenProperties() = "pool contestTab vunderTab info acBean cvrs"
+        }
     }
 }
