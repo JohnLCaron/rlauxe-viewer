@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * A JTable that uses JavaBeans to store the data.
@@ -416,6 +417,14 @@ public class BeanTable<T> extends JPanel {
     return beans;
   }
 
+  public List<IndexedBean<T>> getIndexedBeans() {
+    return IntStream.range(0, beans.size())
+            .mapToObj(idx -> new IndexedBean<T>(beans.get(idx), idx, jtable.convertRowIndexToView(idx)))
+            .toList();
+  }
+
+  public record IndexedBean<T>(T bean, int modelIndex, int viewIndex) { }
+
   public JTable getJTable() {
     return jtable;
   }
@@ -569,7 +578,7 @@ public class BeanTable<T> extends JPanel {
           ++newViewIndex; // Don't increment for hidden columns.
         }
       } catch (IllegalArgumentException e) {
-        logger.info(String.format("Column named \"%s\" was present in the preferences file but not the dataset.", propCol.getName()));
+        logger.debug(String.format("Column named \"%s\" was present in the preferences file but not the dataset.", propCol.getName()));
       }
     }
   }
@@ -1000,6 +1009,7 @@ public class BeanTable<T> extends JPanel {
     }
 
     public String showBean(Object bean, List<TableBeanProperty> props) {
+      int maxValueWidth = 50;
       try {
         Map<String, TableBeanProperty> propm = props.stream()
               .collect(Collectors.toMap(prop -> prop.name, prop -> prop));
@@ -1019,7 +1029,7 @@ public class BeanTable<T> extends JPanel {
           var modelIdx = vc.getModelIndex();
           var pc = propm.get(id.toString());
           if (pc == null) {
-            logger.warn("cant find pc=" + id);
+            logger.warn("cant find TableBeanProperty=" + id);
             continue;
           }
           maxName = Math.max(maxName, pc.name.length());
@@ -1034,6 +1044,7 @@ public class BeanTable<T> extends JPanel {
 
           logger.debug(pc.toString() + " " + colVal);
         }
+        maxValue = Math.min(maxValue, maxValueWidth);
 
         String rowf = new StringBuilder(" | %")
                 .append(maxName)
@@ -1218,3 +1229,5 @@ public class BeanTable<T> extends JPanel {
     }
   }
 }
+
+

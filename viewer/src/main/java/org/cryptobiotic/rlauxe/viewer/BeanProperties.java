@@ -1,6 +1,7 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.ContestRound;
+import org.cryptobiotic.rlauxe.audit.CountyPools;
 import org.cryptobiotic.rlauxe.core.Assertion;
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions;
 import ucar.ui.prefs.BeanTable;
@@ -21,6 +22,7 @@ public class BeanProperties {
         contests.add(new BeanTable.TableBeanProperty("winners", "list of winning candidates"));
         contests.add(new BeanTable.TableBeanProperty("nc", "trusted upper bound on contest number of cards"));
         contests.add(new BeanTable.TableBeanProperty("npop", "population size (for diluted margin)"));
+        contests.add(new BeanTable.TableBeanProperty("ncast", "number of cards cast"));
         contests.add(new BeanTable.TableBeanProperty("population", "Nc (hasStyle) or Npop (noStyle)"));
         contests.add(new BeanTable.TableBeanProperty("phantoms", "number of phantom cards"));
         contests.add(new BeanTable.TableBeanProperty("status", "status of contest"));
@@ -47,8 +49,11 @@ public class BeanProperties {
         contests.add(new BeanTable.TableBeanProperty("target", "is a Corla targeted contest"));
         contests.add(new BeanTable.TableBeanProperty("NCounties", "number of counties, or the county name if only one"));
         contests.add(new BeanTable.TableBeanProperty("corlaEst", "estimate from Corla (super simple) algorithm"));
+        contests.add(new BeanTable.TableBeanProperty("nvotes", "tabulated nvotes from auditcenter or cvrs"));
+        contests.add(new BeanTable.TableBeanProperty("compareNvotes", "tabulated nvotes from auditcenter - cvrs"));
+        contests.add(new BeanTable.TableBeanProperty("pctCompareNvotes", "compareNvotes / (auditcenter nvotes)"));
 
-        // CountyTable.Contest
+        // CountyPoolsTable.Contest
         contests.add(new BeanTable.TableBeanProperty("contestId", "contest identifier"));
         contests.add(new BeanTable.TableBeanProperty("contestName", "contest name"));
         contests.add(new BeanTable.TableBeanProperty("countyPopulation", "contestRound.ballotCardCount"));
@@ -56,6 +61,10 @@ public class BeanProperties {
         contests.add(new BeanTable.TableBeanProperty("corlaSample", "contestRound.estimatedSamplesToAudit"));
         contests.add(new BeanTable.TableBeanProperty("corlaHaveMvrs", "estimated Corla uniform have mvrs"));
         contests.add(new BeanTable.TableBeanProperty("corlaRisk", "estimated Corla uniform risk"));
+        contests.add(new BeanTable.TableBeanProperty("cvrNcards", "number or cards from cvrs"));
+        contests.add(new BeanTable.TableBeanProperty("diffNcards", "contest.Nc  - cvrNcards"));
+        contests.add(new BeanTable.TableBeanProperty("pctMissing", "diffNcards / contest.Nc"));
+        contests.add(new BeanTable.TableBeanProperty("diffNvotes", "votes.sum() - cvrNvotes"));
 
         // AuditRound
         contests.add(new BeanTable.TableBeanProperty("round", "index of audit round"));
@@ -97,10 +106,22 @@ public class BeanProperties {
         assertions.add(new BeanTable.TableBeanProperty("completed", "round that assertions was proved"));
     }
 
-    static public <T> String showContestG(T bean, BeanTable<T>.TableBeanModel tableModel, ContestWithAssertions cua, ContestRound contestRound ) {
+    static ArrayList<BeanTable.TableBeanProperty> countyPools = new ArrayList<>();
+    static {
+        countyPools.add(new BeanTable.TableBeanProperty("countyName", "county name"));
+        countyPools.add(new BeanTable.TableBeanProperty("countyPoolId", "county name"));
+        countyPools.add(new BeanTable.TableBeanProperty("population", "county population from round.ballotCardCount"));
+        countyPools.add(new BeanTable.TableBeanProperty("totalCards", "number of cvrs in the pool"));
+        countyPools.add(new BeanTable.TableBeanProperty("diff", "population - totalCards"));
+        countyPools.add(new BeanTable.TableBeanProperty("diffPct", "(population - totalCards)/population"));
+        countyPools.add(new BeanTable.TableBeanProperty("diffNVotes", "auditcenter.votes - cvr.votes"));
+        countyPools.add(new BeanTable.TableBeanProperty("pctDiffNVotes", "(auditcenter.votes - cvr.votes)/auditcenter.votes"));
+    }
+
+    static public <T> String showContestG(T bean, BeanTable<T>.TableBeanModel tableModel, ContestWithAssertions cua) {
         StringBuilder sb = new StringBuilder();
         sb.append("%n%s%n".formatted( tableModel.showBean(bean, BeanProperties.contests)));
-        sb.append("\n%s%n".formatted(cua.show()));
+        if (cua != null) sb.append("\n%s%n".formatted(cua.show()));
         return sb.toString();
     }
 
@@ -112,13 +133,19 @@ public class BeanProperties {
         return sb.toString();
     }
 
-    static public <T> String printContestsG(List<T> beans, BeanTable<T>.TableBeanModel tableModel) {
+    static public <T> String showCountyPoolsG(T bean, BeanTable<T>.TableBeanModel tableModel, CountyPools pool) {
         StringBuilder sb = new StringBuilder();
-        sb.append(tableModel.beanTableHeader(BeanProperties.contests));
+        sb.append("%n%s%n".formatted(tableModel.showBean(bean, BeanProperties.countyPools)));
+        return sb.toString();
+    }
+
+    static public <T> String printTableG(List<T> beans, BeanTable<T>.TableBeanModel tableModel, List<BeanTable.TableBeanProperty> properties, String name) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(tableModel.beanTableHeader(properties));
         for (var bean : beans) {
-            sb.append(tableModel.beanCsv(bean, BeanProperties.contests));
+            sb.append(tableModel.beanCsv(bean, properties));
         }
-        var file = "/home/stormy/rla/temp/contests.csv";
+        var file = "/home/stormy/rla/temp/"+name+".csv";
         try (FileOutputStream fout = new FileOutputStream(file);
              OutputStreamWriter writer = new OutputStreamWriter(fout, StandardCharsets.UTF_8)) {
             writer.write(sb.toString());

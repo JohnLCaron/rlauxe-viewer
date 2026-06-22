@@ -377,7 +377,7 @@ class BelgiumAuditTable(
     }
 
     fun printContests(): String {
-        return BeanProperties.printContestsG(contestTable.getBeans(), contestTable.tableModel)
+        return BeanProperties.printTableG(contestTable.getBeans(), contestTable.tableModel, BeanProperties.contests, "contests")
     }
 
     fun showContest(bean: ContestBean) = buildString {
@@ -385,7 +385,6 @@ class BelgiumAuditTable(
                 bean,
                 contestTable.tableModel,
                 bean.contestUA,
-                bean.contestRound
             ))
 
         if (bean.contestUA.contest is DHondtContest && bean.contestRound != null) {
