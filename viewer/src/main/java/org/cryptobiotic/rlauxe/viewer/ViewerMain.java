@@ -66,7 +66,7 @@ public class ViewerMain extends JPanel {
   private CardTable cardPanel;
   private MvrTable mvrPanel;
   private ContestPoolsTable contestPoolPanel;
-  private CorlaAuditTable corlaPanel = null;
+  private CorlaContestsTable corlaPanel = null;
   private CountyTable countyPanel = null;
   private CountyPoolsTable countyPoolsPanel = null;
 
@@ -95,7 +95,7 @@ public class ViewerMain extends JPanel {
       activePanels.add(belgiumPanel);
 
     } else if (profile.isCorla()) {
-      corlaPanel = new CorlaAuditTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
+      corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
       corlaPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", corlaPanel);
       activePanels.add(corlaPanel);
@@ -157,7 +157,7 @@ public class ViewerMain extends JPanel {
       // actions on right side of Audit record chooser
       if (c instanceof BelgiumAuditTable belgium) {
         belgium.getActions(actionsPanel);
-      } else if (c instanceof CorlaAuditTable corla) {
+      } else if (c instanceof CorlaContestsTable corla) {
         corla.getActions(actionsPanel);
       } else if (c instanceof ContestsPanel contests) {
         contests.getActions(actionsPanel);

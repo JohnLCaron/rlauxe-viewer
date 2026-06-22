@@ -210,7 +210,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
     }
 
     public String printContests() {
-        return printContestsG(contestTable.getBeans(), contestTable.tableModel);
+        return printTableG(contestTable.getBeans(), contestTable.tableModel, BeanProperties.contests, "contests");
     }
 
     public class ContestBean {
@@ -334,7 +334,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         }
 
         public String show() {
-            return showContestG(this, contestTable.tableModel, this.contestUA, this.contestRound);
+            return showContestG(this, contestTable.tableModel, this.contestUA);
         }
 
         /*

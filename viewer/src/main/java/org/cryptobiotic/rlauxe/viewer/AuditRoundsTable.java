@@ -604,7 +604,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         } */
 
         public String show() {
-            return showContestG(this, contestTable.tableModel, this.contestUA, this.contestRound);
+            return showContestG(this, contestTable.tableModel, this.contestUA);
             /*
             StringBuilder sb = new StringBuilder();
             sb.append("%n%s%n".formatted(contestTable.tableModel.showBean(this, BeanProperties.contests)));

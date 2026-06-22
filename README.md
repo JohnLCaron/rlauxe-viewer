@@ -1,7 +1,7 @@
 # rlauxe-viewer
 
 WORK IN PROGRESS
-_last update: 05/26/2026_
+_last update: 06/22/2026_
 
 <!-- TOC -->
 * [rlauxe-viewer](#rlauxe-viewer)
@@ -13,10 +13,12 @@ _last update: 05/26/2026_
     * [Setting UI choices](#setting-ui-choices)
   * [Showing the results of an audit](#showing-the-results-of-an-audit)
   * [Special Features for Belgium Audits](#special-features-for-belgium-audits)
-    * [Choose number of mvrs](#choose-number-of-mvrs)
+    * [Limiting the number mvrs sampled](#limiting-the-number-mvrs-sampled)
       * [Setting mvrLimit in the samplesLimit.txt file](#setting-mvrlimit-in-the-sampleslimittxt-file)
-    * [Choose candidate coalitions](#choose-candidate-coalitions)
-  * [Special Features for Corla Audits](#special-features-for-corla-audits)
+    * [Choose Party coalitions](#choose-party-coalitions)
+    * [Party min/max seat algorithm](#party-minmax-seat-algorithm)
+    * [Show Contest with disputed assertions](#show-contest-with-disputed-assertions)
+    * [Show disputed Assertions](#show-disputed-assertions)
 <!-- TOC -->
 
 ## Building Rlauxe-viewer
@@ -30,7 +32,7 @@ git clone https://github.com/JohnLCaron/rlauxe-viewer.git
 Build the viewer application:
 
 ````
-cd rlauxe-viewer
+cd <devhome>/rlauxe-viewer
 ./gradlew clean assemble uberJar
 ````
 
