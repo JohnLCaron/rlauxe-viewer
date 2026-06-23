@@ -13,7 +13,7 @@ import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord
-import org.cryptobiotic.rlauxe.persist.CountyAudit
+import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyData
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
@@ -58,7 +58,7 @@ class CorlaContestsTable(
     private val split2: JSplitPane
 
     private var auditRecordLocation: String? = "none"
-    private var countyAudit: CountyAudit? = null
+    private var countyAudit: CountyAuditRecord? = null
     private var config: Config? = null
     private var lastAuditRound: AuditRoundIF? = null // may not be null
     private var infos: Map<Int, ContestInfo> = emptyMap()
@@ -168,8 +168,8 @@ class CorlaContestsTable(
                 logger.info("first round was not started") // TODO plan B
                 return false
             }
-            if (record !is CountyAudit) {
-                logger.info("must be CountyAudit")
+            if (record !is CountyAuditRecord) {
+                logger.info("must be CountyAuditRecord")
                 return false
             }
             this.countyAudit = record
@@ -257,13 +257,13 @@ class CorlaContestsTable(
 
         val beans = mutableListOf<ContestCountyBean>()
         this.countyPools.forEach { countyPool : CountyPools ->
-            val countyContestTab = countyPool.contestMap[contestBean.getId()]
+            val countyContestTab = countyPool.contestTabs[contestBean.getId()]
             if (countyContestTab != null) {
                 val info = this.infos[contestBean.getId()]!!
                 val auditcenterBean = ContestCountyBean(countyPool, countyContestTab, info, false)
                 beans.add(auditcenterBean)
                 val cvrPool = countyCvrPools[countyPool.countyName]
-                val cvrTab = cvrPool?.contestMap[contestBean.getId()]
+                val cvrTab = cvrPool?.contestTabs[contestBean.getId()]
                 if (cvrTab != null) {
                     val mvrBean = ContestCountyBean(cvrPool,cvrTab, info, true)
                     mvrBean.acBean = auditcenterBean
