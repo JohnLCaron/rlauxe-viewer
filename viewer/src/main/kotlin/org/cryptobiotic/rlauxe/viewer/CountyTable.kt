@@ -10,7 +10,7 @@ import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
-import org.cryptobiotic.rlauxe.persist.CountyAudit
+import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.persist.CountyData
 import org.cryptobiotic.rlauxe.util.dfn
@@ -41,7 +41,7 @@ class CountyTable(
     private val split2: JSplitPane
 
     private var auditRecordLocation: String? = "none"
-    private var countyAudit: CountyAudit? = null
+    private var countyAudit: CountyAuditRecord? = null
     // private var config: Config? = null
 
     var countyMap = emptyMap<String, CountyBean>()
@@ -123,7 +123,7 @@ class CountyTable(
         this.auditRecordLocation = auditRecordLocation
         val record = read(auditRecordLocation)
         if (record == null) return false
-        if (record !is CountyAudit) return false
+        if (record !is CountyAuditRecord) return false
 
         this.countyAudit = record
         val config = countyAudit!!.config

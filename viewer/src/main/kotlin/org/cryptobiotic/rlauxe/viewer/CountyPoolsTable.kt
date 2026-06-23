@@ -8,7 +8,7 @@ import org.cryptobiotic.rlauxe.audit.CountyPools
 import org.cryptobiotic.rlauxe.core.ContestInfo
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
-import org.cryptobiotic.rlauxe.persist.CountyAudit
+import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyData
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
@@ -50,7 +50,7 @@ class CountyPoolsTable(
     private val split2: JSplitPane
 
     private var auditRecordLocation: String? = "none"
-    private var countyRecord: CountyAudit? = null
+    private var countyRecord: CountyAuditRecord? = null
     var mvrManager: PersistedMvrManager? = null
     var infos: Map<Int, ContestInfo> = emptyMap()
     var countyCvrMap: Map<String, CountyPools> = emptyMap()
@@ -146,8 +146,8 @@ class CountyPoolsTable(
             return false
         }
 
-        if (auditRecord !is CountyAudit) return false
-        this.countyRecord = auditRecord as CountyAudit
+        if (auditRecord !is CountyAuditRecord) return false
+        this.countyRecord = auditRecord as CountyAuditRecord
         this.mvrManager = PersistedMvrManager(this.countyRecord!!, false)
 
         val countyPools = mvrManager!!.countyPools()
@@ -165,7 +165,7 @@ class CountyPoolsTable(
             val bean = CountyPoolsBean(it, countyData[it.countyName]!!)
             val cvrTabs = this.countyCvrMap[ it.countyName ]
             if (cvrTabs != null)
-                bean.cvrTabs = cvrTabs.contestTabs.associateBy { it.contestId }
+                bean.cvrTabs = cvrTabs.contestTabs
             beanList.add(bean)
         }
         countyTable.setBeans(beanList)
@@ -191,11 +191,11 @@ class CountyPoolsTable(
         styleTable.setBeans(sbeanList)
 
         val beanList = mutableListOf<CountyPoolContestBean>()
-        countyBean.countyPool.contestTabs.forEach { tab ->
-            val info = this.infos[tab.contestId]!!
+        countyBean.countyPool.contestTabs.forEach { (id, tab) ->
+            val info = this.infos[id]!!
             val auditcenterBean = CountyPoolContestBean(countyBean, info, tab, false)
             beanList.add( auditcenterBean )
-            val cvrTab = countyBean.cvrTabs[tab.contestId]
+            val cvrTab = countyBean.cvrTabs[id]
             if (cvrTab != null) {
                 val mvrBean = CountyPoolContestBean(countyBean, info, cvrTab, true)
                 mvrBean.acBean = auditcenterBean
@@ -263,7 +263,7 @@ class CountyPoolsTable(
 
         var cvrTabs: Map<Int, ContestTabulation> = emptyMap()
 
-        val acNvotes = countyPool.contestTabs.sumOf { it.nvotes() }
+        val acNvotes = countyPool.contestTabs.values.sumOf { it.nvotes() }
         fun getCvrNvotes() = cvrTabs.values.sumOf { it.nvotes() }
 
         fun getDiffNvotes() : Int {
