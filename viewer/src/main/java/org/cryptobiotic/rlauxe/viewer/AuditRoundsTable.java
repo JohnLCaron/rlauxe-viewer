@@ -51,6 +51,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
     private AuditRecordIF auditRecord;
     boolean isComposite;
     private Config config;
+    private Double auditRiskLimit = .03;
     private AuditRoundIF lastAuditRound; // may be null
     Map<Integer, Integer> oneshotMvrs;
 
@@ -192,6 +193,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         rerunTA.setFontSize(size);
     }
 
+    // TODO when resample from SampleTable, need to reread in the audit rounds
     public boolean setAuditRecord(String auditRecordLocation) {
         logger.info("AuditRoundsTable setAuditRecord "+ auditRecordLocation);
         auditRoundTable.setBeans(emptyList());
@@ -208,6 +210,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
 
         try {
             this.config = auditRecord.getConfig();
+            this.auditRiskLimit = config.getRiskLimit();
             java.util.List<AuditRoundBean> beanList = new ArrayList<>();
 
             int prevTotal = 0;
@@ -551,6 +554,12 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
 
             Integer haveMvrs = getHaveMvrs();
             return UtilsKt.estRiskStandardBet(contestUA.getNpop(), noerror, haveMvrs);
+        }
+
+        public Double getMaxRisk() {
+            if (contestRound == null) return 1.0;
+            var risk = contestRound.getAuditorWantRisk();
+            return (risk != null) ? risk : auditRiskLimit;
         }
 
         public String getNCounties() {

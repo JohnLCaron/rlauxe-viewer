@@ -141,10 +141,18 @@ public class BeanProperties {
 
     static public <T> String printTableG(List<T> beans, BeanTable<T>.TableBeanModel tableModel, List<BeanTable.TableBeanProperty> properties, String name) {
         StringBuilder sb = new StringBuilder();
-        sb.append(tableModel.beanTableHeader(properties));
+        StringBuilder sb2 = new StringBuilder();
+
+        String header = tableModel.beanTableHeader(properties);
+        sb.append(header);
+        sb2.append("| " + header.replace(',','|'));
+
         for (var bean : beans) {
-            sb.append(tableModel.beanCsv(bean, properties));
+            String beanCsv = tableModel.beanCsv(bean, properties);
+            sb.append(beanCsv);
+            sb2.append("| " + beanCsv.replace(',','|'));
         }
+
         var file = "/home/stormy/rla/temp/"+name+".csv";
         try (FileOutputStream fout = new FileOutputStream(file);
              OutputStreamWriter writer = new OutputStreamWriter(fout, StandardCharsets.UTF_8)) {
@@ -153,7 +161,8 @@ public class BeanProperties {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return sb.toString();
+
+        return sb2.toString();
     }
 
 }
