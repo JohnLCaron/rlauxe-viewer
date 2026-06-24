@@ -15,7 +15,6 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.persist.CountyData
-import org.cryptobiotic.rlauxe.util.calcDeciles
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.util.sfn
