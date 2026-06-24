@@ -14,7 +14,6 @@ import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
-import org.cryptobiotic.rlauxe.persist.CountyData
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.util.nfn
@@ -40,21 +39,20 @@ import javax.swing.event.ListSelectionListener
 import kotlin.collections.associateBy
 import kotlin.text.split
 
+// used for both Contests and Sampling tabs
 class CorlaContestsTable(
     private val prefs: PreferencesExt,
-    infoTA: TextHistoryPane?,
-    infoWindow: IndependentWindow?,
+    infoTA: TextHistoryPane,
+    infoWindow: IndependentWindow,
     fontSize: Float,
+    sampler: Boolean,
 ) : JPanel(), ViewerPanelIF {
     var countyTotal: CountyBean? = null
-    var countyMap = mutableMapOf<String, CountyBean>()
 
-    private val contestTable: BeanTable<ContestBean>
-    private val assertionTable: BeanTable<AssertionBean>
-    private val countyTable: BeanTable<CountyBean>
+    private val contestTable: BeanTable<CorlaContestBean>
     private val contestCountyTable: BeanTable<ContestCountyBean>
 
-    private val split1: JSplitPane
+    // private val split1: JSplitPane
     private val split2: JSplitPane
 
     private var auditRecordLocation: String? = "none"
@@ -71,8 +69,8 @@ class CorlaContestsTable(
 
     init {
         contestTable =
-            BeanTable<ContestBean>(
-                ContestBean::class.java,
+            BeanTable<CorlaContestBean>(
+                CorlaContestBean::class.java,
                 prefs.node("contestTable") as PreferencesExt?,
                 false,
                 "Contests",
@@ -87,34 +85,12 @@ class CorlaContestsTable(
         })
         contestTable.addPopupOption(
             "Show Contest",
-            contestTable.makeShowAction(infoTA, infoWindow) { bean: Any? -> showContest(bean as ContestBean) }
+            contestTable.makeShowAction(infoTA, infoWindow) { bean: Any? -> showContest(bean as CorlaContestBean) }
         )
         contestTable.addPopupOption(
             "Print Contests", contestTable.makeShowAction(
                 infoTA, infoWindow,
                 Function { bean: Any? -> printContests() })
-        )
-
-        assertionTable = BeanTable<AssertionBean>(
-            AssertionBean::class.java,
-            prefs.node("assertionTable") as PreferencesExt?,
-            false,
-            "Assertions",
-            "Assertions",
-            null
-        )
-        assertionTable.addPopupOption(
-            "Show Assertion",
-            assertionTable.makeShowAction(infoTA, infoWindow) { bean: Any? -> showAssertion(bean as AssertionBean) }
-        )
-
-        countyTable = BeanTable<CountyBean>(
-            CountyBean::class.java,
-            prefs.node("countyTable") as PreferencesExt?,
-            false,
-            "Counties",
-            "County",
-            null
         )
 
         contestCountyTable = BeanTable<ContestCountyBean>(
@@ -134,21 +110,17 @@ class CorlaContestsTable(
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, assertionTable)
-        split1.setDividerLocation(prefs.getInt("splitPos1", 400))
-        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, contestCountyTable)
+        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, contestCountyTable)
         split2.setDividerLocation(prefs.getInt("splitPos2", 800))
 
         setLayout(BorderLayout())
         add(split2, BorderLayout.CENTER)
 
-        logger.debug("CorlaAuditTable init")
+        logger.debug("CorlaContestsTable init")
     }
 
     override fun setFontSize(size: Float) {
         contestTable.setFontSize(size)
-        assertionTable.setFontSize(size)
-        countyTable.setFontSize(size)
         contestCountyTable.setFontSize(size)
     }
 
@@ -156,7 +128,7 @@ class CorlaContestsTable(
         this.onlyShowInprogressContests = prefs.getBoolean( "onlyInProgress", false)
 
         this.auditRecordLocation = auditRecordLocation
-        contestTable.setBeans(mutableListOf<ContestBean?>())
+        contestTable.setBeans(mutableListOf<CorlaContestBean?>())
 
         logger.debug("setAuditRecord " + auditRecordLocation)
 
@@ -176,6 +148,7 @@ class CorlaContestsTable(
             this.lastAuditRound = countyAudit!!.rounds.last()
             this.config = countyAudit!!.config
             this.auditRiskLimit = config!!.riskLimit
+            CorlaContestBean.auditRiskLimit = config!!.riskLimit
 
             val mvrManager = PersistedMvrManager(this.countyAudit!!, false)
             val countyPools = mvrManager.countyPools()
@@ -209,52 +182,18 @@ class CorlaContestsTable(
             contestRoundMap.put(contestRound.id, contestRound)
         }
 
-        val beanList = mutableListOf<ContestBean>()
+        val contestList = mutableListOf<CorlaContestBean>()
         auditRecord.contests.filter { !onlyShowInprogressContests || it.preAuditStatus == TestH0Status.InProgress }.forEach { cwa ->
             val cr = contestRoundMap.get(cwa.id)
-            val bean = ContestBean(cwa, cr) { b -> samplingChanged = b }
-            beanList.add(bean)
+            val bean = CorlaContestBean(cwa, cr) { b -> samplingChanged = b }
+            contestList.add(bean)
         }
         // sort contests by payoff
-        beanList.sortBy { it.getPayoff() }
-        contestTable.setBeans(beanList)
-
-        var countUniformMvrs = 0
-        var statewide: CountyBean? = null
-        val countyList = mutableListOf<CountyBean>()
-        val _countyMap = mutableMapOf<String, CountyBean>()
-        for (countyData in countyAudit!!.countyData) {
-            val bean = CountyBean(countyData)
-            if (bean.name == "Statewide") statewide = bean
-            else countUniformMvrs += bean.nmvrsUniformSampling // statewide now included in counties, so dont count twice
-
-            countyList.add(bean)
-            _countyMap.put(bean.name, bean)
-        }
-        countyMap = _countyMap
-
-        val totalPopulation = countyAudit!!.countyData.filter { it.countyName != "Statewide"}.sumOf { it.npop }
-        countyTotal = CountyBean(CountyData("=Total", countUniformMvrs, totalPopulation))
-        countMvrsByCounty()
-        countyList.add(countyTotal!!)
-
-        // sort counties by nmvrs
-        countyList.sortByDescending { it.nmvrsCardStyleSampling }
-        countyTable.setBeans(countyList)
+        contestList.sortBy { it.getPayoff() }
+        contestTable.setBeans(contestList)
     }
 
-    fun setSelectedContest(contestBean: ContestBean) {
-        val beanList = mutableListOf<AssertionBean>()
-        for (cassert in contestBean.contestUA.clcaAssertions) {
-            beanList.add(AssertionBean(contestBean, cassert))
-        }
-
-        if (beanList.isEmpty()) return
-
-        // sort assertions by payoff
-        beanList.sortBy{ it.getPayoff() }
-        assertionTable.setBeans(beanList)
-
+    fun setSelectedContest(contestBean: CorlaContestBean) {
         val beans = mutableListOf<ContestCountyBean>()
         this.countyPools.forEach { countyPool : CountyPools ->
             val countyContestTab = countyPool.contestTabs[contestBean.getId()]
@@ -276,11 +215,8 @@ class CorlaContestsTable(
 
     override fun saveState() {
         contestTable.saveState(false)
-        assertionTable.saveState(false)
-        countyTable.saveState(false)
         contestCountyTable.saveState(false)
 
-        prefs.putInt("splitPos1", split1.getDividerLocation())
         prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
@@ -321,61 +257,6 @@ class CorlaContestsTable(
         BAMutil.setActionProperties(onlyProcessAction, "sunrise-icon.png", "Only show Contests InProgress", true, 'S'.code, -1)
         BAMutil.addActionToContainer(container, onlyProcessAction)
 
-        val startAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                resample()
-            }
-        }
-        BAMutil.setActionProperties(startAction, "ambition.png", "Resample", false, 'S'.code, -1)
-        BAMutil.addActionToContainer(container, startAction)
-
-        val targetAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                includeTargetedOnly()
-            }
-        }
-        BAMutil.setActionProperties(targetAction, "goal.png", "Include Targets Only", false, 'T'.code, -1)
-        BAMutil.addActionToContainer(container, targetAction)
-
-        val targetPlusAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                includeTargetedPlus()
-            }
-        }
-        BAMutil.setActionProperties(targetPlusAction, "goal.png", "Include Targets plus", false, 'T'.code, -1)
-        BAMutil.addActionToContainer(container, targetPlusAction)
-
-        val targetLessThanAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                includeTargetedPlusContestsLessThan(100) // TODO allow user to set maxMvrs
-            }
-        }
-        BAMutil.setActionProperties(
-            targetLessThanAction,
-            "goal.png",
-            "Include Targets and LessThan 100",
-            false,
-            'T'.code,
-            -1
-        )
-        BAMutil.addActionToContainer(container, targetLessThanAction)
-
-        val includeAllAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                setInclude(true)
-            }
-        }
-        BAMutil.setActionProperties(includeAllAction, "add.png", "Include All Contests", false, 'T'.code, -1)
-        BAMutil.addActionToContainer(container, includeAllAction)
-
-        val excludeAllAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                setInclude(false)
-            }
-        }
-        BAMutil.setActionProperties(excludeAllAction, "exemption.png", "Exclude All Contests", false, 'T'.code, -1)
-        BAMutil.addActionToContainer(container, excludeAllAction)
-
         logger.debug("CorlaAuditTable.getActions")
     }
 
@@ -383,102 +264,6 @@ class CorlaContestsTable(
     fun onlyProcess(onlyInProgress: Boolean) {
         this.onlyShowInprogressContests = onlyInProgress
         loadAuditRecord()
-    }
-
-    fun resample() {
-        try {
-            val cuas: MutableList<ContestWithAssertions?> = ArrayList<ContestWithAssertions?>()
-            for (cr in this.lastAuditRound!!.contestRounds) {
-                cuas.add(cr.contestUA)
-            }
-
-            val nrounds = countyAudit!!.rounds.size
-            if (nrounds == 0) return
-
-            logger.info(String.format("call resampleAndSaveResults"))
-
-            resampleAndSaveResults(countyAudit!!, (lastAuditRound as AuditRound?)!!)
-            countMvrsByCounty()
-            contestTable.refresh()
-
-            samplingChanged = false // perhaps not needed
-        } catch (e: Exception) {
-            JOptionPane.showMessageDialog(null, e.message)
-            logger.error("AuditRoundsTable.resample failed", e)
-        }
-    }
-
-    // all include or exclude
-    fun setInclude(include: Boolean) {
-        for (contestRound in lastAuditRound!!.contestRounds) {
-            contestRound.included = include
-        }
-        samplingChanged = true
-        contestTable.refresh()
-    }
-
-    // set targeted to be included
-    fun includeTargetedOnly() {
-        for (bean in contestTable.getBeans()) {
-            bean.setInclude(bean.targeted())
-            bean.setMaxRisk(.03)
-        }
-        samplingChanged = true
-        contestTable.refresh()
-    }
-
-    // targeted plus some experimental algorithm using include and maxRisk
-    fun includeTargetedPlus() {
-        includeTargetedOnly()
-
-        for (bean in contestTable.getBeans()) {
-            if (bean.getStatus() != TestH0Status.InProgress.name) continue
-            if (bean.contestRound == null) continue
-
-            if (!bean.targeted()) {
-                if (bean.getEstMvrs() < 500) {
-                    bean.setInclude(true)
-                    if (bean.getEstMvrs() >= 150) bean.setMaxRisk(.10)
-                    else if (bean.getEstMvrs() >= 50) bean.setMaxRisk(.05)
-                }
-            }
-        }
-
-        samplingChanged = true
-        contestTable.refresh()
-    }
-
-    // targeted and contests with estMvrs < needMvrs
-    fun includeTargetedPlusContestsLessThan(maxMvrs: Int): Boolean {
-        includeTargetedOnly()
-
-        for (bean in contestTable.getBeans()) {
-            if (bean.contestRound == null) continue
-            if (bean.getEstMvrs() <= maxMvrs && bean.getStatus() == TestH0Status.InProgress.name)
-                bean.contestRound!!.included = true
-        }
-
-        samplingChanged = true
-        contestTable.refresh()
-        return true
-    }
-
-    fun countMvrsByCounty() {
-        var countMvrs = 0
-        val mvrCounts = countyAudit!!.countMvrsByCounty()
-        for (countyData in mvrCounts.values) {
-            val countyBean = countyMap.get(countyData.countyName)
-            if (countyBean != null) {
-                countyBean.nmvrsCardStyleSampling = countyData.nmvrs
-                countMvrs += countyData.nmvrs
-            } else {
-                logger.warn("cant find countyName '" + countyData.countyName + "'")
-            }
-        }
-        if (countyTotal != null) {
-            countyTotal!!.nmvrsCardStyleSampling = countMvrs
-        }
-        countyTable.refresh()
     }
 
     fun showInfo(f: Formatter) {
@@ -513,7 +298,7 @@ class CorlaContestsTable(
         }
     }
 
-    fun showContest(bean: ContestBean) = buildString {
+    fun showContest(bean: CorlaContestBean) = buildString {
         append(BeanProperties.showContestG(bean, contestTable.tableModel, bean.contestUA))
         val votes: Map<Int, Int> = bean.contestUA.contest.votes()!!
         val sortedVotes = votes.toList().sortedBy { it.first }.toMap()
@@ -546,16 +331,11 @@ class CorlaContestsTable(
     }
 
     fun printContests(): String {
-        return BeanProperties.printTableG(contestTable.getBeans(), contestTable.tableModel, BeanProperties.contests, "contests")
-    }
-
-    fun showAssertion(bean: AssertionBean): String {
-        return BeanProperties.showAssertionG(
-            bean,
-            assertionTable.tableModel,
-            bean.cua,
-            bean.cassertion
-        )
+        // TODO make general
+        val indexBeans = contestTable.getIndexedBeans()
+        val sortedIndexBeans = indexBeans.sortedBy { it.viewIndex() }
+        val sortedBeans =   sortedIndexBeans.map { it.bean }
+        return BeanProperties.printTableG(sortedBeans, contestTable.tableModel, BeanProperties.contests, "contests")
     }
 
     fun showCountyContest(bean: ContestCountyBean) = buildString {
@@ -563,7 +343,8 @@ class CorlaContestsTable(
         // append(bean.showSums(contestCountyTable.getBeans()))
     }
 
-    class ContestBean(var contestUA: ContestWithAssertions, var contestRound: ContestRound?, val sampleChanged: (Boolean) -> Any) {
+    // used also in SamplingTable
+    class CorlaContestBean(var contestUA: ContestWithAssertions, var contestRound: ContestRound?, val sampleChanged: (Boolean) -> Any) {
         var mvrLimit: Int = -1
 
         fun canedit(): Boolean {
@@ -591,8 +372,7 @@ class CorlaContestsTable(
         fun setMaxRisk(risk: Double) {
             if (contestRound == null) return
             contestRound!!.auditorWantRisk = risk
-            // val estMvrs = this.getEstMvrs()
-            // contestRound!!.estMvrs = estMvrs
+            contestRound!!.estMvrs = this.calcEstMvrs(risk)
             // this.setInclude(true)
             sampleChanged(true)
         }
@@ -611,11 +391,15 @@ class CorlaContestsTable(
         }
 
         fun getEstMvrs(): Int {
+            return calcEstMvrs(this.getMaxRisk())
+        }
+
+        fun calcEstMvrs(maxRisk: Double): Int {
             val minAssertion = contestUA.minClcaAssertion()
             if (minAssertion == null) return 0
             val noerror = minAssertion.noerror
 
-            return estSampleSizeStandardBet(contestUA.population(), noerror, this.getMaxRisk())
+            return estSampleSizeStandardBet(contestUA.population(), noerror, maxRisk)
         }
 
         fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
@@ -759,7 +543,7 @@ class CorlaContestsTable(
         fun getWinners() = contestUA.contest.winners().toString()
 
         companion object {
-            val auditRiskLimit: Double = .03
+            var auditRiskLimit: Double = .03 // TODO
 
             @JvmStatic
             fun editableProperties() = "include maxRisk"
@@ -769,7 +553,7 @@ class CorlaContestsTable(
         }
     }
 
-    class AssertionBean(val contestBean: ContestBean, val cassertion: ClcaAssertion) {
+    class AssertionBean(val contestBean: CorlaContestBean, val cassertion: ClcaAssertion) {
         val cua: ContestWithAssertions
         val assorter: AssorterIF
         val candidates: Map<Int, String>

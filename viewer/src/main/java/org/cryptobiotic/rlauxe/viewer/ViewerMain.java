@@ -45,6 +45,7 @@ public class ViewerMain extends JPanel {
   private final JPanel actionsPanel = new JPanel();
   private final FontUtil.StandardFont fontu;
 
+  FileManager fileChooser;
   TextHistoryPane infoTA;
   IndependentWindow infoWindow;
   ComboBox<String> auditRecordDirCB;
@@ -52,23 +53,26 @@ public class ViewerMain extends JPanel {
   JButton statusButton = new JButton("status");
 
   MvrAction mvrAction = new MvrAction();
-  FileManager fileChooser;
   boolean eventOk = true;
-
   String auditRecordDir = "none";
 
   JTabbedPane tabbedPane;
+
   private BelgiumAuditTable belgiumPanel;
+
+  private CorlaContestsTable corlaPanel = null;
+  private CountyTable countyPoolsPanel = null;
+  private SamplingTable samplingPanel;
+
   private ContestsPanel contestsPanel;
-  private AuditRoundsTable auditRoundsPanel = null;
-  private PoolTable poolPanel;
   private StyleTable stylePanel;
+  private PoolTable poolPanel;
   private CardTable cardPanel;
   private MvrTable mvrPanel;
+  private AuditRoundsTable auditRoundsPanel;
+
+  // not used
   private ContestPoolsTable contestPoolPanel;
-  private CorlaContestsTable corlaPanel = null;
-  private CountyTable countyPanel = null;
-  private CountyPoolsTable countyPoolsPanel = null;
 
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
@@ -95,18 +99,18 @@ public class ViewerMain extends JPanel {
       activePanels.add(belgiumPanel);
 
     } else if (profile.isCorla()) {
-      corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
+      corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize, false);
       corlaPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", corlaPanel);
       activePanels.add(corlaPanel);
 
-      countyPanel = new CountyTable((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Sampling", countyPanel);
-      activePanels.add(countyPanel);
-
-      countyPoolsPanel = new CountyPoolsTable((PreferencesExt) prefs.node("CountyPoolsTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("CountyPools", countyPoolsPanel);
+      countyPoolsPanel = new CountyTable((PreferencesExt) prefs.node("CountyPoolsTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Counties", countyPoolsPanel);
       activePanels.add(countyPoolsPanel);
+
+      samplingPanel = new SamplingTable((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Sampling", samplingPanel);
+      activePanels.add(samplingPanel);
 
     } else {
 
@@ -150,8 +154,8 @@ public class ViewerMain extends JPanel {
         cardTable.setSelectedTab();
       } else if (c instanceof MvrTable mvrTable) {
         mvrTable.setSelectedTab();
-      } else if (c instanceof CountyTable countyTable) {
-        countyTable.setSelectedTab();
+      } else if (c instanceof SamplingTable samplingTable) {
+        samplingTable.setSelectedTab();
       }
 
       // actions on right side of Audit record chooser
@@ -163,8 +167,10 @@ public class ViewerMain extends JPanel {
         contests.getActions(actionsPanel);
       } else if (c instanceof AuditRoundsTable auditRound) {
         auditRound.getActions(actionsPanel, contestsPanel);
-      } else if (c instanceof CountyPoolsTable countyPools) {
+      } else if (c instanceof CountyTable countyPools) {
         countyPools.getActions(actionsPanel);
+      } else if (c instanceof SamplingTable samplingTable) {
+        samplingTable.getActions(actionsPanel);
       }
 
       validate();

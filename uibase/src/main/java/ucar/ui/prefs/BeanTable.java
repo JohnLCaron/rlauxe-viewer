@@ -1036,13 +1036,13 @@ public class BeanTable<T> extends JPanel {
           maxDesc = Math.max(maxDesc, pc.desc.length());
 
           Object colVal = getValueAt(bean, modelIdx);
-          logger.debug(vc.getIdentifier() + " " + modelIdx + " " + colVal);
+          if (debugBean) logger.debug(vc.getIdentifier() + " " + modelIdx + " " + colVal);
 
           if (colVal != null) {
             maxValue = Math.max(maxValue, colVal.toString().length());
           }
 
-          logger.debug(pc.toString() + " " + colVal);
+          if (debugBean) logger.debug(pc.toString() + " " + colVal);
         }
         maxValue = Math.min(maxValue, maxValueWidth);
 
