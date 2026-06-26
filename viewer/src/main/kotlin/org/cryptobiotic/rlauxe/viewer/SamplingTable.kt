@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 John L. Caron
+ * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
 package org.cryptobiotic.rlauxe.viewer
