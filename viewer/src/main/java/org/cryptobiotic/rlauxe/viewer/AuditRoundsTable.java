@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 John L. Caron
+ * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
 
@@ -51,7 +51,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
     private AuditRecordIF auditRecord;
     boolean isComposite;
     private Config config;
-    private Double auditRiskLimit = .03;
+    private Double auditRiskLimit = 0.0;
     private AuditRoundIF lastAuditRound; // may be null
     Map<Integer, Integer> oneshotMvrs;
 
@@ -371,10 +371,10 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
                 if (samplingChanged && lastAuditRound != null)
                     resampleAndSaveResults((AuditRecord) auditRecord, (AuditRound) lastAuditRound);
 
-                runRound(auditRecord.getLocation(), null, null); // TODO why not use startFirstRound ?
+                runRound(auditRecord.getTopdir(), null, null); // TODO why not use startFirstRound ?
 
                 logger.info("return from runRound");
-                setAuditRecord(auditRecord.getLocation()); // reread in
+                setAuditRecord(auditRecord.getTopdir()); // reread in
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
@@ -919,7 +919,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
 
         public String runRoundAgain() {
             try {
-                String result = RunAuditRoundAgainKt.runRoundAgain(auditRecord.auditdir(), contestRound, assertionRound);
+                String result = RunAuditRoundAgainKt.runRoundAgain(auditRecord.getTopdir(), contestRound, assertionRound);
                 StringBuilder sb = new StringBuilder();
                 sb.append(show());
                 sb.append(result);

@@ -1,25 +1,25 @@
 /*
- * Copyright (c) 2025 John L. Caron
+ * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
 package org.cryptobiotic.rlauxe.viewer
 
 import org.cryptobiotic.rlauxe.audit.AuditRound
+import org.cryptobiotic.rlauxe.audit.Config
 import org.cryptobiotic.rlauxe.audit.ContestRound
 import org.cryptobiotic.rlauxe.audit.resampleAndSaveResults
 import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
+import org.cryptobiotic.rlauxe.core.Assertion
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.persist.CountyData
-import org.cryptobiotic.rlauxe.util.dfn
-import org.cryptobiotic.rlauxe.util.nfn
-import org.cryptobiotic.rlauxe.util.sfn
-import org.cryptobiotic.rlauxe.util.showDeciles
-import org.cryptobiotic.rlauxe.util.showDecilesShort
+import org.cryptobiotic.rlauxe.strata.Strata
+import org.cryptobiotic.rlauxe.strata.calcCountyStrataWant
+import org.cryptobiotic.rlauxe.util.*
 import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable.CorlaContestBean
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -36,6 +36,7 @@ import java.util.function.Function
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
+import kotlin.math.max
 
 class SamplingTable(
     private val prefs: PreferencesExt,
@@ -65,7 +66,8 @@ class SamplingTable(
     var contestRoundMap = emptyMap<Int, ContestRound>()
     var countyContestData = emptyList<CountyContestData>()
 
-    private var auditRiskLimit: Double = .03
+    private var config : Config? = null
+    private var auditRiskLimit: Double = 0.0
     private var samplingChanged = false
     private var onlyShowInprogressContests = false
 
@@ -80,6 +82,7 @@ class SamplingTable(
             "Contests",
             null
         )
+        contestTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         contestTable.addPopupOption(
             "Show Contest",
             contestTable.makeShowAction(infoTA, infoWindow) { bean: Any? -> showContest(bean as CorlaContestBean) }
@@ -147,8 +150,8 @@ class SamplingTable(
             if (record !is CountyAuditRecord) return false
 
             this.countyAudit = record
-            val config = countyAudit!!.config
-            this.auditRiskLimit = config.riskLimit
+            this.config = countyAudit!!.config
+            this.auditRiskLimit = config!!.riskLimit
             lastAuditRound = countyAudit!!.rounds.last()
 
             contestRoundMap = lastAuditRound!!.contestRounds.associateBy { it.id }
@@ -197,7 +200,7 @@ class SamplingTable(
         for (countyData in countyAudit!!.countyData) {
             val bean = CountyBean(countyData)
             if (bean.name == "Statewide") statewide = bean
-            else countUniformMvrs += bean.nmvrsUniformSampling // statewide now included in counties, so dont count twice
+            else countUniformMvrs += bean.corlaSampling // statewide now included in counties, so dont count twice
 
             countyList.add(bean)
             _countyMap.put(bean.name, bean)
@@ -209,7 +212,7 @@ class SamplingTable(
         countyList.add(countyTotal)
 
         // sort counties by nmvrs
-        countyList.sortByDescending { it.nmvrsCardStyleSampling }
+        countyList.sortByDescending { it.rlauxeSampling }
         countyTable.setBeans(countyList)
         this.totalBean = countyTotal
 
@@ -236,8 +239,8 @@ class SamplingTable(
                     val bean = CountyContestBean(countyContest, this.auditRiskLimit)
                     beanList.add(bean)
                     bean.countyPopulation = countyBean.population
-                    bean.nmvrsConsistent = countyBean.nmvrsCardStyleSampling
-                    bean.nmvrsUniform = countyBean.nmvrsUniformSampling
+                    bean.rlauxeNmvrs = countyBean.rlauxeSampling
+                    bean.corlaNmvrs = countyBean.corlaSampling
 
                     bean.contestUA = contestMap[countyContest.id]
                     bean.contestRound = contestRound
@@ -322,7 +325,7 @@ class SamplingTable(
                 setInclude(true)
             }
         }
-        BAMutil.setActionProperties(includeAllAction, "add.png", "Include All Contests", false, 'T'.code, -1)
+        BAMutil.setActionProperties(includeAllAction, "add.png", "Include selected Contests", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, includeAllAction)
 
         val excludeAllAction: AbstractAction = object : AbstractAction() {
@@ -330,7 +333,7 @@ class SamplingTable(
                 setInclude(false)
             }
         }
-        BAMutil.setActionProperties(excludeAllAction, "exemption.png", "Exclude All Contests", false, 'T'.code, -1)
+        BAMutil.setActionProperties(excludeAllAction, "exemption.png", "Exclude selected Contests", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, excludeAllAction)
 
         val reportAction: AbstractAction = object : AbstractAction() {
@@ -348,8 +351,8 @@ class SamplingTable(
 
     fun reportRisks() = buildString {
         countMvrsByCounty()
-        appendLine("  style nmvrs = ${totalBean!!.nmvrsCardStyleSampling}")
-        appendLine("uniform nmvrs = ${totalBean!!.nmvrsUniformSampling}")
+        appendLine("rlauxe nmvrs = ${totalBean!!.rlauxeSampling}")
+        appendLine(" corla nmvrs = ${totalBean!!.corlaSampling}")
 
         var countU = IntArray(4)
         var countS = IntArray(4)
@@ -363,14 +366,14 @@ class SamplingTable(
             val risk = bean.getRisk()
             risks.add(risk)
             if (risk <= maxRisk) countS[0]++
-            if (risk <= .03) countS[1]++
+            if (risk <= auditRiskLimit) countS[1]++
             if (risk <= .05) countS[2]++
             if (risk <= .10) countS[3]++
 
             val riskU = bean.getCorlaRisk()
             riskus.add(riskU)
             if (riskU <= maxRisk) countU[0]++
-            if (riskU <= .03) countU[1]++
+            if (riskU <= auditRiskLimit) countU[1]++
             if (riskU <= .05) countU[2]++
             if (riskU <= .10) countU[3]++
         }
@@ -380,7 +383,7 @@ class SamplingTable(
         appendLine("contests under maxRisk (uniform) = ${countU[0]} / $countBeans = ${nfn(pctU.toInt(),2)}%")
         appendLine()
 
-        val under = listOf("maxRisk", "3%", "5%", "10%")
+        val under = listOf("maxRisk", "${(100*auditRiskLimit).toInt()}%", "5%", "10%")
         appendLine("|               |  style  |  uniform |")
         appendLine("|---------------|---------|----------|")
         repeat (4) {
@@ -409,17 +412,21 @@ class SamplingTable(
 
     fun resample() {
         try {
-            val cuas: MutableList<ContestWithAssertions?> = ArrayList<ContestWithAssertions?>()
-            for (cr in this.lastAuditRound!!.contestRounds) {
-                cuas.add(cr.contestUA)
+            if (lastAuditRound == null) return
+
+            // if uniform
+            val contestsIncluded: List<ContestRound> = contestTable.getBeans().map { it.contestRound }.filterNotNull().filter { it.included }
+            val countyStrata: List<Strata> = calcCountyStrataWant(contestsIncluded, auditRiskLimit)
+            lastAuditRound!!.countyStrata = countyStrata
+            logger.info(String.format("call resampleAndSaveResults wantFromPools=$countyStrata"))
+            if (config!!.isUniform) {
+                lastAuditRound!!.auditorMaxNewMvrs = 8245
+                logger.info(String.format("call resampleAndSaveResults with auditorMaxNewMvrs = 8245"))
+            } else {
+                lastAuditRound!!.auditorMaxNewMvrs = null
             }
 
-            val nrounds = countyAudit!!.rounds.size
-            if (nrounds == 0) return
-
-            logger.info(String.format("call resampleAndSaveResults"))
-
-            resampleAndSaveResults(countyAudit!!, (lastAuditRound as AuditRound?)!!)
+            resampleAndSaveResults(countyAudit!!, lastAuditRound!!)
             countMvrsByCounty()
             contestTable.refresh()
             countyTable.refresh()
@@ -433,8 +440,11 @@ class SamplingTable(
 
     // all include or exclude
     fun setInclude(include: Boolean) {
-        for (contestRound in lastAuditRound!!.contestRounds) {
-            contestRound.included = include
+        var selectedRows: List<CorlaContestBean> = contestTable.getSelectedBeans()
+        if (selectedRows.isEmpty()) selectedRows = contestTable.getBeans()
+
+        selectedRows.forEach { bean ->
+            if (bean.contestRound != null) bean.contestRound!!.included = include
         }
         samplingChanged = true
         contestTable.refresh()
@@ -444,7 +454,7 @@ class SamplingTable(
     fun includeTargetedOnly() {
         for (bean in contestTable.getBeans()) {
             bean.setInclude(bean.targeted())
-            bean.setMaxRisk(.03)
+            bean.setMaxRisk(auditRiskLimit)
         }
         samplingChanged = true
         contestTable.refresh()
@@ -491,14 +501,14 @@ class SamplingTable(
         for (countyData in mvrCounts.values) {
             val countyBean = countyMap.get(countyData.countyName)
             if (countyBean != null) {
-                countyBean.nmvrsCardStyleSampling = countyData.nmvrs
+                countyBean.rlauxeSampling = countyData.nmvrs
                 countMvrs += countyData.nmvrs
             } else {
                 logger.warn("cant find countyName '" + countyData.countyName + "'")
             }
         }
         if (totalBean != null) {
-            totalBean!!.nmvrsCardStyleSampling = countMvrs
+            totalBean!!.rlauxeSampling = countMvrs
         }
         countyTable.refresh()
     }
@@ -533,23 +543,26 @@ class SamplingTable(
 class CountyBean(countyData: CountyData) {
     val name: String
     val population: Int
-    val nmvrsUniformSampling: Int
-    var nmvrsCardStyleSampling: Int = 0
+    val corlaSampling: Int
+    var rlauxeSampling: Int = 0
 
     init {
         this.name = countyData.countyName
         this.population = countyData.npop
-        this.nmvrsUniformSampling = countyData.nmvrs
+        this.corlaSampling = countyData.nmvrs
     }
 
-    fun getDiff() = nmvrsUniformSampling - nmvrsCardStyleSampling
+    fun getCorlaSamplePct() = 100 * corlaSampling / population.toDouble()
+    fun getRlauxeSamplePct() = 100 * rlauxeSampling / population.toDouble()
+
+    fun getDiff() = corlaSampling - rlauxeSampling
 }
 
 // data class CountyContestData(val countyName: String, val contestName: String, val id: Int, val voteDiff: Int, val votes: Map<Int, Int>)
 class CountyContestBean(val countyContestData: CountyContestData, val auditRiskLimit: Double) {
     var countyPopulation = 1
-    var nmvrsConsistent = 0
-    var nmvrsUniform = 0
+    var rlauxeNmvrs = 0
+    var corlaNmvrs = 0
     var contestUA: ContestWithAssertions? = null
     var contestRound: ContestRound? = null
 
@@ -581,18 +594,36 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
         return String.format("%02d", toks.size)
     }
 
-    fun getCorlaSample(): String {
-        if (contestUA == null) return "N/A"
+    fun getCorlaEstMvrs(): Int {
+        if (!targeted()) return -1
+        if (contestUA == null) return -1
         val CORLAsample = contestUA!!.contest.info().metadata.get("CORLAsample")
-        if (CORLAsample == null) return "N/A"
-        return CORLAsample.toInt().toString()
+        if (CORLAsample == null) return -1
+        return CORLAsample.toInt()
     }
 
-    fun getCorlaHaveMvrs(): String {
-        if (contestUA == null) return "N/A"
-        val CORLAsample = contestUA!!.contest.info().metadata.get("CORLAhaveMvrs")
-        if (CORLAsample == null) return "N/A"
-        return CORLAsample.toInt().toString()
+    fun getCorlaHaveMvrs(): Int {
+        if (contestUA == null) return -1
+        val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAhaveMvrs")
+        if (haveMvrss == null) return -1
+        return haveMvrss.toInt()
+    }
+
+    fun getCorlaStrata(): Int {
+        if (contestUA == null) return -1
+        val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAstrataNcards")
+        if (haveMvrss == null) return -1
+        return haveMvrss.toInt()
+    }
+
+    // same as corlaSampling plot
+    fun getCorlaVoteDiff(): Int {
+        if (contestUA == null) return -1
+        val cua = contestUA!!
+        val contest = cua.contest
+        val minMargin: String? = contest.info().metadata.get("CORLAmarginInVotes")
+        if (minMargin == null) return -1
+        return minMargin.toInt()
     }
 
     // same as corlaSampling plot
@@ -602,7 +633,11 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
         val contest = cua.contest
         val haveMvrss: String? = contest.info().metadata.get("CORLAhaveMvrs")
         if (haveMvrss == null) return 1.0
-        return estRiskStandardBet(cua.Npop, getNoerror(), haveMvrss.toInt())
+        val minAssertion: Assertion? = cua.minAssertion()
+        if (minAssertion == null) return 1.0
+
+        // fun estRiskStandardBet(voteDiff: Int, Npop: Int, upper: Double, nsamples: Int, ): Double {
+        return estRiskStandardBet(getCorlaVoteDiff(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
     }
 
     //                 val haveMvrss: String = it.contest.info().metadata.get("CORLAhaveMvrs")!!
@@ -626,6 +661,7 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
         if (contestUA == null) return false
         val reason = contestUA!!.contest.info().metadata.get("CORLAauditReason")
         if (reason == null) return false
+        // return reason == "county_wide_contest"
         return reason == "state_wide_contest" || reason == "county_wide_contest"
     }
 
@@ -651,6 +687,11 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
     fun getEstMvrs(): Int {
         if (contestUA == null) return 0
         return estSampleSizeStandardBet(contestUA!!.population(), getNoerror(), maxrisk())
+    }
+
+    fun getEstNewMvrs(): Int {
+        val minAssertion = contestUA!!.minClcaAssertion()!!
+        return estSampleSizeStandardBet(getCorlaVoteDiff(), getCorlaStrata(), minAssertion.upper, maxrisk())
     }
 
     fun getHaveMvrs(): String {

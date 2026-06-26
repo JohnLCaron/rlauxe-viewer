@@ -48,6 +48,7 @@ public class BeanProperties {
         // Corla
         contests.add(new BeanTable.TableBeanProperty("target", "is a Corla targeted contest"));
         contests.add(new BeanTable.TableBeanProperty("NCounties", "number of counties, or the county name if only one"));
+        contests.add(new BeanTable.TableBeanProperty("county", "name of County"));
         contests.add(new BeanTable.TableBeanProperty("corlaEst", "estimate from Corla (super simple) algorithm"));
         contests.add(new BeanTable.TableBeanProperty("nvotes", "tabulated nvotes from auditcenter or cvrs"));
         contests.add(new BeanTable.TableBeanProperty("compareNvotes", "tabulated nvotes from auditcenter - cvrs"));
@@ -56,10 +57,12 @@ public class BeanProperties {
         // CountyPoolsTable.Contest
         contests.add(new BeanTable.TableBeanProperty("contestId", "contest identifier"));
         contests.add(new BeanTable.TableBeanProperty("contestName", "contest name"));
-        contests.add(new BeanTable.TableBeanProperty("countyPopulation", "contestRound.ballotCardCount"));
-        contests.add(new BeanTable.TableBeanProperty("contestPopulation", "contestRound.contestBallotCardCount"));
-        contests.add(new BeanTable.TableBeanProperty("corlaSample", "contestRound.estimatedSamplesToAudit"));
-        contests.add(new BeanTable.TableBeanProperty("corlaHaveMvrs", "estimated Corla uniform have mvrs"));
+        contests.add(new BeanTable.TableBeanProperty("countyPopulation", "contestRound.ballot_card_count for county's targeted contest")); // TODO check
+        contests.add(new BeanTable.TableBeanProperty("contestPopulation", "contestRound.contest_ballot_card_count"));
+        contests.add(new BeanTable.TableBeanProperty("corlaEstMvrs", "contestRound.estimated_samples_to_audit"));
+        contests.add(new BeanTable.TableBeanProperty("corlaVoteDiff", "contestRound.min_margin"));
+        contests.add(new BeanTable.TableBeanProperty("corlaHaveMvrs", "Corla mvrs for contest's strata"));
+        contests.add(new BeanTable.TableBeanProperty("corlaStrata", "contestRound.ballot_card_count"));
         contests.add(new BeanTable.TableBeanProperty("corlaRisk", "estimated Corla uniform risk"));
         contests.add(new BeanTable.TableBeanProperty("cvrNcards", "number or cards from cvrs"));
         contests.add(new BeanTable.TableBeanProperty("diffNcards", "contest.Nc  - cvrNcards"));
@@ -106,21 +109,9 @@ public class BeanProperties {
         assertions.add(new BeanTable.TableBeanProperty("completed", "round that assertions was proved"));
     }
 
-    static ArrayList<BeanTable.TableBeanProperty> countyPools = new ArrayList<>();
-    static {
-        countyPools.add(new BeanTable.TableBeanProperty("countyName", "county name"));
-        countyPools.add(new BeanTable.TableBeanProperty("countyPoolId", "county name"));
-        countyPools.add(new BeanTable.TableBeanProperty("population", "county population from round.ballotCardCount"));
-        countyPools.add(new BeanTable.TableBeanProperty("totalCards", "number of cvrs in the pool"));
-        countyPools.add(new BeanTable.TableBeanProperty("diff", "population - totalCards"));
-        countyPools.add(new BeanTable.TableBeanProperty("diffPct", "(population - totalCards)/population"));
-        countyPools.add(new BeanTable.TableBeanProperty("diffNVotes", "auditcenter.votes - cvr.votes"));
-        countyPools.add(new BeanTable.TableBeanProperty("pctDiffNVotes", "(auditcenter.votes - cvr.votes)/auditcenter.votes"));
-    }
-
     static public <T> String showContestG(T bean, BeanTable<T>.TableBeanModel tableModel, ContestWithAssertions cua) {
         StringBuilder sb = new StringBuilder();
-        sb.append("%n%s%n".formatted( tableModel.showBean(bean, BeanProperties.contests)));
+        sb.append("%n%s%n%n".formatted( tableModel.showBean(bean, BeanProperties.contests)));
         if (cua != null) sb.append("\n%s%n".formatted(cua.show()));
         return sb.toString();
     }
@@ -130,12 +121,6 @@ public class BeanProperties {
         sb.append("%n%s%n".formatted(tableModel.showBean(bean, BeanProperties.assertions)));
         sb.append(assertion.show());
         sb.append("\n   difficulty: %s".formatted(cua.getContest().showAssertionDifficulty(assertion.getAssorter())));
-        return sb.toString();
-    }
-
-    static public <T> String showCountyPoolsG(T bean, BeanTable<T>.TableBeanModel tableModel, CountyPools pool) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("%n%s%n".formatted(tableModel.showBean(bean, BeanProperties.countyPools)));
         return sb.toString();
     }
 
