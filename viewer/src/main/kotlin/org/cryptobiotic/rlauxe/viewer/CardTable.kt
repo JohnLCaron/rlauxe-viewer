@@ -102,6 +102,8 @@ class CardTable(
     }
 
     fun readCards(): Boolean {
+        if (auditRecord == null) return false
+
         logger.info("start readCards for " + auditRecordLocation)
 
         val config = auditRecord!!.config

@@ -36,7 +36,6 @@ import java.util.function.Function
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
-import kotlin.math.max
 
 class SamplingTable(
     private val prefs: PreferencesExt,
@@ -306,10 +305,10 @@ class SamplingTable(
 
         val targetLessThanAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
-                includeTargetedPlusContestsLessThan(100) // TODO allow user to set maxMvrs
+                includeImportant()
             }
         }
-        BAMutil.setActionProperties(targetLessThanAction, "goal.png", "Include Targets and LessThan 100", false, 'T'.code, -1)
+        BAMutil.setActionProperties(targetLessThanAction, "goal.png", "Include Important Contests", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, targetLessThanAction)
 
         val targetPlusAction: AbstractAction = object : AbstractAction() {
@@ -441,7 +440,7 @@ class SamplingTable(
     // all include or exclude
     fun setInclude(include: Boolean) {
         var selectedRows: List<CorlaContestBean> = contestTable.getSelectedBeans()
-        if (selectedRows.isEmpty()) selectedRows = contestTable.getBeans()
+        if (selectedRows.size < 2) selectedRows = contestTable.getBeans() // all
 
         selectedRows.forEach { bean ->
             if (bean.contestRound != null) bean.contestRound!!.included = include
@@ -480,14 +479,12 @@ class SamplingTable(
         contestTable.refresh()
     }
 
-    // targeted and contests with estMvrs < needMvrs
-    fun includeTargetedPlusContestsLessThan(maxMvrs: Int): Boolean {
-        includeTargetedOnly()
 
+    fun includeImportant(): Boolean {
         for (bean in contestTable.getBeans()) {
-            if (bean.contestRound == null) continue
-            if (bean.getEstMvrs() <= maxMvrs && bean.getStatus() == TestH0Status.InProgress.name)
-                bean.contestRound!!.included = true
+            if ((bean.counties()?.size ?: 0) > 1) bean.setInclude(true)
+            if (bean.getName().startsWith("Representative to the")) bean.setInclude(true)
+            if (bean.getName().startsWith("State")) bean.setInclude(true)
         }
 
         samplingChanged = true
