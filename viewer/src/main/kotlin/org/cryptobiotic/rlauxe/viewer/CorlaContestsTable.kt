@@ -6,6 +6,7 @@ import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
+import org.cryptobiotic.rlauxe.core.Assertion
 import org.cryptobiotic.rlauxe.core.AssorterIF
 import org.cryptobiotic.rlauxe.core.ClcaAssertion
 import org.cryptobiotic.rlauxe.core.ContestInfo
@@ -63,7 +64,7 @@ class CorlaContestsTable(
     private var countyPools: List<CountyPools> = emptyList()
     private var countyCvrPools: Map<String, CountyPools> = emptyMap()
 
-    private var auditRiskLimit: Double = .03
+    private var auditRiskLimit: Double = 0.0
     private var samplingChanged = false
     private var onlyShowInprogressContests = false
 
@@ -269,7 +270,7 @@ class CorlaContestsTable(
     fun showInfo(f: Formatter) {
         if (this.countyAudit == null) return
 
-        f.format("Audit record at %s%n%n", countyAudit!!.location)
+        f.format("Audit record at %s%n%n", countyAudit!!.topdir)
         f.format("%s%n", this.config)
         if (this.lastAuditRound == null) return
 
@@ -293,8 +294,8 @@ class CorlaContestsTable(
         f.format("total cards = %d %n", this.config!!.election.totalCardCount)
 
         if (countyTotal != null) {
-            f.format("%nmvrs for uniform sampling = %d %n", countyTotal!!.nmvrsUniformSampling)
-            f.format("%nmvrs for card style sampling = %d %n", countyTotal!!.nmvrsCardStyleSampling)
+            f.format("%nmvrs for corla sampling = %d %n", countyTotal!!.corlaSampling)
+            f.format("%nmvrs for rlauxe sampling = %d %n", countyTotal!!.rlauxeSampling)
         }
     }
 
@@ -410,18 +411,49 @@ class CorlaContestsTable(
         }
 
         fun getNCounties(): String {
-            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
-            if (CORLAcounties == null) return "N/A"
-            val toks: List<String> = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }
-            if (toks.size == 1) return toks[0]
-            return String.format("%02d", toks.size)
+            val counties = counties()
+            if (counties == null) return "N/A"
+            if (counties.size == 1) return counties[0]
+            return String.format("%02d", counties.size)
         }
 
-        fun getCorlaHaveMvrs(): String {
-            if (contestUA == null) return "N/A"
-            val CORLAsample = contestUA!!.contest.info().metadata.get("CORLAhaveMvrs")
-            if (CORLAsample == null) return "N/A"
-            return CORLAsample.toInt().toString()
+        fun counties(): List<String>? {
+            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
+            if (CORLAcounties == null) return null
+            val stripped = CORLAcounties.drop(1).dropLast(1)
+            return stripped.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+        }
+
+        fun getCorlaEstMvrs(): Int {
+            if (!targeted()) return -1
+            if (contestUA == null) return -1
+            val CORLAsample = contestUA!!.contest.info().metadata.get("CORLAsample")
+            if (CORLAsample == null) return -1
+            return CORLAsample.toInt()
+        }
+
+        fun getCorlaHaveMvrs(): Int {
+            if (contestUA == null) return -1
+            val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAhaveMvrs")
+            if (haveMvrss == null) return -1
+            return haveMvrss.toInt()
+        }
+
+        fun getCorlaStrata(): Int {
+            if (contestUA == null) return -1
+            val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAstrataNcards")
+            if (haveMvrss == null) return -1
+            return haveMvrss.toInt()
+        }
+
+        // same as corlaSampling plot
+        fun getCorlaVoteDiff(): Int {
+            if (contestUA == null) return -1
+            val cua = contestUA!!
+            val contest = cua.contest
+            val minMargin: String? = contest.info().metadata.get("CORLAmarginInVotes")
+            if (minMargin == null) return -1
+            return minMargin.toInt()
         }
 
         // same as corlaSampling plot
@@ -429,12 +461,13 @@ class CorlaContestsTable(
             if (contestUA == null) return 1.0
             val cua = contestUA!!
             val contest = cua.contest
-            val noerror = cua.minNoerror()
-            if (noerror == null) return 0.0
-
             val haveMvrss: String? = contest.info().metadata.get("CORLAhaveMvrs")
             if (haveMvrss == null) return 1.0
-            return estRiskStandardBet(cua.Npop, noerror, haveMvrss.toInt())
+            val minAssertion: Assertion? = cua.minAssertion()
+            if (minAssertion == null) return 1.0
+
+            // fun estRiskStandardBet(voteDiff: Int, Npop: Int, upper: Double, nsamples: Int, ): Double {
+            return estRiskStandardBet(getCorlaVoteDiff(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
         }
 
         fun getTarget() = if (targeted()) "YES" else ""
@@ -442,6 +475,7 @@ class CorlaContestsTable(
         fun targeted(): Boolean {
             val reason = contestUA.contest.info().metadata.get("CORLAauditReason")
             if (reason == null) return false
+            // return reason == "county_wide_contest"
             return reason == "state_wide_contest" || reason == "county_wide_contest"
         }
 
@@ -543,7 +577,7 @@ class CorlaContestsTable(
         fun getWinners() = contestUA.contest.winners().toString()
 
         companion object {
-            var auditRiskLimit: Double = .03 // TODO
+            var auditRiskLimit: Double = 0.0
 
             @JvmStatic
             fun editableProperties() = "include maxRisk"

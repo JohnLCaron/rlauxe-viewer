@@ -189,7 +189,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
     void showInfo(Formatter f) {
         if (this.auditRecord == null) return;
 
-        f.format("Audit record at %s%n%n", auditRecord.getLocation());
+        f.format("Audit record at %s%n%n", auditRecord.getTopdir());
         f.format("%s%n", this.config);
         if (this.lastAuditRound == null) return;
 
@@ -214,7 +214,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
     }
 
     public class ContestBean {
-        static Double alpha = .03;
+        static Double alpha = 0.0;
 
         ContestRound contestRound;
         ContestWithAssertions contestUA;
@@ -246,7 +246,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             return UtilsKt.estRiskStandardBet(contestUA.getNpop(), noerror, haveMvrs);
         }
 
-        public Integer getEstMvrs() { return (contestRound == null) ? 0 : contestRound.getEstNewMvrs(); }
+        public Integer getEstMvrs() { return (contestRound == null) ? 0 : contestRound.getEstMvrs(); }
 
         public Integer getHaveMvrs() {
             return (contestRound == null) ? 0 : contestRound.getHaveSampleSize();

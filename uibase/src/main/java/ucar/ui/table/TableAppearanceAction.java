@@ -5,7 +5,10 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 
 import static ucar.ui.widget.BAMutil.getIcon;
 
@@ -55,9 +58,10 @@ public class TableAppearanceAction extends AbstractAction {
     popupMenu.add(new HideAllColumnsAction());
     popupMenu.addSeparator();
 
-    Enumeration<TableColumn> allTableColumns = getTableColumnModel().getColumns(false);
-    while (allTableColumns.hasMoreElements()) {
-      TableColumn tableColumn = allTableColumns.nextElement();
+    List<TableColumn> allTableColumns = Collections.list(getTableColumnModel().getColumns(false));
+    allTableColumns.sort(Comparator.comparing((TableColumn t) -> t.getHeaderValue().toString()));
+
+    for (TableColumn tableColumn : allTableColumns) {
       ColumnVisibilityAction columnVisibilityAction = new ColumnVisibilityAction(tableColumn);
       JCheckBoxMenuItem columnVisibilityMenuItem = new JCheckBoxMenuItem(columnVisibilityAction);
       popupMenu.add(columnVisibilityMenuItem);

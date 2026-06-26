@@ -303,7 +303,7 @@ class BelgiumAuditTable(
 
         val result = buildString {
 
-            appendLine("Audit record at ${auditRecord!!.location}")
+            appendLine("Audit record at ${auditRecord!!.topdir}")
             appendLine(config)
             if (lastAuditRound == null) return
 
@@ -577,7 +577,7 @@ class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
         get() = contestUA.contest.winners().toString()
 
     companion object {
-        var alpha: Double = .03
+        var alpha: Double = 0.0
 
         @JvmStatic
         fun editableProperties() = "mvrLimit"
