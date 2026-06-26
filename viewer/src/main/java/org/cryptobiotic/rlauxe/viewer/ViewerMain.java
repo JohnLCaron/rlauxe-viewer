@@ -92,53 +92,54 @@ public class ViewerMain extends JPanel {
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     if (profile.isBelgium()) {
-
       belgiumPanel = new BelgiumAuditTable((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
       belgiumPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", belgiumPanel);
       activePanels.add(belgiumPanel);
 
-    } else if (profile.isCorla()) {
-      corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize, false);
-      corlaPanel.getActions(actionsPanel);
-      tabbedPane.addTab("Contests", corlaPanel);
-      activePanels.add(corlaPanel);
-
-      countyPoolsPanel = new CountyTable((PreferencesExt) prefs.node("CountyPoolsTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Counties", countyPoolsPanel);
-      activePanels.add(countyPoolsPanel);
-
-      samplingPanel = new SamplingTable((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Sampling", samplingPanel);
-      activePanels.add(samplingPanel);
-
     } else {
 
-      contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
-      contestsPanel.getActions(actionsPanel);
-      tabbedPane.addTab("Contests", contestsPanel);
-      activePanels.add(contestsPanel);
+      if (profile.isCorla()) {
+        corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize, false);
+        corlaPanel.getActions(actionsPanel);
+        tabbedPane.addTab("Contests", corlaPanel);
+        activePanels.add(corlaPanel);
 
-      poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
-      tabbedPane.addTab("Pools", poolPanel);
-      activePanels.add(poolPanel);
+        countyPoolsPanel = new CountyTable((PreferencesExt) prefs.node("CountyPoolsTable"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("Counties", countyPoolsPanel);
+        activePanels.add(countyPoolsPanel);
+
+        samplingPanel = new SamplingTable((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("Sampling", samplingPanel);
+        activePanels.add(samplingPanel);
+
+      } else {
+        contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
+        contestsPanel.getActions(actionsPanel);
+        tabbedPane.addTab("Contests", contestsPanel);
+        activePanels.add(contestsPanel);
+
+        poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+        tabbedPane.addTab("Pools", poolPanel);
+        activePanels.add(poolPanel);
+      }
+
+      stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Styles", stylePanel);
+      activePanels.add(stylePanel);
+
+      cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Cards", cardPanel);
+      activePanels.add(cardPanel);
+
+      mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
+      tabbedPane.addTab("Mvrs", mvrPanel);
+      activePanels.add(mvrPanel);
+
+      auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
+      tabbedPane.addTab("AuditRounds", auditRoundsPanel);
+      activePanels.add(auditRoundsPanel);
     }
-
-    stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("Styles", stylePanel);
-    activePanels.add(stylePanel);
-
-    cardPanel = new CardTable((PreferencesExt) prefs.node("CardTable"), infoTA, infoWindow, fontSize);
-    tabbedPane.addTab("Cards", cardPanel);
-    activePanels.add(cardPanel);
-
-    mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
-    tabbedPane.addTab("Mvrs", mvrPanel);
-    activePanels.add(mvrPanel);
-
-    auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
-    tabbedPane.addTab("AuditRounds", auditRoundsPanel);
-    activePanels.add(auditRoundsPanel);
 
     tabbedPane.setSelectedIndex(0);
 
