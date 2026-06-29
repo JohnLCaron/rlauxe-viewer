@@ -7,6 +7,7 @@ package org.cryptobiotic.rlauxe.viewer
 
 import org.cryptobiotic.rlauxe.audit.AuditableCard
 import org.cryptobiotic.rlauxe.audit.StyleIF
+import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
@@ -14,7 +15,6 @@ import org.cryptobiotic.rlauxe.persist.SortedManifest
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import ucar.ui.prefs.BeanTable
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -50,12 +50,12 @@ class CardTable(
             CardBean::class.java, prefs.node("cardTable") as PreferencesExt, false,
             "CardManifest", "AuditableCard", null
         )
-        cardTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent? ->
+        cardTable.addListSelectionListener { e: ListSelectionEvent? ->
             val cardBean = cardTable.getSelectedBean()
             if (cardBean != null) {
                 setSelectedCard(cardBean)
             }
-        })
+        }
 
         //cardTable.addPopupOption("Show Population", cardTable.makeShowAction(localInfo,
         //    bean -> ((cardTable) bean).show()));
@@ -77,8 +77,8 @@ class CardTable(
     }
 
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
-        logger.info("CardTable setAuditRecord " + auditRecordLocation)
-        cardTable.setBeans(mutableListOf<CardBean?>())
+        logger.debug("CardTable setAuditRecord " + auditRecordLocation)
+        cardTable.setBeans(null)
 
         this.auditRecordLocation = auditRecordLocation
         val auditRecord = read(auditRecordLocation)
@@ -103,9 +103,6 @@ class CardTable(
 
     fun readCards(): Boolean {
         if (auditRecord == null) return false
-
-        logger.info("start readCards for " + auditRecordLocation)
-
         val config = auditRecord!!.config
         val cutoff = config.round.sampling.contestSampleCutoff
         val ncardsToRead = if (cutoff == null || cutoff < 11111) 11111 else cutoff
@@ -138,12 +135,12 @@ class CardTable(
             cardManifest!!.cards.iterator().use { iter ->
                 while (iter.hasNext() && index < ncardsToRead) {
                     val card = iter.next()
-                    beanList.add(CardBean(card, index))
+                    beanList.add(CardBean(card))
                     index++
                 }
             }
             cardTable.setBeans(beanList)
-            logger.info("end readCards " + index + " cards from " + auditRecordLocation)
+            logger.debug("readCards " + index + " cards from " + auditRecordLocation)
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
@@ -169,7 +166,7 @@ class CardTable(
         prefs.putInt("splitPos1", split1.getDividerLocation())
     }
 
-    class CardBean(val card: AuditableCard, val sortedIndex: Int) {
+    class CardBean(val card: AuditableCard) {
 
         val id: String
             get() = card.id()

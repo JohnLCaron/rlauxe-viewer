@@ -7,11 +7,11 @@ package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.AuditableCard;
 import org.cryptobiotic.rlauxe.audit.Config;
+import org.cryptobiotic.rlauxe.beans.BeanTable;
 import org.cryptobiotic.rlauxe.persist.*;
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.TextHistoryPane;
 import ucar.util.prefs.PreferencesExt;
 
@@ -22,6 +22,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
+// TODO turn this into comparison of mvrs and cvrs
 public class MvrTable extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(MvrTable.class);
 
@@ -80,7 +81,7 @@ public class MvrTable extends JPanel implements ViewerPanelIF {
         this.auditRecordLocation = auditRecordLocation;
         AuditRecordIF auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (auditRecord == null) {
-            logger.info("CardTable failed on readFrom "+ auditRecordLocation);
+            logger.info("CardTable failed on read "+ auditRecordLocation);
             return false;
         }
         if (auditRecord instanceof CompositeAuditRecord) return false;
@@ -110,6 +111,7 @@ public class MvrTable extends JPanel implements ViewerPanelIF {
             List<CardBean> beanList = new ArrayList<>();
             int index = 1;
 
+            // why ??
             try (var mvrIter = mvrManager.readCardsAndMerge(publisher.sortedMvrsFile())) {
                 while (mvrIter.hasNext() && index < ncardsToRead) {
                     var mvr = mvrIter.next();
@@ -118,7 +120,7 @@ public class MvrTable extends JPanel implements ViewerPanelIF {
                 }
             }
             mvrTable.setBeans(beanList);
-            logger.info("MvrTable read " + index + " cards from "+ publisher.sortedMvrsFile());
+            logger.debug("MvrTable read " + index + " cards from "+ publisher.sortedMvrsFile());
 
         } catch (Exception e) {
             e.printStackTrace();

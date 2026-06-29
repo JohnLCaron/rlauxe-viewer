@@ -4,8 +4,8 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord;
 
 public class TestReadAudit {
     public static void main(String[] args) {
-        var auditdir = "/home/stormy/rla/persist/testRunCli/clca/audit";
-        var auditConfig = AuditRecord.Companion.read(auditdir);
+        var topdir = "/home/stormy/rla/persist/testRunCli/clca";
+        var auditConfig = AuditRecord.Companion.read(topdir);
         if (auditConfig == null) System.out.println("failed");
         else System.out.println("success");
     }

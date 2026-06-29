@@ -6,6 +6,7 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
+import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord;
 import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;
 import ucar.ui.prefs.Debug;
@@ -58,7 +59,7 @@ public class ViewerMain extends JPanel {
 
   JTabbedPane tabbedPane;
 
-  private BelgiumAuditTable belgiumPanel;
+  private BelgiumContestsTable belgiumPanel;
 
   private CorlaContestsTable corlaPanel = null;
   private CountyTable countyPoolsPanel = null;
@@ -72,7 +73,7 @@ public class ViewerMain extends JPanel {
   private AuditRoundsTable auditRoundsPanel;
 
   // not used
-  private ContestPoolsTable contestPoolPanel;
+  private ContestPoolsTableOld contestPoolPanel;
 
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
@@ -92,7 +93,7 @@ public class ViewerMain extends JPanel {
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
     if (profile.isBelgium()) {
-      belgiumPanel = new BelgiumAuditTable((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
+      belgiumPanel = new BelgiumContestsTable((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
       belgiumPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", belgiumPanel);
       activePanels.add(belgiumPanel);
@@ -100,7 +101,7 @@ public class ViewerMain extends JPanel {
     } else {
 
       if (profile.isCorla()) {
-        corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize, false);
+        corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
         corlaPanel.getActions(actionsPanel);
         tabbedPane.addTab("Contests", corlaPanel);
         activePanels.add(corlaPanel);
@@ -132,9 +133,10 @@ public class ViewerMain extends JPanel {
       tabbedPane.addTab("Cards", cardPanel);
       activePanels.add(cardPanel);
 
+      /*
       mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
       tabbedPane.addTab("Mvrs", mvrPanel);
-      activePanels.add(mvrPanel);
+      activePanels.add(mvrPanel); */
 
       auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
       tabbedPane.addTab("AuditRounds", auditRoundsPanel);
@@ -160,7 +162,7 @@ public class ViewerMain extends JPanel {
       }
 
       // actions on right side of Audit record chooser
-      if (c instanceof BelgiumAuditTable belgium) {
+      if (c instanceof BelgiumContestsTable belgium) {
         belgium.getActions(actionsPanel);
       } else if (c instanceof CorlaContestsTable corla) {
         corla.getActions(actionsPanel);
@@ -288,10 +290,21 @@ public class ViewerMain extends JPanel {
     infoTA.setFontSize(fontSize);
   }
 
-  void setAuditRecord() {
-    for (var vpanel : activePanels) {
-      vpanel.setAuditRecord(auditRecordDir);
+  boolean setAuditRecord() {
+    try {
+      var auditRecord = AuditRecord.Companion.read(auditRecordDir);
+      if (auditRecord == null) return false;
+
+      for (var vpanel : activePanels) {
+        vpanel.setAuditRecord(auditRecordDir);
+      }
+      return true;
+
+    } catch (Exception e) {
+      JOptionPane.showMessageDialog(null, e.getMessage());
+      logger.error("AuditRoundsTable.setAuditRecord failed", e);
     }
+    return false;
   }
 
   public void save() {
