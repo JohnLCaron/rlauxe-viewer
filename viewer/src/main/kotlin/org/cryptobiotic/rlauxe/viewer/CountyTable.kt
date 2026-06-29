@@ -5,6 +5,9 @@
 package org.cryptobiotic.rlauxe.viewer
 
 import org.cryptobiotic.rlauxe.audit.CountyPools
+import org.cryptobiotic.rlauxe.beans.BeanTable
+import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.beans.printTable
 import org.cryptobiotic.rlauxe.core.ContestInfo
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
@@ -17,32 +20,29 @@ import org.cryptobiotic.rlauxe.util.trunc
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import ucar.ui.prefs.BeanTable
-import ucar.ui.prefs.BeanTable.TableBeanProperty
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
-import java.util.function.Function
 import javax.swing.AbstractAction
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
-private val logger: Logger = LoggerFactory.getLogger(ContestPoolsTable::class.java)
+private val logger: Logger = LoggerFactory.getLogger(CountyTable::class.java)
 
 class CountyTable(
-    private val prefs: PreferencesExt,
-    infoTA: TextHistoryPane?,
-    infoWindow: IndependentWindow?,
+    val prefs: PreferencesExt,
+    val infoTA: TextHistoryPane,
+    val infoWindow: IndependentWindow,
     fontSize: Float,
 ) : JPanel(), ViewerPanelIF {
     private val countyTable: BeanTable<CountyPoolsBean>
     private val styleTable: BeanTable<StyleTable.StyleBean>
-    private val contestTable: BeanTable<CountyPoolContestBean>
+    private val countyContestTable: BeanTable<CountyContestBean>
 
     // TextHistoryPane localInfo = new TextHistoryPane();
     private val split1: JSplitPane
@@ -56,52 +56,46 @@ class CountyTable(
 
     init {
         countyTable = BeanTable(
-            CountyPoolsBean::class.java, prefs.node("countyCardPool") as PreferencesExt?, false,
+            CountyPoolsBean::class.java, prefs.node("countyCardPool") as PreferencesExt, false,
             "CountyPools", "CountyPools", null
         )
         countyTable.addPopupOption(
             "Show CountyPool",
-            countyTable.makeShowAction(infoTA, infoWindow, Function { bean: Any? -> showCountyPool(bean as CountyPoolsBean) })
+            countyTable.makeShowAction(infoTA, infoWindow,) { bean: CountyPoolsBean -> showCountyPool(bean) }
         )
         countyTable.addPopupOption(
-            "Print Table", countyTable.makeShowAction(infoTA, infoWindow,
-                Function { bean: Any? ->
-                    val indexBeans : List<BeanTable.IndexedBean<CountyPoolsBean>> = countyTable.getIndexedBeans()
-                    val sortedIndexBeans : List<BeanTable.IndexedBean<CountyPoolsBean>> = indexBeans.sortedBy { it.viewIndex() }
-                    val sortedBeans : List<CountyPoolsBean> =   sortedIndexBeans.map { it.bean }
-                    BeanProperties.printTableG(sortedBeans, countyTable.tableModel, CountyPoolsBean.beanProperties,"countyPool")
-                }
+            "Print Table", countyTable.makeShowAction(infoTA, infoWindow)
+                { printTable(countyTable, CountyPoolsBean.beanProperties,"countyPool") }
             )
-        )
-        countyTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent? ->
+        countyTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
             val selected = countyTable.getSelectedBean()
             if (selected != null) {
                 setSelectedCounty(selected)
             }
         })
 
-        contestTable = BeanTable(
-            CountyPoolContestBean::class.java, prefs.node("contestTable") as PreferencesExt?, false,
-            "Contest subtotal in selected County", "ContestTabulation", null
+        countyContestTable = BeanTable(
+            CountyContestBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
+            "Auditcenter and cvr subtotals for all Contests in selected County", "ContestTabulation", null
         )
-        contestTable.addPopupOption(
-            "Show County Contest", contestTable.makeShowAction(infoTA, infoWindow,
-                Function { bean: Any? -> showCountyContest(bean as CountyPoolContestBean) })
+        countyContestTable.addPopupOption(
+            "Show County Contest",
+            countyContestTable.makeShowAction(infoTA, infoWindow) { bean: CountyContestBean -> showCountyContest(bean) }
         )
 
         styleTable = BeanTable(
-            StyleTable.StyleBean::class.java, prefs.node("styleTable") as PreferencesExt?, false,
+            StyleTable.StyleBean::class.java, prefs.node("styleTable") as PreferencesExt, false,
             "Style", "Style", null
         )
         styleTable.addPopupOption(
-            "Show use in Contests", styleTable.makeShowAction(infoTA, infoWindow,
-                Function { bean: Any? -> showCountyStyle(bean as StyleTable.StyleBean) })
+            "Show use in Contests",
+            styleTable.makeShowAction(infoTA, infoWindow) { bean: StyleTable.StyleBean -> showCountyStyle(bean) }
         )
 
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, countyTable, contestTable)
+        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, countyTable, countyContestTable)
         split1.setDividerLocation(prefs.getInt("splitPos1", 200))
         split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, styleTable)
         split2.setDividerLocation(prefs.getInt("splitPos2", 600))
@@ -115,7 +109,7 @@ class CountyTable(
     // actions on right side of Audit record chooser
     fun getActions(container: JPanel) {
         val readMvrAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
+            override fun actionPerformed(e: ActionEvent) {
                 val selected = countyTable.getSelectedBean()
                 if (selected != null) {
                     // readMvrTabulation(selected)
@@ -128,25 +122,25 @@ class CountyTable(
 
     override fun setFontSize(size: Float) {
         countyTable.setFontSize(size)
-        contestTable.setFontSize(size)
+        countyContestTable.setFontSize(size)
         styleTable.setFontSize(size)
     }
 
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
         logger.debug("ContestPoolsTable setAuditRecord " + auditRecordLocation)
         countyTable.setBeans(emptyList())
-        contestTable.setBeans(emptyList())
+        countyContestTable.setBeans(emptyList())
         styleTable.setBeans(emptyList())
 
         this.auditRecordLocation = auditRecordLocation
         val auditRecord = read(auditRecordLocation)
         if (auditRecord == null) {
-            logger.info("ContestPoolsTable failed on readFrom " + auditRecordLocation)
+            logger.info("ContestPoolsTable failed on read " + auditRecordLocation)
             return false
         }
 
         if (auditRecord !is CountyAuditRecord) return false
-        this.countyRecord = auditRecord as CountyAuditRecord
+        this.countyRecord = auditRecord
         this.mvrManager = PersistedMvrManager(this.countyRecord!!, false)
 
         val countyPools = mvrManager!!.countyPools()
@@ -154,7 +148,7 @@ class CountyTable(
 
         val countyCvrs = mvrManager!!.countyCvrPools() //.associateBy { it.countyName }
         this.countyCvrMap = if (countyCvrs == null) emptyMap() else countyCvrs.associateBy { it.countyName }
-        logger.info("read countyCvrPools=" + countyCvrMap.size)
+        logger.debug("read countyCvrPools=" + countyCvrMap.size)
 
         this.infos = auditRecord.contests.associate { it.contest.info().id to it.contest.info() }
         val countyData = countyRecord!!.countyData.associateBy { it.countyName }
@@ -173,7 +167,7 @@ class CountyTable(
     }
 
     fun setSelectedCounty(countyBean: CountyPoolsBean) {
-        contestTable.setBeans(emptyList())
+        countyContestTable.setBeans(emptyList())
         styleTable.setBeans(emptyList())
 
         val styleNCards = mutableMapOf<Int, Int>()
@@ -189,37 +183,39 @@ class CountyTable(
         }
         styleTable.setBeans(sbeanList)
 
-        val beanList = mutableListOf<CountyPoolContestBean>()
+        val beanList = mutableListOf<CountyContestBean>()
         countyBean.countyPool.contestTabs.forEach { (id, tab) ->
             val info = this.infos[id]!!
-            val auditcenterBean = CountyPoolContestBean(countyBean, info, tab, false)
+            val auditcenterBean = CountyContestBean(countyBean, info, tab, false)
             beanList.add( auditcenterBean )
             val cvrTab = countyBean.cvrTabs[id]
             if (cvrTab != null) {
-                val mvrBean = CountyPoolContestBean(countyBean, info, cvrTab, true)
+                val mvrBean = CountyContestBean(countyBean, info, cvrTab, true)
                 mvrBean.acBean = auditcenterBean
                 beanList.add(mvrBean)
             }
         }
-        contestTable.setBeans(beanList)
+        countyContestTable.setBeans(beanList)
     }
 
     override fun saveState() {
         countyTable.saveState(false)
         styleTable.saveState(false)
-        contestTable.saveState(false)
+        countyContestTable.saveState(false)
 
         prefs.putInt("splitPos1", split1.getDividerLocation())
         prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
-    fun showCountyContest(bean: CountyPoolContestBean) = buildString {
-        appendLine(contestTable.tableModel.showBean(this, CountyPoolContestBean.beanProperties))
+    fun showCountyContest(bean: CountyContestBean) = buildString {
+        append(org.cryptobiotic.rlauxe.beans.showContestWithDesc(bean, countyContestTable.tableModel, null))
+
+        // appendLine(countyContestTable.tableModel.showBean(this, CountyContestBean.beanProperties))
         appendLine(bean.contestTab)
         appendLine(bean.vunderTab)
         appendLine()
         appendLine("Used in Styles:")
-        styleTable.getBeans().forEach { styleBean ->
+        styleTable.beans.forEach { styleBean ->
             if (styleBean.style.hasContest(bean.contestId)) {
                 appendLine("  ${styleBean.style}")
             }
@@ -229,9 +225,9 @@ class CountyTable(
     fun showCountyStyle(bean: StyleTable.StyleBean) = buildString {
         appendLine(bean.style)
         appendLine("Used in Contests:")
-        appendLine(CountyPoolContestBean.header)
+        appendLine(CountyContestBean.header)
 
-        contestTable.getBeans().forEach { contestBean ->
+        countyContestTable.beans.forEach { contestBean ->
             if (bean.style.hasContest(contestBean.contestId)) {
                 appendLine(contestBean.show())
             }
@@ -242,15 +238,9 @@ class CountyTable(
         appendLine(countyTable.tableModel.showBean(bean, CountyPoolsBean.beanProperties))
         append(bean.show())
     }
+
     ////////////////////////////////////////////////////////////////
-    // data class CountyPoolMultipleStyles (
-    //    val countyName: String,
-    //    val countyPoolId: Int,
-    //    val contestTabs: List<ContestTabulation>,  // contestId -> ContestTabulation
-    //    val totalCards: Int,
-    //    val cardStyles: List<StyleIF>,
-    //    // val cardStylesCount: List<Int>, // or CardStyleWithNCards ??
-    //)
+
     class CountyPoolsBean(val countyPool: CountyPools, val countyData: CountyData) {
         val countyName = countyPool.countyName
         val countyPoolId = countyPool.countyPoolId
@@ -300,12 +290,12 @@ class CountyTable(
     }
 
     // all the contests in this county
-    class CountyPoolContestBean(val countyBean: CountyPoolsBean, val info: ContestInfo, val contestTab: ContestTabulation, val isMvrs: Boolean) {
+    class CountyContestBean(val countyBean: CountyPoolsBean, val info: ContestInfo, val contestTab: ContestTabulation, val isMvrs: Boolean) {
         val contestId: Int
         val contestName: String
         val countyPoolId = countyBean.countyPoolId
         val vunderTab: Vunder
-        var acBean: CountyPoolContestBean? = null
+        var acBean: CountyContestBean? = null
 
         init {
             contestId = contestTab.contestId
@@ -316,7 +306,7 @@ class CountyTable(
         val undervotes = vunderTab.undervotes  // vunder properly calculates when voteForN > 1
         val uvPct = undervotes / (contestTab.voteForN * contestTab.ncards()).toDouble()
         val voteForN = contestTab.voteForN
-        val missing = vunderTab.missing
+        // val missing = vunderTab.missing
         val votes = vunderTab.cands().toString()
 
         val nvotes = vunderTab.nvotes
@@ -327,7 +317,7 @@ class CountyTable(
             return if (acBean == null) "" else dfn((acBean!!.nvotes - vunderTab.nvotes) / acBean!!.nvotes.toDouble(), 4)
         }
 
-        val ncards = contestTab.ncards()
+        val estNcards = contestTab.ncards()
         val source = if (isMvrs) "cvrs" else "auditcenter"
 
         fun getNCounties(): String {
@@ -347,7 +337,7 @@ class CountyTable(
             val header = " id,                                     name, tabNCards, styleNCards, diffNCards, nvotes, undervotes, uvPct"
 
             @JvmStatic
-            fun hiddenProperties() = "countyBean contestTab vunderTab info acBean"
+            fun hiddenProperties() = "countyBean contestTab vunderTab info acBean mvrs"
 
             @JvmStatic
             val beanProperties = listOf(

@@ -1,16 +1,19 @@
 package org.cryptobiotic.rlauxe.viewer
 
-import org.cryptobiotic.rlauxe.audit.*
+import org.cryptobiotic.rlauxe.audit.AuditRoundIF
+import org.cryptobiotic.rlauxe.audit.Config
+import org.cryptobiotic.rlauxe.audit.ContestRound
+import org.cryptobiotic.rlauxe.audit.CountyPools
+import org.cryptobiotic.rlauxe.beans.BeanProperties
+import org.cryptobiotic.rlauxe.beans.BeanTable
+import org.cryptobiotic.rlauxe.beans.printTable
+import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
-import org.cryptobiotic.rlauxe.core.Assertion
-import org.cryptobiotic.rlauxe.core.AssorterIF
-import org.cryptobiotic.rlauxe.core.ClcaAssertion
-import org.cryptobiotic.rlauxe.core.ContestInfo
-import org.cryptobiotic.rlauxe.core.ContestWithAssertions
+import org.cryptobiotic.rlauxe.core.*
 import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord
@@ -18,11 +21,11 @@ import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.util.nfn
+import org.cryptobiotic.rlauxe.util.roundToClosest
 import org.cryptobiotic.rlauxe.util.trunc
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import ucar.ui.prefs.BeanTable
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -30,15 +33,12 @@ import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.util.*
-import java.util.function.Function
 import javax.swing.AbstractAction
 import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
-import kotlin.collections.associateBy
-import kotlin.text.split
 
 // used for both Contests and Sampling tabs
 class CorlaContestsTable(
@@ -46,7 +46,6 @@ class CorlaContestsTable(
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
     fontSize: Float,
-    sampler: Boolean,
 ) : JPanel(), ViewerPanelIF {
     var countyTotal: CountyBean? = null
 
@@ -72,39 +71,39 @@ class CorlaContestsTable(
         contestTable =
             BeanTable<CorlaContestBean>(
                 CorlaContestBean::class.java,
-                prefs.node("contestTable") as PreferencesExt?,
+                prefs.node("contestTable") as PreferencesExt,
                 false,
                 "Contests",
                 "Contests",
                 null
             )
-        contestTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent? ->
+        contestTable.addListSelectionListener { e: ListSelectionEvent? ->
             val contest = contestTable.getSelectedBean()
             if (contest != null) {
                 setSelectedContest(contest)
             }
-        })
+        }
         contestTable.addPopupOption(
             "Show Contest",
-            contestTable.makeShowAction(infoTA, infoWindow) { bean: Any? -> showContest(bean as CorlaContestBean) }
+            contestTable.makeShowAction(infoTA, infoWindow) { bean: CorlaContestBean -> showContest(bean) }
         )
         contestTable.addPopupOption(
-            "Print Contests", contestTable.makeShowAction(
-                infoTA, infoWindow,
-                Function { bean: Any? -> printContests() })
+            "Print Contests", contestTable.makeShowAction(infoTA, infoWindow)
+                { printTable(contestTable, BeanProperties.contests,"countyPool") }
         )
 
         contestCountyTable = BeanTable<ContestCountyBean>(
             ContestCountyBean::class.java,
-            prefs.node("contestCountyPoolBean") as PreferencesExt?,
+            prefs.node("contestCountyPoolBean") as PreferencesExt,
             false,
+            "Auditcenter and cvr subtotals by County for selected Contest",
             "County subtotals for selected Contest",
-            "CountyContests",
             null
         )
         contestCountyTable.addPopupOption(
-            "Show Contest",
-            contestCountyTable.makeShowAction(infoTA, infoWindow) { bean: Any? -> showCountyContest(bean as ContestCountyBean) }
+            "Show Contest Counties",
+            contestCountyTable.makeShowAction(infoTA, infoWindow)
+                { bean: ContestCountyBean -> showContestWithDesc(bean, contestCountyTable.tableModel, null) }
         )
 
         // countyTable.addPopupOption("Show County", countyTable.makeShowAction(infoTA, infoWindow, bean -> ((CountyBean) bean).show()));
@@ -129,7 +128,7 @@ class CorlaContestsTable(
         this.onlyShowInprogressContests = prefs.getBoolean( "onlyInProgress", false)
 
         this.auditRecordLocation = auditRecordLocation
-        contestTable.setBeans(mutableListOf<CorlaContestBean?>())
+        contestTable.setBeans(null)
 
         logger.debug("setAuditRecord " + auditRecordLocation)
 
@@ -138,11 +137,11 @@ class CorlaContestsTable(
             val record = AuditRecord.read(auditRecordLocation)
             if (record == null) return false
             if (record.rounds.isEmpty()) {
-                logger.info("first round was not started") // TODO plan B
+                logger.info("{} first round was not started", auditRecordLocation)
                 return false
             }
             if (record !is CountyAuditRecord) {
-                logger.info("must be CountyAuditRecord")
+                logger.info("{} must be CountyAuditRecord", auditRecordLocation)
                 return false
             }
             this.countyAudit = record
@@ -247,14 +246,14 @@ class CorlaContestsTable(
         //   prefs.putBoolean("dsState", dsButt.getModel().isSelected());
         val onlyProcessAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
-                val state = getValue( BAMutil.STATE);
+                val state = getValue( BAMutil.STATE)
                 val onlyProcess = state as Boolean
                 onlyProcess(onlyProcess)
                 prefs.putBoolean( "onlyInProgress", onlyProcess)
             }
         }
         val savedState = prefs.getBoolean( "onlyInProgress", false)
-        onlyProcessAction.putValue(BAMutil.STATE, savedState);
+        onlyProcessAction.putValue(BAMutil.STATE, savedState)
         BAMutil.setActionProperties(onlyProcessAction, "sunrise-icon.png", "Only show Contests InProgress", true, 'S'.code, -1)
         BAMutil.addActionToContainer(container, onlyProcessAction)
 
@@ -300,7 +299,8 @@ class CorlaContestsTable(
     }
 
     fun showContest(bean: CorlaContestBean) = buildString {
-        append(BeanProperties.showContestG(bean, contestTable.tableModel, bean.contestUA))
+        append( showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
+        appendLine()
         val votes: Map<Int, Int> = bean.contestUA.contest.votes()!!
         val sortedVotes = votes.toList().sortedBy { it.first }.toMap()
         appendLine("sortedVotes   = $sortedVotes")
@@ -312,7 +312,7 @@ class CorlaContestsTable(
             var cvrNu = 0
             val acSum = ContestTabulation(bean.contestUA.contest.info())
             val cvrSum = ContestTabulation(bean.contestUA.contest.info())
-            contestCountyTable.getBeans().forEach { bean ->
+            contestCountyTable.beans.forEach { bean ->
                 if (bean.isCvrs) {
                     cvrSum.sum(bean.contestTab)
                     cvrNvotes += bean.nvotes
@@ -329,19 +329,6 @@ class CorlaContestsTable(
             appendLine("acNu = $acNu, cvrNu = $cvrNu diff = ${acNu - cvrNu}")
         }
         append(showSums)
-    }
-
-    fun printContests(): String {
-        // TODO make general
-        val indexBeans = contestTable.getIndexedBeans()
-        val sortedIndexBeans = indexBeans.sortedBy { it.viewIndex() }
-        val sortedBeans =   sortedIndexBeans.map { it.bean }
-        return BeanProperties.printTableG(sortedBeans, contestTable.tableModel, BeanProperties.contests, "contests")
-    }
-
-    fun showCountyContest(bean: ContestCountyBean) = buildString {
-        append(BeanProperties.showContestG(bean, contestCountyTable.tableModel, null))
-        // append(bean.showSums(contestCountyTable.getBeans()))
     }
 
     // used also in SamplingTable
@@ -405,9 +392,9 @@ class CorlaContestsTable(
 
         fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
 
-        fun samplePct() : Double{
+        fun samplePct() : Double {
             val pop = this.getPopulation()
-            return if (pop == 0) 0.0 else this.getEstMvrs() / (1.0 * pop)
+            return if (pop == 0) 0.0 else 100 * this.getEstMvrs() / pop.toDouble()
         }
 
         fun getNCounties(): String {
@@ -426,63 +413,46 @@ class CorlaContestsTable(
 
         fun getCorlaEstMvrs(): Int {
             if (!targeted()) return -1
-            if (contestUA == null) return -1
-            val CORLAsample = contestUA!!.contest.info().metadata.get("CORLAsample")
-            if (CORLAsample == null) return -1
+            val CORLAsample = contestUA.contest.info().metadata.get("CORLAsample") ?: return -1
             return CORLAsample.toInt()
         }
 
         fun getCorlaHaveMvrs(): Int {
-            if (contestUA == null) return -1
-            val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAhaveMvrs")
-            if (haveMvrss == null) return -1
+            val haveMvrss = contestUA.contest.info().metadata.get("CORLAhaveMvrs") ?: return -1
             return haveMvrss.toInt()
         }
 
         fun getCorlaStrata(): Int {
-            if (contestUA == null) return -1
-            val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAstrataNcards")
-            if (haveMvrss == null) return -1
+            val haveMvrss = contestUA.contest.info().metadata.get("CORLAstrataNcards") ?: return -1
             return haveMvrss.toInt()
         }
 
         // same as corlaSampling plot
-        fun getCorlaVoteDiff(): Int {
-            if (contestUA == null) return -1
-            val cua = contestUA!!
-            val contest = cua.contest
-            val minMargin: String? = contest.info().metadata.get("CORLAmarginInVotes")
-            if (minMargin == null) return -1
+        fun getCorlaVoteMargin(): Int {
+            val contest = contestUA.contest
+            val minMargin: String = contest.info().metadata.get("CORLAmarginInVotes") ?: return -1
             return minMargin.toInt()
         }
 
         // same as corlaSampling plot
         fun getCorlaRisk(): Double {
-            if (contestUA == null) return 1.0
-            val cua = contestUA!!
-            val contest = cua.contest
-            val haveMvrss: String? = contest.info().metadata.get("CORLAhaveMvrs")
-            if (haveMvrss == null) return 1.0
-            val minAssertion: Assertion? = cua.minAssertion()
-            if (minAssertion == null) return 1.0
+            val contest = contestUA.contest
+            val haveMvrss: String = contest.info().metadata.get("CORLAhaveMvrs") ?: return 1.0
+            val minAssertion: Assertion = contestUA.minAssertion() ?: return 1.0
 
-            // fun estRiskStandardBet(voteDiff: Int, Npop: Int, upper: Double, nsamples: Int, ): Double {
-            return estRiskStandardBet(getCorlaVoteDiff(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
+            return estRiskStandardBet(getCorlaVoteMargin(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
         }
 
         fun getTarget() = if (targeted()) "YES" else ""
 
         fun targeted(): Boolean {
-            val reason = contestUA.contest.info().metadata.get("CORLAauditReason")
-            if (reason == null) return false
-            // return reason == "county_wide_contest"
+            val reason = contestUA.contest.info().metadata.get("CORLAauditReason") ?: return false
             return reason == "state_wide_contest" || reason == "county_wide_contest"
         }
 
         fun statewide(): Boolean {
-            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
-            if (CORLAcounties == null) return false
-            val toks: Array<String?> = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties") ?: return false
+            val toks = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             return (toks.size > 60)
         }
 
@@ -509,10 +479,29 @@ class CorlaContestsTable(
         }
 
         fun getDiffNcards() : Int {
-            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards")
-            if (CvrNcards == null) return 0
+            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards") ?: return 0
             val ncvrs = CvrNcards.toInt()
             return contestUA.Nc - ncvrs
+        }
+
+        // Nc - cvrs.ncards / Nc
+        fun getPctNcardsMissing() : Int {
+            return roundToClosest(100 * getDiffNcards() / contestUA.Nc.toDouble())
+        }
+
+        fun getVotes(): String {
+            val votes = contestUA.contest.votes()
+            if (votes != null) return votes.toString()
+            return "N/A"
+        }
+
+        fun getVoteMargin(): Int {
+            val minAssertion = contestUA.minAssertion() ?: return 0
+            return contestUA.contest.marginInVotes(minAssertion.assorter)
+        }
+
+        fun getNvotes() : Int {
+            return contestUA.contest.nvotes()
         }
 
         fun getCvrNvotes() : Int {
@@ -522,28 +511,14 @@ class CorlaContestsTable(
             return nvotes
         }
 
-        fun getCvrNundervotes() : Int {
-            val CvrNvotes = contestUA.contest.info().metadata.get("CvrNundervotes")
-            if (CvrNvotes == null) return 0
-            val nvotes = CvrNvotes.toInt()
-            return nvotes
-        }
-
-        fun getNvotes() : Int {
-            return contestUA.contest.nvotes()
-        }
-
         fun getDiffNvotes() : Int {
-            val CvrNvotes = contestUA.contest.info().metadata.get("CvrNvotes")
-            if (CvrNvotes == null) return 0
-            val nvotes = CvrNvotes.toInt()
-            return contestUA.contest.nvotes() - nvotes
+            return getNvotes() - getCvrNvotes()
         }
 
-         // Nc - cvrs.ncards / Nc = % phantoms ?
-         fun getPctMissing() : Double {
-             return getDiffNcards() / contestUA.Nc.toDouble()
-         }
+        // Nc - cvrs.ncards / Nc
+        fun getPctNvotesMissing() : Int {
+            return roundToClosest(100 * getDiffNvotes() / getNvotes().toDouble())
+        }
 
         fun getPopulation() = contestUA.population()
 
@@ -551,7 +526,7 @@ class CorlaContestsTable(
 
         fun getRecountMargin(): Double {
                 val min = contestUA.minRecountMargin()
-                return if (min == null) 0.0 else min
+                return min ?: 0.0
             }
 
         fun getStatus() = Naming.status(contestUA.preAuditStatus)
@@ -560,19 +535,12 @@ class CorlaContestsTable(
 
         fun getUndervotes() = contestUA.contest.Nundervotes()
 
+        fun getCvrNundervotes() : Int {
+            val cvrNvotes = contestUA.contest.info().metadata.get("CvrNundervotes") ?: return 0
+            return cvrNvotes.toInt()
+        }
+
         fun getUvPct() = contestUA.contest.undervotePct()
-
-        fun getVotes(): String {
-                val votes = contestUA.contest.votes()
-                if (votes != null) return votes.toString()
-                return "N/A"
-            }
-
-        fun getVoteDiff(): Int {
-                val minAssertion = contestUA.minAssertion()
-                if (minAssertion == null) return 0
-                return contestUA.contest.marginInVotes(minAssertion.assorter)
-            }
 
         fun getWinners() = contestUA.contest.winners().toString()
 
@@ -672,8 +640,7 @@ class CorlaContestsTable(
         }
 
         val undervotes = vunderTab.undervotes  // vunder properly calculates when voteForN > 1
-        // val uvPct = undervotes / (contestTab.voteForN * contestTab.ncards()).toDouble()
-        val missing = vunderTab.missing
+        // val missing = vunderTab.missing
         val votes = vunderTab.cands().toString()
 
         val nvotes = vunderTab.nvotes
@@ -681,7 +648,9 @@ class CorlaContestsTable(
             return if (acBean == null) -1 else (acBean!!.nvotes - nvotes)
         }
         fun getPctCompareNvotes() : String {
-            return if (acBean == null) "" else dfn((acBean!!.nvotes - nvotes) / acBean!!.nvotes.toDouble(), 4)
+            return if (acBean == null) ""
+            else if (getCompareNvotes() == 0) return "0"
+            else dfn(getCompareNvotes() / acBean!!.nvotes.toDouble(), 4)
         }
 
         val cvrNcards = contestTab.ncards()

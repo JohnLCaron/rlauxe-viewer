@@ -43,9 +43,6 @@ and check that `viewer/build/libs/viewer-uber.jar` was built.
 [The Rlauxe getting started page](https://github.com/JohnLCaron/rlauxe/blob/main/docs/Developer.md#getting-started) has instructions
 on how to build all of the case study datasets.
 
-(Or contact me for the prebuilt Belgium 2024 dataset).
-
-
 ## Starting Rlauxe-viewer
 
 ### From the command line
@@ -57,28 +54,29 @@ cd devhome/rlauxe-viewer
 For Belgium elections:
 
 `
-java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit
+java -jar viewer/build/libs/rlauxe-viewer-uber.jar -belgiumAudit
 `
 
 For Colorado elections:
 
 `
-java -jar viewer/build/libs/viewer-uber.jar -corlaAudit
+java -jar viewer/build/libs/rlauxe-viewer-uber.jar -corlaAudit
 `
 
 For all audits:
 
 `
-java -jar viewer/build/libs/viewer-uber.jar
+java -jar viewer/build/libs/rlauxe-viewer-uber.jar
 `
 
 For any of these, you can optionally set the default directory where Audit Records are kept, eg:
 
 `
-java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit -datadir /my/rlauxe/audits
+java -jar viewer/build/libs/rlauxe-viewer-uber.jar -belgiumAudit -datadir /my/rlauxe/audits
 `
 
 which is where the "Audit Record Chooser" widget will start from.
+
 
 ### From IntelliJ:
 
@@ -169,7 +167,7 @@ The fields shown in the **Rerun audit with Details** report are:
 
 To bring up the specialized Belgium Audit viewer, add -belgiumAudit to the command line, for example:
 
-`java -jar viewer/build/libs/viewer-uber.jar -belgiumAudit`
+`java -jar viewer/build/libs/rlauxe-viewer-uber.jar -belgiumAudit`
 
 Use the Audit Record chooser to navigate to the top of the Belgium Audit Record, and select it.
 

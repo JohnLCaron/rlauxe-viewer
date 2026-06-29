@@ -6,6 +6,8 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.audit.*;
+import org.cryptobiotic.rlauxe.beans.BeanProperties;
+import org.cryptobiotic.rlauxe.beans.BeanTable;
 import org.cryptobiotic.rlauxe.betting.TestH0Status;
 import org.cryptobiotic.rlauxe.betting.UtilsKt;
 import org.cryptobiotic.rlauxe.bridge.Naming;
@@ -18,7 +20,6 @@ import org.cryptobiotic.rlauxe.persist.*;
 import org.cryptobiotic.rlauxe.viewer.ViewerMain.ViewerProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ucar.ui.prefs.BeanTable;
 import ucar.ui.widget.IndependentWindow;
 import ucar.ui.widget.TextHistoryPane;
 import ucar.util.prefs.PreferencesExt;
@@ -28,8 +29,9 @@ import java.awt.*;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
+import static org.cryptobiotic.rlauxe.beans.BeanPropertiesKt.*;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.*;
-import static org.cryptobiotic.rlauxe.viewer.BeanProperties.*;
+import static org.cryptobiotic.rlauxe.viewer.BeanPropertiesOld.*;
 
 public class ContestsPanel extends JPanel implements ViewerPanelIF {
     static private final Logger logger = LoggerFactory.getLogger(ContestsPanel.class);
@@ -37,7 +39,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
     private final PreferencesExt prefs;
     private final ViewerProfile profile;
 
-    private final BeanTable<ContestsPanel.ContestBean> contestTable;
+    private final BeanTable<ContestBean> contestTable;
     private final BeanTable<ContestsPanel.AssertionBean> assertionTable;
 
     private final JSplitPane split2;
@@ -108,7 +110,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         this.auditRecord = AuditRecord.Companion.read(auditRecordLocation);
         if (this.auditRecord == null) return false;
         if (!auditRecord.getRounds().isEmpty()) {
-            logger.info("first round was not started"); // TODO plan B
+            logger.info("{} first round was not started", auditRecordLocation); // TODO plan B
         }
         this.lastAuditRound = auditRecord.getRounds().getLast();
 
@@ -210,7 +212,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
     }
 
     public String printContests() {
-        return printTableG(contestTable.getBeans(), contestTable.tableModel, BeanProperties.contests, "contests");
+        return printTable(contestTable, BeanProperties.INSTANCE.getContestBeanProperties(), "contests");
     }
 
     public class ContestBean {
@@ -324,7 +326,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             return "N/A";
         }
 
-        public Integer getVoteDiff() {
+        public Integer getVoteMargin() {
             Assertion minAssertion = contestUA.minAssertion();
             return contestUA.getContest().marginInVotes(minAssertion.getAssorter());
         }
@@ -334,19 +336,9 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         }
 
         public String show() {
-            return showContestG(this, contestTable.tableModel, this.contestUA);
+            return showContestWithDesc(this, contestTable.getTableModel(), this.contestUA);
         }
 
-        /*
-                public Integer getPoolPct() {
-            var pct =  contestUA.getContest().info().getMetadata().get("PoolPct");
-            return (pct == null) ? 0 : Integer.parseInt(pct);
-        }
-
-        public Integer getOneshotEst() {
-            Integer nmvrs = oneshotMvrs.get(contestUA.getId());
-            return (nmvrs != null) ? nmvrs : 0;
-        } */
     }
 
     public class AssertionBean {
@@ -440,7 +432,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
         public String show() {
             var assn = (this.cassertion != null) ? this.cassertion : this.assertion;
-            return showAssertionG(this, assertionTable.tableModel, this.cua, assn);
+            return showAssertionWithDesc(this, assertionTable.getTableModel(), this.cua, assn);
         }
     }
 

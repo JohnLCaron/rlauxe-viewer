@@ -21,14 +21,14 @@ import static ucar.ui.widget.BAMutil.getIcon;
 public class TableAppearanceAction extends AbstractAction {
   private static final Logger logger = LoggerFactory.getLogger(TableAppearanceAction.class);
 
-  private final JTable table;
+  private final JTable clientTable;
 
-  public TableAppearanceAction(JTable table) {
-    if (!(table.getColumnModel() instanceof HidableTableColumnModel)) {
+  public TableAppearanceAction(JTable clientTable) {
+    if (!(clientTable.getColumnModel() instanceof HidableTableColumnModel)) {
       throw new IllegalArgumentException("table's TableColumnModel must be an instance of HidableTableColumnModel.");
     }
 
-    this.table = table;
+    this.clientTable = clientTable;
 
     putValue(NAME, "Table appearance");
     putValue(SMALL_ICON, getIcon("TableAppearance.png", true));
@@ -72,9 +72,8 @@ public class TableAppearanceAction extends AbstractAction {
 
   // We can't cache the table model because a new one may be installed.
   private HidableTableColumnModel getTableColumnModel() {
-    return (HidableTableColumnModel) table.getColumnModel();
+    return (HidableTableColumnModel) clientTable.getColumnModel();
   }
-
 
   private class ResizeColumnWidthsAction extends AbstractAction {
     private ResizeColumnWidthsAction() {
@@ -85,7 +84,7 @@ public class TableAppearanceAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      ColumnWidthsResizer.resize(table);
+      ColumnWidthsResizer.resize(clientTable);
     }
   }
 

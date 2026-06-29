@@ -1139,7 +1139,7 @@ public class BeanTable<T> extends JPanel {
 
   static public class TableBeanProperty implements Comparable<TableBeanProperty> {
     public String name;
-    String desc;
+    public String desc;
     boolean visible;
     int viewColumnIndex;
 

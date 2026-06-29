@@ -9,15 +9,19 @@ java {
     }
 }
 
+val subprojectName = name
+val subprojectVersion = version
+
 dependencies {
-    api(project(":uibase"))
-    // implementation(files("/home/stormy/dev/github/rla/rlauxe/core/build/libs/core-0.9.5.3-uber.jar"))
-    implementation(files("../libs/core-0.9.5.3-uber.jar"))
+    api(project(":rlauxe-uibase"))
+    // implementation(files("/home/stormy/dev/github/rla/rlauxe/core/build/libs/rlauxe-core-0.10.0.0-uber.jar"))
+    implementation(files("../libs/rlauxe-core-0.10.0.0-uber.jar"))
     implementation(libs.slf4j)
     implementation(libs.logback.classic)
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)
+    testImplementation(kotlin("test"))
 }
 
 tasks.getByName<Test>("test") {
@@ -30,6 +34,8 @@ tasks.register<Jar>("uberJar") {
 
     manifest {
         attributes("Main-Class" to "org.cryptobiotic.rlauxe.viewer.ViewerMain")
+        attributes("Implementation-Title" to subprojectName)
+        attributes("Implementation-Version" to subprojectVersion)
     }
 
     from(sourceSets.main.get().output)
