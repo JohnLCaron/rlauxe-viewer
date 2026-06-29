@@ -22,12 +22,12 @@ xmlutil-version = "0.91.3"
 jdom2 = "2.0.6.1"
 jgoodies = "1.6.0"
 junit = "4.13.2"
-slf4j = "1.7.32"
+slf4j = "2.0.17"
 truth = "1.4.4"
 
 # test only dependency versions
 junit-jupiter-params = "5.13.1"
-logback = "1.5.29"
+logback = "1.5.34"
 mockk = "1.14.9"
 kotest = "6.1.3"
 
