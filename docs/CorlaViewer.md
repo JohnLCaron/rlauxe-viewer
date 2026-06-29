@@ -16,7 +16,7 @@ First, [build the jar file](https://github.com/JohnLCaron/rlauxe-viewer#building
 
 Make sure you are in the rlauxe-viewer local git repo:
 
-cd <devhome>/rlauxe-viewer
+`cd <devhome>/rlauxe-viewer`
 
 Then run
 
