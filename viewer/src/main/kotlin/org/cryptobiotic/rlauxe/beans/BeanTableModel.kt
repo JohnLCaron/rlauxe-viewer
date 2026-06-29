@@ -34,7 +34,7 @@ import kotlin.math.min
 private val logger: Logger = LoggerFactory.getLogger(BeanTableModel::class.java)
 
 
-private val showTableTypes = true
+private val showTableTypes = false
 private val debugBean = false
 private val debugEditing = false
 
@@ -226,7 +226,7 @@ class BeanTableModel<T>(val store: PreferencesExt, val beanClass: Class<T>, val 
     }
 
     // editing
-    override fun getColumnClass(col: Int): Class<*>? {
+    override fun getColumnClass(col: Int): Class<*> {
         return wrapPrimitives(properties.get(col).getPropertyType())
         // return properties.get(col).getPropertyType()
     }
