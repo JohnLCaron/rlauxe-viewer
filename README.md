@@ -85,9 +85,6 @@ After the application starts, use the "Audit Record Chooser" button
 to bring up the "Audit Record Chooser" widget,
 then navigate to the directory where the Audit Record is stored.
 
-Note that for Belgium or Corla audits, this is the top directory containing the component counties or province audits,
-but for regular audits, its the subdirectory named "audit" under the test case name. (Sorry about that).
-
 ![image](docs/images/DirectoryChooser.png)
 
 The **Contests** tab will be populated from the chosen audit record:
@@ -109,13 +106,12 @@ Closing the viewer window will save your UI configuration (in _~/.rlauxe/_).
 Choose "Exit Viewer NO Save" to exit without saving.
 Choose "Save Preferences to Disk" to save without exiting.
 
-The upper right corner gear widget in each table
+Click on a table's top right corner gear icon ![gear](docs/images/TableColumnGear.png) to bring up the table column chooser:
 
-![image](docs/images/TableColumnChooser.png).
+![image](docs/images/TableColumnMenu.png)
 
-allows you to change which columns are visible:
+which shows the table's columns to show or remove from the table.
 
-![image](docs/images/TableColumnContests.png).
 
 Change the order and size of the table headings, by clicking and dragging the table headers:
 
@@ -136,7 +132,7 @@ audit. By clicking on a header, you can sort the table by that column's value. I
 The **Estimation Rounds** table shows the estimated distribution of samples needed for the selected assertion. 
 The **Audit Results** table shows the results of the actual Audit (if its was done).
 
-If you right click on the Audit Result line, and choose **Rerun audit with Details**, the audit is rerun and shows the
+If you right-click on the Audit Result line, and choose **Rerun audit with Details**, the audit is rerun and shows the
 actual audit sample values, betting value, pvalue, mvr and cvr. 
 
 ![image](docs/images/AuditDetail.png)
