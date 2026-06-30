@@ -85,7 +85,7 @@ In the top right are various buttons that make it easy to try different scenario
 
 ![image](../uibase/src/main/resources/resources/ui/png/remove-cart.png) All selected contests are not included. If 0 or 1 rows are selected, then set all rows to not included.
 
-![image](../uibase/src/main/resources/resources/ui/png/count.png) Once you have resamples, show a "summary risk report":
+![image](../uibase/src/main/resources/resources/ui/png/count.png) Once you have set the included flags and resampled, show a "summary risk report":
 
 ![image](images/corla/SummaryRiskReport.png)
 
