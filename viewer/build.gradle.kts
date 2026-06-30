@@ -1,6 +1,5 @@
 plugins {
-    java
-    alias(libs.plugins.kotlin.jvm)
+    kotlin("jvm")
 }
 
 java {
@@ -14,8 +13,8 @@ val subprojectVersion = version
 
 dependencies {
     api(project(":rlauxe-uibase"))
-    // implementation(files("/home/stormy/dev/github/rla/rlauxe/core/build/libs/rlauxe-core-0.10.0.0-uber.jar"))
-    implementation(files("../libs/rlauxe-core-0.10.0.0-uber.jar"))
+    // implementation(files("/home/stormy/dev/github/rla/rlauxe/core/build/libs/rlauxe-core-0.10.1.0-uber.jar"))
+    implementation(files("../libs/rlauxe-core-0.10.1.0-uber.jar"))
     implementation(libs.slf4j)
     implementation(libs.logback.classic)
 
