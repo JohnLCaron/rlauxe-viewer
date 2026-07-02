@@ -143,7 +143,7 @@ The fields shown in the **Rerun audit with Details** report are:
 * j  : sample number
 * xj : assort value
 * lamj : BettingMart bet
-* tj : (1 - lamj*(xj - mj) )
+* tj : (1 + lamj*(xj - mj) )
 * Tj : Product (tj, j=1..j)
 * pvalue = 1 / Tj
 * location: sampled CVR's location
