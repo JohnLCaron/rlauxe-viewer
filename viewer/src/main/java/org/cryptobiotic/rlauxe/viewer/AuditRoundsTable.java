@@ -154,7 +154,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
         add(split4, BorderLayout.CENTER);
     }
 
-    public void getActions(JPanel container, ContestsPanel contestsPanel) {
+    public void getActions(JPanel container, RlauxeContestsTable contestsPanel) {
         AbstractAction startAction = new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 resample();
@@ -268,6 +268,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
                 .min(Comparator.comparing(ContestRoundBean::getMargin))
                 .orElseThrow(NoSuchElementException::new);
         contestRoundTable.setSelectedBean(minByMargin);
+        setSelectedContest(minByMargin);
     }
 
     void setSelectedContest(ContestRoundBean contestRoundBean) {
@@ -285,6 +286,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
                 .min(Comparator.comparing(AssertionBean::getMargin)) // TODO use noerror
                 .orElseThrow(NoSuchElementException::new);
         assertionTable.setSelectedBean(minByMargin);
+        setSelectedAssertion(minByMargin);
     }
 
     // TODO could you use ContestRound.resultsForAssertion(assorterDesc: String) ??

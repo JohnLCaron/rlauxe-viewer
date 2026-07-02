@@ -6,7 +6,6 @@
 package org.cryptobiotic.rlauxe.viewer;
 
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
-import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord;
 import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;
 import ucar.ui.prefs.Debug;
@@ -65,7 +64,7 @@ public class ViewerMain extends JPanel {
   private CountyTable countyPoolsPanel = null;
   private SamplingTable samplingPanel;
 
-  private ContestsPanel contestsPanel;
+  private RlauxeContestsTable rlauxeContests;
   private StyleTable stylePanel;
   private PoolTable poolPanel;
   private CardTable cardPanel;
@@ -115,10 +114,10 @@ public class ViewerMain extends JPanel {
         activePanels.add(samplingPanel);
 
       } else {
-        contestsPanel = new ContestsPanel((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize, profile);
-        contestsPanel.getActions(actionsPanel);
-        tabbedPane.addTab("Contests", contestsPanel);
-        activePanels.add(contestsPanel);
+        rlauxeContests = new RlauxeContestsTable((PreferencesExt) prefs.node("AuditTable"), infoTA, infoWindow, fontSize);
+        rlauxeContests.getActions(actionsPanel);
+        tabbedPane.addTab("Contests", rlauxeContests);
+        activePanels.add(rlauxeContests);
 
         poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
         tabbedPane.addTab("Pools", poolPanel);
@@ -169,7 +168,7 @@ public class ViewerMain extends JPanel {
       } else if (c instanceof ContestsPanel contests) {
         contests.getActions(actionsPanel);
       } else if (c instanceof AuditRoundsTable auditRound) {
-        auditRound.getActions(actionsPanel, contestsPanel);
+        auditRound.getActions(actionsPanel, rlauxeContests);
       } else if (c instanceof CountyTable countyPools) {
         countyPools.getActions(actionsPanel);
       } else if (c instanceof SamplingTable samplingTable) {
@@ -276,7 +275,7 @@ public class ViewerMain extends JPanel {
   void showInfo(Formatter f) {
     if (belgiumPanel != null) belgiumPanel.showInfo(f);
     else if (corlaPanel != null) corlaPanel.showInfo(f);
-    else contestsPanel.showInfo(f);
+    else rlauxeContests.showInfo(f);
   }
 
   // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
