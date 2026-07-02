@@ -174,7 +174,7 @@ class PoolTable(
             get() = vunder.missing
         val votes: String
             get() {
-                if (!contestTab!!.isIrv) return vunder.cands().toString()
+                if (!contestTab.isIrv) return vunder.cands().toString()
                 else return "VC " + vunder.voteCounts.size + " unique rankings"
             }
 

@@ -268,10 +268,10 @@ class RlauxeContestsTable(
             }
 
         val estMvrs: Int
-            get() = if (contestRound == null) 0 else contestRound!!.estMvrs
+            get() = if (contestRound == null) 0 else contestRound.estMvrs
 
         val haveMvrs: Int
-            get() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
+            get() = if (contestRound == null) 0 else contestRound.haveSampleSize
 
         val noerror: String
             get() {
@@ -298,7 +298,7 @@ class RlauxeContestsTable(
             get() = this.haveMvrs - this.estMvrs
 
         val mvrsUsed: Int
-            get() = if (contestRound == null) 0 else contestRound!!.maxSamplesUsed()
+            get() = if (contestRound == null) 0 else contestRound.maxSamplesUsed()
 
         val nc: Int
             get() = contestUA.Nc

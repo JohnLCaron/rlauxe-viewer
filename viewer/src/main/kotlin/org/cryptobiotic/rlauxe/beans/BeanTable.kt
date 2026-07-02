@@ -21,16 +21,6 @@ import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 import javax.swing.table.TableColumnModel
 
-/**
- * Constructor.
- * 
- * @param bc           JavaBean class
- * @param pstore       store data in this PreferencesExt store.
- * @param canAddDelete allow changes to the jtable - adds a New and Delete button to bottom panel
- * @param header       optional header label
- * @param tooltip      optional tooltip label
- * @param bean         needed for inner classes to call reflected methods; // TODO remove support ?
- */
 class BeanTable<T>(
     val beanClass: Class<T>,
     val store: PreferencesExt,
@@ -142,7 +132,6 @@ class BeanTable<T>(
         setLayout(BorderLayout())
         add(scrollPane, BorderLayout.CENTER)
 
-        if (header != null) {
             if (tooltip != null) {
                 headerLabel = object : JLabel(header, CENTER) {
                     override fun createToolTip(): JToolTip {
@@ -154,7 +143,6 @@ class BeanTable<T>(
                 headerLabel = JLabel(header, SwingConstants.CENTER)
             }
             add(headerLabel, BorderLayout.NORTH)
-        }
 
         // event management
         listenerList = EventListenerList()
