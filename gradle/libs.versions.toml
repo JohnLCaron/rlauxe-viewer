@@ -2,9 +2,9 @@
 rlauxe = "0.10.2.0"
 
 # main dependency versions
-kotlin = "2.3.21"
+kotlin = "2.3.20"
 kotlinx-cli = "0.3.6"
-kotlinx-coroutines = "1.11.0"
+kotlinx-coroutines = "1.10.2"
 oshai-version = "8.0.4"
 slf4j-version="2.0.17"
 

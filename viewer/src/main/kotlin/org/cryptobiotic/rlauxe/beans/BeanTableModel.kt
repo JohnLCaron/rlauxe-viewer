@@ -357,7 +357,7 @@ class BeanTableModel<T>(val store: PreferencesExt, val beanClass: Class<T>, val 
             val propm = props.stream()
                 .collect(
                     Collectors.toMap(
-                        Function { prop: TableBeanProperty -> prop!!.name },
+                        Function { prop: TableBeanProperty -> prop.name },
                         Function { prop: TableBeanProperty -> prop })
                 )
 
@@ -435,7 +435,7 @@ class BeanTableModel<T>(val store: PreferencesExt, val beanClass: Class<T>, val 
         val propm = props.stream()
             .collect(
                 Collectors.toMap(
-                    Function { prop: TableBeanProperty -> prop!!.name },
+                    Function { prop: TableBeanProperty -> prop.name },
                     Function { prop: TableBeanProperty -> prop })
             )
 
