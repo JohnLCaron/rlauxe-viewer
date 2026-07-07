@@ -31,16 +31,15 @@ import java.util.*;
 import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.beans.BeanPropertiesKt.*;
 import static org.cryptobiotic.rlauxe.util.UtilsKt.*;
-import static org.cryptobiotic.rlauxe.viewer.BeanPropertiesOld.*;
 
-public class ContestsPanel extends JPanel implements ViewerPanelIF {
-    static private final Logger logger = LoggerFactory.getLogger(ContestsPanel.class);
+public class ContestsPanelOld extends JPanel implements ViewerPanelIF {
+    static private final Logger logger = LoggerFactory.getLogger(ContestsPanelOld.class);
 
     private final PreferencesExt prefs;
     private final ViewerProfile profile;
 
     private final BeanTable<ContestBean> contestTable;
-    private final BeanTable<ContestsPanel.AssertionBean> assertionTable;
+    private final BeanTable<ContestsPanelOld.AssertionBean> assertionTable;
 
     private final JSplitPane split2;
 
@@ -50,12 +49,12 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
     private Map<Integer, Integer> oneshotMvrs;
     private AuditRoundIF lastAuditRound; // may be null
 
-    public ContestsPanel(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize, ViewerProfile profile) {
+    public ContestsPanelOld(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize, ViewerProfile profile) {
         this.prefs = prefs;
         this.profile = profile;
 
         contestTable =
-                new BeanTable<>(ContestsPanel.ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false, "Contests", "ContestRound", null);
+                new BeanTable<>(ContestsPanelOld.ContestBean.class, (PreferencesExt) prefs.node("contestTable"), false, "Contests", "ContestRound", null);
 
         contestTable.addListSelectionListener(e -> {
             ContestBean contest = contestTable.getSelectedBean();
@@ -64,7 +63,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             }
         });
         contestTable.addPopupOption("Show Contest", contestTable.makeShowAction(infoTA, infoWindow,
-                bean -> ((ContestsPanel.ContestBean) bean).show()));
+                bean -> ((ContestsPanelOld.ContestBean) bean).show()));
         contestTable.addPopupOption("Print Contests", contestTable.makeShowAction(infoTA, infoWindow,
                 bean -> printContests()));
 
@@ -118,8 +117,8 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
             this.config = auditRecord.getConfig();
             ContestBean.alpha = config.getRiskLimit();
 
-            var contestMap = new HashMap<Integer, ContestsPanel.ContestBean>();
-            java.util.List<ContestsPanel.ContestBean> beanList = new ArrayList<>();
+            var contestMap = new HashMap<Integer, ContestsPanelOld.ContestBean>();
+            java.util.List<ContestsPanelOld.ContestBean> beanList = new ArrayList<>();
 
             java.util.Map<Integer, ContestRound> contestRoundMap = new HashMap<>();
             for (var contestRound : lastAuditRound.getContestRounds()) {
@@ -128,7 +127,7 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
             for (var cwa : auditRecord.getContests()) {
                 var cr = contestRoundMap.get(cwa.getId());
-                var bean = new ContestsPanel.ContestBean(cwa, cr);
+                var bean = new ContestsPanelOld.ContestBean(cwa, cr);
                 beanList.add(bean);
                 contestMap.put(cwa.getId(), bean);
             }
@@ -140,10 +139,10 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
 
             if (!auditRecord.getRounds().isEmpty()) {
                 // select inProgress contest with smallest margin
-                Optional<ContestsPanel.ContestBean> minByMargin = beanList
+                Optional<ContestsPanelOld.ContestBean> minByMargin = beanList
                         .stream()
                         .filter(bean -> bean.getStatus().equals("InProgress"))
-                        .min(Comparator.comparing(ContestsPanel.ContestBean::getMargin));
+                        .min(Comparator.comparing(ContestsPanelOld.ContestBean::getMargin));
                 minByMargin.ifPresent(contestTable::setSelectedBean);
             }
 
@@ -158,11 +157,11 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         return true;
     }
 
-    void setSelectedContest(ContestsPanel.ContestBean contestBean) {
-        java.util.List<ContestsPanel.AssertionBean> beanList = new ArrayList<>();
+    void setSelectedContest(ContestsPanelOld.ContestBean contestBean) {
+        java.util.List<ContestsPanelOld.AssertionBean> beanList = new ArrayList<>();
         if (contestBean.contestRound != null) {
             for (AssertionRound ar : contestBean.contestRound.getAssertionRounds()) {
-                var bean = new ContestsPanel.AssertionBean(contestBean, ar);
+                var bean = new ContestsPanelOld.AssertionBean(contestBean, ar);
                 beanList.add(bean);
             }
         }
@@ -171,9 +170,9 @@ public class ContestsPanel extends JPanel implements ViewerPanelIF {
         if (beanList.isEmpty()) return;
 
         // select assertion with smallest noerror
-        ContestsPanel.AssertionBean minByMargin = beanList
+        ContestsPanelOld.AssertionBean minByMargin = beanList
                 .stream()
-                .min(Comparator.comparing(ContestsPanel.AssertionBean::getNoerror))
+                .min(Comparator.comparing(ContestsPanelOld.AssertionBean::getNoerror))
                 .orElseThrow(NoSuchElementException::new);
         assertionTable.setSelectedBean(minByMargin);
     }

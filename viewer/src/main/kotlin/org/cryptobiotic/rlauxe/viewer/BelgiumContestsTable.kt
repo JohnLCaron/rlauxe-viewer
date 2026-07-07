@@ -51,7 +51,7 @@ class BelgiumContestsTable(
     var partyNames = emptyMap<Int, String>()
 
     private val contestTable: BeanTable<ContestBean>
-    private val assertionTable: BeanTable<AssertionBean>
+    private val assertionTable: BeanTable<AssertionRoundBean>
     private val partyTable: BeanTable<PartyBean>
 
     private val split1: JSplitPane
@@ -105,7 +105,7 @@ class BelgiumContestsTable(
 
         assertionTable =
             BeanTable(
-                AssertionBean::class.java,
+                AssertionRoundBean::class.java,
                 prefs.node("assertionTable") as PreferencesExt,
                 false,
                 "Assertions",
@@ -114,7 +114,7 @@ class BelgiumContestsTable(
             )
         assertionTable.addPopupOption(
             "Show Assertion",
-            assertionTable.makeShowAction(assertTA, assertWindow) { bean: Any? -> showAssertion(bean as AssertionBean) }
+            assertionTable.makeShowAction(assertTA, assertWindow) { bean: Any? -> showAssertion(bean as AssertionRoundBean) }
         )
 
         partyTable =
@@ -275,17 +275,17 @@ class BelgiumContestsTable(
         assertionTable.setBeans(null)
         logger.debug("select contest ${contestBean.id} assertions")
 
-        val beanList = mutableListOf<AssertionBean>()
+        val beanList = mutableListOf<AssertionRoundBean>()
         contestBean.contestRound.assertionRounds.forEach { ar ->
-            val bean = AssertionBean(contestBean, ar)
+            val bean = AssertionRoundBean(ar, contestBean.contestRound)
             beanList.add(bean)
         }
         logger.debug("add ${beanList.size} assertions")
 
         if (beanList.isEmpty()) return
 
-        // sort assertions by payoff
-        beanList.sortBy { it.payoff }
+        // sort assertions by noerror
+        beanList.sortBy { it.noerror }
         assertionTable.setBeans(beanList)
     }
 
@@ -309,7 +309,7 @@ class BelgiumContestsTable(
         val result = buildString {
 
             appendLine("Audit record at ${auditRecord!!.topdir}")
-            appendLine(config)
+            f.format("%s%n", config!!.show())
             if (lastAuditRound == null) return
 
             append("AuditRounds")
@@ -389,9 +389,9 @@ class BelgiumContestsTable(
         }
     }
 
-    fun showAssertion(bean: AssertionBean) = buildString {
-        appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.cua, bean.cassertion))
-        append((bean.cua.contest as DHondtContest).showRelaxedAssertion(bean.contestBean.contestRound, bean.cassertion))
+    fun showAssertion(bean: AssertionRoundBean) = buildString {
+        appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.contestUA, bean.assertion))
+        append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
     }
 
     companion object {
@@ -535,9 +535,7 @@ class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
             return if (min == null) 0.0 else min
         }
 
-    val status: String?
-        // TODO maybe not needed
-        get() = if (contestRound == null) Naming.status(contestUA.preAuditStatus) else Naming.status(contestRound.status)
+    val status = Naming.status(contestRound.status)
 
     val type = contestUA.choiceFunction.toString()
 

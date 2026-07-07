@@ -1,12 +1,11 @@
 package org.cryptobiotic.rlauxe.beans
 
-import org.cryptobiotic.rlauxe.viewer.AssertionBean
-import org.cryptobiotic.rlauxe.viewer.AuditRoundsTable
-import org.cryptobiotic.rlauxe.viewer.BelgiumContestsTable
+import org.cryptobiotic.rlauxe.viewer.AssertionRoundBean
 import org.cryptobiotic.rlauxe.viewer.ContestBean
-import org.cryptobiotic.rlauxe.viewer.ContestsPanel
+import org.cryptobiotic.rlauxe.viewer.ContestRoundBean
 import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable
 import org.cryptobiotic.rlauxe.viewer.CountyTable
+import org.cryptobiotic.rlauxe.viewer.RlauxeContestBean
 import kotlin.test.Test
 
 class TestBeans {
@@ -28,8 +27,8 @@ class TestBeans {
         // BelgiumContestsTable.contestTable
         // CorlaContestsTable.contestTable and SamplingTable.contestTable (same CorlaContestBean)
         val beans = listOf(
-            Bean("Contests", ContestsPanel.ContestBean::class.java),
-            Bean("ContestRound", AuditRoundsTable.ContestRoundBean::class.java),
+            Bean("RlauxeContest", RlauxeContestBean::class.java),
+            Bean("ContestRound", ContestRoundBean::class.java),
             Bean("BelgiumContest", ContestBean::class.java),
             Bean("CorlaContest", CorlaContestsTable.CorlaContestBean::class.java),
             Bean("CountyContest", CountyTable.CountyContestBean::class.java),
@@ -42,8 +41,8 @@ class TestBeans {
     @Test
     fun testAssertionBeans() {
         val beans = listOf(
-            Bean("Belgium", AssertionBean::class.java),
-            Bean("AssertionRound", AuditRoundsTable.AssertionBean::class.java),
+            Bean("Belgium", AssertionRoundBean::class.java),
+            Bean("AssertionRound", AssertionRoundBean::class.java),
         )
         val b = Beans(beans, BeanProperties.assertions)
         println(b.show())

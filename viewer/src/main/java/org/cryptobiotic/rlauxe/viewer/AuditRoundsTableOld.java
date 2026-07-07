@@ -30,14 +30,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
-import static java.util.Collections.emptyList;
 import static org.cryptobiotic.rlauxe.audit.RunAuditRoundKt.*;
 import static org.cryptobiotic.rlauxe.beans.BeanPropertiesKt.showContestWithDesc;
-import static org.cryptobiotic.rlauxe.viewer.BeanPropertiesOld.showAssertionG;
-import static org.cryptobiotic.rlauxe.viewer.BeanPropertiesOld.showContestG;
 
-public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
-    static private final Logger logger = LoggerFactory.getLogger(AuditRoundsTable.class);
+public class AuditRoundsTableOld extends JPanel implements ViewerPanelIF {
+    static private final Logger logger = LoggerFactory.getLogger(AuditRoundsTableOld.class);
 
     private final PreferencesExt prefs;
     private final ViewerMain.ViewerProfile profile;
@@ -65,8 +62,8 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
 
     public AbstractAction mvrCall;
 
-    public AuditRoundsTable(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize,
-                            ViewerMain.ViewerProfile profile, ViewerMain.MvrAction mvrCall) {
+    public AuditRoundsTableOld(PreferencesExt prefs, TextHistoryPane infoTA, IndependentWindow infoWindow, float fontSize,
+                               ViewerMain.ViewerProfile profile, ViewerMain.MvrAction mvrCall) {
         this.prefs = prefs;
         this.mvrCall = mvrCall;
         this.profile = profile;
@@ -780,6 +777,7 @@ public class AuditRoundsTable extends JPanel implements ViewerPanelIF {
             var t = estRound.getStartingTestStatistic();
             if (t == 0.0) return 0.0; else return 1.0/t;
         }
+        // TODO calc on the fly maybe
         public int getCalcNewMvrs() {
             return estRound.getCalcNewMvrsNeeded();
         }
