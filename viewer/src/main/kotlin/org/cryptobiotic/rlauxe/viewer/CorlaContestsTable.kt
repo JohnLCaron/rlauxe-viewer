@@ -256,11 +256,9 @@ class CorlaContestsTable(
         onlyProcessAction.putValue(BAMutil.STATE, savedState)
         BAMutil.setActionProperties(onlyProcessAction, "sunrise-icon.png", "Only show Contests InProgress", true, 'S'.code, -1)
         BAMutil.addActionToContainer(container, onlyProcessAction)
-
-        logger.debug("CorlaAuditTable.getActions")
     }
 
-    // all include or exclude
+    // only show active contests
     fun onlyProcess(onlyInProgress: Boolean) {
         this.onlyShowInprogressContests = onlyInProgress
         loadAuditRecord()
@@ -270,7 +268,7 @@ class CorlaContestsTable(
         if (this.countyAudit == null) return
 
         f.format("Audit record at %s%n%n", countyAudit!!.topdir)
-        f.format("%s%n", this.config)
+        f.format("%s%n", this.config!!.show())
         if (this.lastAuditRound == null) return
 
         f.format("AuditRounds")

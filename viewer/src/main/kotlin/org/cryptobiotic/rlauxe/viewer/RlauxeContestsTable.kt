@@ -23,18 +23,21 @@ import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.util.dfn
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
+import java.awt.event.ActionEvent
 import java.util.*
+import javax.swing.AbstractAction
 import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
-private val logger: Logger = LoggerFactory.getLogger(ContestsPanel::class.java)
+private val logger: Logger = LoggerFactory.getLogger(RlauxeContestsTable::class.java)
 
 class RlauxeContestsTable(
     private val prefs: PreferencesExt,
@@ -46,6 +49,7 @@ class RlauxeContestsTable(
     private val assertionTable: BeanTable<RlauxeAssertionBean>
 
     private val split2: JSplitPane
+    private var onlyShowInprogressContests = false
 
     private var auditRecordLocation = "none"
     private var auditRecord: AuditRecordIF? = null
@@ -105,10 +109,27 @@ class RlauxeContestsTable(
         setLayout(BorderLayout())
         add(split2, BorderLayout.CENTER)
 
-        logger.debug("ContestsPanel init")
+        logger.debug("RlauxeContestsTable init")
     }
 
-    fun getActions(container: JPanel?) {
+    fun getActions(container: JPanel) {
+        val onlyProcessAction: AbstractAction = object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent) {
+                val state = getValue( BAMutil.STATE)
+                val onlyProcess = state as Boolean
+                onlyProcess(onlyProcess)
+                prefs.putBoolean( "onlyInProgress", onlyProcess)
+            }
+        }
+        val savedState = prefs.getBoolean( "onlyInProgress", false)
+        onlyProcessAction.putValue(BAMutil.STATE, savedState)
+        BAMutil.setActionProperties(onlyProcessAction, "sunrise-icon.png", "Only show Contests InProgress", true, 'S'.code, -1)
+        BAMutil.addActionToContainer(container, onlyProcessAction)
+    }
+    // only show active contests
+    fun onlyProcess(onlyInProgress: Boolean) {
+        this.onlyShowInprogressContests = onlyInProgress
+        loadAuditRecord()
     }
 
     override fun setFontSize(size: Float) {
@@ -121,10 +142,11 @@ class RlauxeContestsTable(
     }
 
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
+        this.onlyShowInprogressContests = prefs.getBoolean("onlyInProgress", false)
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)
 
-        logger.debug("ContestsPanel setAuditRecord " + auditRecordLocation)
+        logger.debug("RlauxeContestsTable setAuditRecord " + auditRecordLocation)
 
         this.auditRecordLocation = auditRecordLocation
         this.auditRecord = read(auditRecordLocation)
@@ -132,12 +154,16 @@ class RlauxeContestsTable(
         this.config = auditRecord!!.config
         this.alpha = config!!.riskLimit
 
+        return loadAuditRecord()
+    }
+
+    fun loadAuditRecord(): Boolean {
         if (auditRecord!!.rounds.isEmpty()) {
-            logger.info("{} first round was not started", auditRecordLocation) // TODO plan B
+            logger.info("{} first round was not started", auditRecordLocation)
 
             val beanList: MutableList<RlauxeContestBean> = ArrayList<RlauxeContestBean>()
 
-            for (cwa in auditRecord!!.contests) {
+            auditRecord!!.contests.filter { !onlyShowInprogressContests || it.preAuditStatus == TestH0Status.InProgress }.forEach { cwa ->
                 val bean = RlauxeContestBean(cwa, null)
                 beanList.add(bean)
             }
@@ -155,7 +181,7 @@ class RlauxeContestsTable(
                     contestRoundMap.put(contestRound.id, contestRound)
                 }
 
-                for (cwa in auditRecord!!.contests) {
+                auditRecord!!.contests.filter { !onlyShowInprogressContests || it.preAuditStatus == TestH0Status.InProgress }.forEach { cwa ->
                     val cr = contestRoundMap.get(cwa.id)
                     val bean: RlauxeContestBean = RlauxeContestBean(cwa, cr)
                     beanList.add(bean)
@@ -174,7 +200,7 @@ class RlauxeContestsTable(
             } catch (e: Exception) {
                 e.printStackTrace()
                 JOptionPane.showMessageDialog(null, e.message)
-                logger.error("ContestsPanel setAuditRecord failed", e)
+                logger.error("RlauxeContestsTable setAuditRecord failed", e)
             }
         }
 
@@ -215,23 +241,26 @@ class RlauxeContestsTable(
         if (this.auditRecord == null) return
 
         f.format("Audit record at %s%n%n", auditRecord!!.topdir)
-        f.format("%s%n", this.config)
+        f.format("%s%n", this.config!!.show())
         if (this.lastAuditRound == null) return
 
         f.format("AuditRounds")
         var totalExtra = 0
+        var mvrsUsed = 0
         for (round in auditRecord!!.rounds) {
             if (round.auditWasDone) {
                 val roundIdx = round.roundIdx
                 val nmvrs = round.samplePrns.size
                 f.format("%n  number of Mvrs in round %d = %d %n", roundIdx, nmvrs)
-                val extra = round.mvrsUnused
-                f.format("  extraBallotsUsed = %d %n", extra)
-                totalExtra += extra
+                f.format("  mvrsUsed = %d %n", round.mvrsUsed)
+                f.format("  extraMvrs = %d %n", round.mvrsUnused)
+                totalExtra += round.mvrsUnused
+                mvrsUsed = round.mvrsUsed
             }
         }
-        f.format("%n  total extraBallotsUsed = %d %n", totalExtra)
-        f.format("  total Mvrs = %d%n", this.lastAuditRound!!.nmvrs)
+        f.format("%n  total mvrs used = %d %n", mvrsUsed)
+        f.format("  total extraMvrs = %d %n", totalExtra)
+        f.format("  total mvrs sampled = %d%n", this.lastAuditRound!!.nmvrs)
     }
 
     fun showContest(bean: RlauxeContestBean): String {
@@ -248,195 +277,214 @@ class RlauxeContestsTable(
     }
 }
 
-    class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: ContestRound?) {
-        var orgSampleSize = if (contestRound != null) contestRound.haveSampleSize else 0
+class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: ContestRound?) {
+    var orgSampleSize = if (contestRound != null) contestRound.haveSampleSize else 0
 
-        val name: String
-            get() = contestUA.name
+    val name: String
+        get() = contestUA.name
 
-        val id: Int
-            get() = contestUA.id
+    val id: Int
+        get() = contestUA.id
 
-        val estRisk: Double
-            get() {
-                val minAssertion = contestUA.minClcaAssertion()
-                if (minAssertion == null) return 1.0
-                val noerror = minAssertion.noerror
+    val candidates: String
+        get() = contestUA.contest.info().candidateNames.map { it.key }.joinToString(", ")
 
-                val haveMvrs = this.haveMvrs
-                return estRiskStandardBet(contestUA.Npop, noerror, haveMvrs)
+    val estRisk: Double
+        get() {
+            val minAssertion = contestUA.minClcaAssertion()
+            if (minAssertion == null) return 1.0
+            val noerror = minAssertion.noerror
+
+            val haveMvrs = this.haveMvrs
+            return estRiskStandardBet(contestUA.Npop, noerror, haveMvrs)
+        }
+
+    val estMvrs: Int
+        get() = if (contestRound == null) 0 else contestRound.estMvrs
+
+    val haveMvrs: Int
+        get() = if (contestRound == null) 0 else contestRound.haveSampleSize
+
+    val noerror: String
+        get() {
+            val minAssertion = contestUA.minAssertion()
+            if (minAssertion == null) return "N/A"
+            return dfn(minAssertion.assorter.noerror(contestUA.hasStyle), 5)
+        }
+
+    val payoff: String
+        get() {
+            val minAssertion = contestUA.minAssertion()
+            if (minAssertion == null) return "N/A"
+            val noerror = minAssertion.assorter.noerror(contestUA.hasStyle)
+            return dfn(payoff(2.0 / 1.03905, noerror), 6)
+        }
+
+    val margin: Double
+        get() {
+            val margin = contestUA.minMargin()
+            return if (margin == null) 0.0 else margin
+        }
+
+    val mvrsExtra: Int
+        get() = this.haveMvrs - this.estMvrs
+
+    val mvrsUsed: Int
+        get() = if (contestRound == null) 0 else contestRound.maxSamplesUsed()
+
+    val nc: Int
+        get() = contestUA.Nc
+
+    val nCand: Int
+        get() = contestUA.ncandidates
+
+    val npop: Int
+        get() = contestUA.Npop
+
+    val phantoms: Int
+        get() = contestUA.Nphantoms
+
+    val nvotes = contestUA.contest.nvotes()
+
+    val recountMargin: Double
+        get() {
+            val min = contestUA.minRecountMargin()
+            return if (min == null) 0.0 else min
+        }
+
+    val status: String?
+        // TODO maybe not needed
+        get() = if (contestRound == null || contestUA.preAuditStatus != TestH0Status.InProgress)
+            Naming.status(contestUA.preAuditStatus)
+        else
+            Naming.status(contestRound.status)
+
+    val type: String?
+        get() = contestUA.choiceFunction.toString()
+
+    val undervotes: Int
+        get() = contestUA.contest.Nundervotes()
+
+    val uvPct: Int
+        get() = contestUA.contest.undervotePct()
+
+    val votes: String
+        get() {
+            val votes = contestUA.contest.votes()
+            if (votes != null) return votes.toString()
+            return "N/A"
+        }
+
+    val voteMargin: Int
+        get() {
+            val minAssertion = contestUA.minAssertion()
+            return contestUA.contest.marginInVotes(minAssertion!!.assorter)
+        }
+
+    val winners: String
+        get() = contestUA.contest.winners().toString()
+
+    fun getNCounties(): String {
+        val counties = counties()
+        if (counties == null) return "N/A"
+        if (counties.size == 1) return counties[0]
+        return String.format("%02d", counties.size)
+    }
+
+    fun counties(): List<String>? {
+        val counties = contestUA.contest.info().metadata.get("Counties")
+        if (counties == null) return null
+        //val stripped = counties.drop(1).dropLast(1)
+        return counties.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+    }
+
+    companion object {
+        @JvmStatic
+        fun hiddenProperties() = "contestUA contestRound orgSampleSize"
+    }
+}
+
+class RlauxeAssertionBean(val contestBean: RlauxeContestBean, val assertion: Assertion, val assertionRound: AssertionRound?) {
+    val cua: ContestWithAssertions = contestBean.contestUA
+    val candidates = cua.contest.info().candidateIdToName
+    val cassertion: ClcaAssertion?
+    var oaAssorter: OneAuditClcaAssorter? = null
+
+    init {
+        if (assertion is ClcaAssertion) {
+            this.cassertion = assertion
+            if (assertion.cassorter is OneAuditClcaAssorter) {
+                this.oaAssorter = assertion.cassorter as OneAuditClcaAssorter
             }
-
-        val estMvrs: Int
-            get() = if (contestRound == null) 0 else contestRound.estMvrs
-
-        val haveMvrs: Int
-            get() = if (contestRound == null) 0 else contestRound.haveSampleSize
-
-        val noerror: String
-            get() {
-                val minAssertion = contestUA.minAssertion()
-                if (minAssertion == null) return "N/A"
-                return dfn(minAssertion.assorter.noerror(contestUA.hasStyle), 5)
-            }
-
-        val payoff: String
-            get() {
-                val minAssertion = contestUA.minAssertion()
-                if (minAssertion == null) return "N/A"
-                val noerror = minAssertion.assorter.noerror(contestUA.hasStyle)
-                return dfn(payoff(2.0 / 1.03905, noerror), 6)
-            }
-
-        val margin: Double
-            get() {
-                val margin = contestUA.minMargin()
-                return if (margin == null) 0.0 else margin
-            }
-
-        val mvrsExtra: Int
-            get() = this.haveMvrs - this.estMvrs
-
-        val mvrsUsed: Int
-            get() = if (contestRound == null) 0 else contestRound.maxSamplesUsed()
-
-        val nc: Int
-            get() = contestUA.Nc
-
-        val nCand: Int
-            get() = contestUA.ncandidates
-
-        val npop: Int
-            get() = contestUA.Npop
-
-        val phantoms: Int
-            get() = contestUA.Nphantoms
-
-        val recountMargin: Double
-            get() {
-                val min = contestUA.minRecountMargin()
-                return if (min == null) 0.0 else min
-            }
-
-        val status: String?
-            // TODO maybe not needed
-            get() = if (contestRound == null || contestUA.preAuditStatus != TestH0Status.InProgress)
-                Naming.status(contestUA.preAuditStatus)
-            else
-                Naming.status(contestRound!!.status)
-
-        val type: String?
-            get() = contestUA.choiceFunction.toString()
-
-        val undervotes: Int
-            get() = contestUA.contest.Nundervotes()
-
-        val uvPct: Int
-            get() = contestUA.contest.undervotePct()
-
-        val votes: String
-            get() {
-                val votes = contestUA.contest.votes()
-                if (votes != null) return votes.toString()
-                return "N/A"
-            }
-
-        val voteMargin: Int
-            get() {
-                val minAssertion = contestUA.minAssertion()
-                return contestUA.contest.marginInVotes(minAssertion!!.assorter)
-            }
-
-        val winners: String
-            get() = contestUA.contest.winners().toString()
-
-        companion object {
-            @JvmStatic
-            fun hiddenProperties() = "contestUA contestRound orgSampleSize"
+        } else {
+            this.cassertion = null
+            this.oaAssorter = null
         }
     }
 
-    class RlauxeAssertionBean(val contestBean: RlauxeContestBean, val assertion: Assertion, val assertionRound: AssertionRound?) {
-        val cua: ContestWithAssertions = contestBean.contestUA
-        val candidates = cua.contest.info().candidateIdToName
-        val cassertion: ClcaAssertion?
-        var oaAssorter: OneAuditClcaAssorter? = null
+    val type: String
+        get() = assertion.assorter.javaClass.getSimpleName()
 
-        init {
-            if (assertion is ClcaAssertion) {
-                this.cassertion = assertion
-                if (assertion.cassorter is OneAuditClcaAssorter) {
-                    this.oaAssorter = assertion.cassorter as OneAuditClcaAssorter
-                }
-            } else {
-                this.cassertion = null
-                this.oaAssorter = null
+    val winner: String
+        get() {
+            if (assertion.assorter is DHondtAssorter) {
+                return (assertion.assorter as DHondtAssorter).winnerNameRound()
             }
+            val winner = assertion.assorter.winner()
+            return candidates[winner]!!
         }
 
-        val type: String
-            get() = assertion.assorter.javaClass.getSimpleName()
-
-        val winner: String
-            get() {
-                if (assertion.assorter is DHondtAssorter) {
-                    return (assertion.assorter as DHondtAssorter).winnerNameRound()
-                }
-                val winner = assertion.assorter.winner()
-                return candidates[winner]!!
+    val loser: String
+        get() {
+            if (assertion.assorter is DHondtAssorter) {
+                return (assertion.assorter as DHondtAssorter).loserNameRound()
             }
-
-        val loser: String
-            get() {
-                if (assertion.assorter is DHondtAssorter) {
-                    return (assertion.assorter as DHondtAssorter).loserNameRound()
-                }
-                val loser = assertion.assorter.loser()
-                return candidates[loser]!!
-            }
-
-        val desc: String
-            get() = assertion.assorter.hashcodeDesc()
-
-        val estRisk: Double
-            get() {
-                if (cassertion == null) return 0.0
-                val noerror = cassertion.noerror
-                val haveMvrs = contestBean.haveMvrs
-                return estRiskStandardBet(cua.Npop, noerror, haveMvrs)
-            }
-
-        val estMvrs: Int
-            get() = assertionRound?.estNewMvrs ?: 0
-
-        val margin: Double
-            get() = if (cassertion != null) cassertion.cassorter.assorterMargin else assertion.assorter.dilutedMargin()
-
-        val difficulty: String
-            get() = cua.contest.showAssertionDifficulty(assertion.assorter)
-
-        val recountMargin: Double
-            get() = cua.contest.recountMargin(assertion.assorter)
-
-        val mean: Double
-            get() = assertion.assorter.dilutedMean()
-
-        val noerror: String
-            // could use payoff
-            get() = dfn(assertion.assorter.noerror(cua.hasStyle), 5)
-
-        val payoff: String
-            get() {
-                val noerror = assertion.assorter.noerror(cua.hasStyle)
-                return dfn(payoff(2.0 / 1.03905, noerror), 6)
-            }
-
-        val upper: Double
-            get() = assertion.assorter.upperBound()
-
-        companion object {
-            @JvmStatic
-            fun hiddenProperties() = "contestBean assertion assertionRound cua candidates cassertion oaAssorter"
+            val loser = assertion.assorter.loser()
+            return candidates[loser]!!
         }
+
+    val desc: String
+        get() = assertion.assorter.hashcodeDesc()
+
+    val estRisk: Double
+        get() {
+            if (cassertion == null) return 0.0
+            val noerror = cassertion.noerror
+            val haveMvrs = contestBean.haveMvrs
+            return estRiskStandardBet(cua.Npop, noerror, haveMvrs)
+        }
+
+    val estMvrs: Int
+        get() = assertionRound?.estNewMvrs ?: 0
+
+    val margin: Double
+        get() = if (cassertion != null) cassertion.cassorter.assorterMargin else assertion.assorter.dilutedMargin()
+
+    val difficulty: String
+        get() = cua.contest.showAssertionDifficulty(assertion.assorter)
+
+    val recountMargin: Double
+        get() = cua.contest.recountMargin(assertion.assorter)
+
+    val mean: Double
+        get() = assertion.assorter.dilutedMean()
+
+    val noerror: String
+        // could use payoff
+        get() = dfn(assertion.assorter.noerror(cua.hasStyle), 5)
+
+    val payoff: String
+        get() {
+            val noerror = assertion.assorter.noerror(cua.hasStyle)
+            return dfn(payoff(2.0 / 1.03905, noerror), 6)
+        }
+
+    val upper: Double
+        get() = assertion.assorter.upperBound()
+
+    companion object {
+        @JvmStatic
+        fun hiddenProperties() = "contestBean assertion assertionRound cua candidates cassertion oaAssorter"
     }
+}
 

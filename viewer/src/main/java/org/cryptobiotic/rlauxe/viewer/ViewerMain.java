@@ -137,7 +137,7 @@ public class ViewerMain extends JPanel {
       tabbedPane.addTab("Mvrs", mvrPanel);
       activePanels.add(mvrPanel); */
 
-      auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, profile, mvrAction);
+      auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
       tabbedPane.addTab("AuditRounds", auditRoundsPanel);
       activePanels.add(auditRoundsPanel);
     }
@@ -165,7 +165,7 @@ public class ViewerMain extends JPanel {
         belgium.getActions(actionsPanel);
       } else if (c instanceof CorlaContestsTable corla) {
         corla.getActions(actionsPanel);
-      } else if (c instanceof ContestsPanel contests) {
+      } else if (c instanceof RlauxeContestsTable contests) {
         contests.getActions(actionsPanel);
       } else if (c instanceof AuditRoundsTable auditRound) {
         auditRound.getActions(actionsPanel, rlauxeContests);
