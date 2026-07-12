@@ -91,6 +91,7 @@ public class ViewerMain extends JPanel {
     ////////////////////////////////////////////
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+
     if (profile.isBelgium()) {
       belgiumPanel = new BelgiumContestsTable((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
       belgiumPanel.getActions(actionsPanel);
@@ -98,7 +99,6 @@ public class ViewerMain extends JPanel {
       activePanels.add(belgiumPanel);
 
     } else {
-
       if (profile.isCorla()) {
         corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
         corlaPanel.getActions(actionsPanel);
@@ -150,8 +150,6 @@ public class ViewerMain extends JPanel {
       logger.debug("ViewerMain.tabbedPanel.changed, component {}", c.getClass().getName());
       actionsPanel.removeAll();
 
-      if (this.auditRecordDir.equals("none")) return;
-
       if (c instanceof CardTable cardTable) {
         cardTable.setSelectedTab();
       } else if (c instanceof MvrTable mvrTable) {
@@ -163,14 +161,19 @@ public class ViewerMain extends JPanel {
       // actions on right side of Audit record chooser
       if (c instanceof BelgiumContestsTable belgium) {
         belgium.getActions(actionsPanel);
+
       } else if (c instanceof CorlaContestsTable corla) {
         corla.getActions(actionsPanel);
+
       } else if (c instanceof RlauxeContestsTable contests) {
         contests.getActions(actionsPanel);
-      } else if (c instanceof AuditRoundsTable auditRound) {
-        auditRound.getActions(actionsPanel, rlauxeContests);
+
+      } else if (c instanceof org.cryptobiotic.rlauxe.viewer.AuditRoundsTable auditRound) {
+        auditRound.getActions(actionsPanel); // , rlauxeContests); // TODO wont take second argument
+
       } else if (c instanceof CountyTable countyPools) {
         countyPools.getActions(actionsPanel);
+
       } else if (c instanceof SamplingTable samplingTable) {
         samplingTable.getActions(actionsPanel);
       }
@@ -185,7 +188,7 @@ public class ViewerMain extends JPanel {
     // TODO put into seperate thread
     AbstractAction verifyAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        var verifier = new org.cryptobiotic.rlauxe.verify.VerifyContests(auditRecordDir, true);
+        var verifier = new org.cryptobiotic.rlauxe.verify.VerifyContests(auditRecordDir, false);
         infoTA.setText(verifier.verify().toString());
         infoWindow.show();
       }

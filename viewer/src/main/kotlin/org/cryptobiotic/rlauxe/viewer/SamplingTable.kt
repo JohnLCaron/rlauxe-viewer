@@ -19,7 +19,6 @@ import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
-import org.cryptobiotic.rlauxe.persist.CountyData
 import org.cryptobiotic.rlauxe.strata.Strata
 import org.cryptobiotic.rlauxe.strata.calcCountyStrataWant
 import org.cryptobiotic.rlauxe.util.*
@@ -152,6 +151,11 @@ class SamplingTable(
             this.countyAudit = record
             this.config = countyAudit!!.config
             this.auditRiskLimit = config!!.riskLimit
+            if (countyAudit!!.rounds.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No AuditRounds have been made")
+                return false
+            }
+
             lastAuditRound = countyAudit!!.rounds.last()
 
             contestRoundMap = lastAuditRound!!.contestRounds.associateBy { it.id }
@@ -207,8 +211,8 @@ class SamplingTable(
         }
         countyMap = _countyMap
 
-        val totalPopulation = countyAudit!!.countyData.filter { it.countyName != "Statewide"}.sumOf { it.npop }
-        val countyTotal = CountyBean( CountyData("=Total", countUniformMvrs, totalPopulation))
+        val totalPopulation = countyAudit!!.countyData.filter { it.strataName != "Statewide"}.sumOf { it.population }
+        val countyTotal = CountyBean( Strata("=Total", countUniformMvrs, totalPopulation))
         countyList.add(countyTotal)
 
         // sort counties by nmvrs
@@ -493,12 +497,12 @@ class SamplingTable(
         var countMvrs = 0
         val mvrCounts = countyAudit!!.countMvrsByCounty() // mvr counts (cardStyle sampling)
         for (countyData in mvrCounts.values) {
-            val countyBean = countyMap.get(countyData.countyName)
+            val countyBean = countyMap.get(countyData.strataName)
             if (countyBean != null) {
                 countyBean.rlauxeSampling = countyData.nmvrs
                 countMvrs += countyData.nmvrs
             } else {
-                logger.warn("cant find countyName '" + countyData.countyName + "'")
+                logger.warn("cant find countyName '" + countyData.strataName + "'")
             }
         }
         if (totalBean != null) {
@@ -534,15 +538,15 @@ class SamplingTable(
 }
 
 ////////////////////////////////////////////////////////////////
-class CountyBean(countyData: CountyData) {
+class CountyBean(countyData: Strata) {
     val name: String
     val population: Int
     val corlaSampling: Int
     var rlauxeSampling: Int = 0
 
     init {
-        this.name = countyData.countyName
-        this.population = countyData.npop
+        this.name = countyData.strataName
+        this.population = countyData.population
         this.corlaSampling = countyData.nmvrs
     }
 

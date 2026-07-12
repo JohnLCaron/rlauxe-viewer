@@ -398,6 +398,11 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
         return counties.split(",".toRegex()).dropLastWhile { it.isEmpty() }
     }
 
+    fun getPoolPct(): Int {
+        val poolPct = contestUA.contest.info().metadata.get("PoolPct") ?: return -1
+        return poolPct.toInt()
+    }
+
     companion object {
         @JvmStatic
         fun hiddenProperties() = "contestUA contestRound orgSampleSize"
