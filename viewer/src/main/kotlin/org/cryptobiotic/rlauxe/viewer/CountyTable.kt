@@ -12,7 +12,7 @@ import org.cryptobiotic.rlauxe.core.ContestInfo
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
-import org.cryptobiotic.rlauxe.persist.CountyData
+import org.cryptobiotic.rlauxe.strata.Strata
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.util.nfn
@@ -151,7 +151,7 @@ class CountyTable(
         logger.debug("read countyCvrPools=" + countyCvrMap.size)
 
         this.infos = auditRecord.contests.associate { it.contest.info().id to it.contest.info() }
-        val countyData = countyRecord!!.countyData.associateBy { it.countyName }
+        val countyData = countyRecord!!.countyData.associateBy { it.strataName }
 
         val beanList = mutableListOf<CountyPoolsBean>()
         countyPools.forEach {
@@ -241,13 +241,13 @@ class CountyTable(
 
     ////////////////////////////////////////////////////////////////
 
-    class CountyPoolsBean(val countyPool: CountyPools, val countyData: CountyData) {
+    class CountyPoolsBean(val countyPool: CountyPools, val countyData: Strata) {
         val countyName = countyPool.countyName
         val countyPoolId = countyPool.countyPoolId
         val totalCards = countyPool.cardCount
 
         // val nmvrs = countyData.nmvrs
-        val population = countyData.npop
+        val population = countyData.population
         val diffCards = population - totalCards
         val diffCardsPct = (population - totalCards) / population.toDouble()
 

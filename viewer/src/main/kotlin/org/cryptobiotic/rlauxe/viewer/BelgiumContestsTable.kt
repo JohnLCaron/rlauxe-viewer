@@ -146,7 +146,7 @@ class BelgiumContestsTable(
         logger.debug("BelgiumAuditPanel init")
     }
 
-    fun getActions(container: JPanel?) {
+    fun getActions(container: JPanel) {
         if (profile.isBelgium()) {
             val limitAction: AbstractAction = object : AbstractAction() {
                 override fun actionPerformed(e: ActionEvent?) {

@@ -173,7 +173,9 @@ class AuditRoundsTable(
         add(split4, BorderLayout.CENTER)
     }
 
-    fun getActions(container: JPanel?, contestsPanel: RlauxeContestsTable) {
+    fun getActions(container: JPanel) { // }, contestsPanel: RlauxeContestsTable) {
+        logger.debug("AuditRoundsTable getActions")
+
         val startAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
                 resample()
@@ -186,7 +188,7 @@ class AuditRoundsTable(
         val runAuditRoundAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
                 callRunRound()
-                contestsPanel.resetAuditRecord()
+                //contestsPanel.resetAuditRecord()
             }
         }
         BAMutil.setActionProperties(runAuditRoundAction, "hamster.png", "Run Audit Round", false, 'R'.code, -1)
