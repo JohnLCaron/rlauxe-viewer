@@ -475,7 +475,6 @@ class SamplingTable(
             else if (bean.getEstMvrs() >= 150) bean.setMaxRisk(.10)
             else if (bean.getEstMvrs() >= 50) bean.setMaxRisk(.05)
             else bean.setMaxRisk(auditRiskLimit)
-
         }
         samplingChanged = true
         contestTable.refresh()

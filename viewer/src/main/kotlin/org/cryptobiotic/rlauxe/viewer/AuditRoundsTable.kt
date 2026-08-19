@@ -19,6 +19,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
+import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable.CorlaContestBean.Companion.auditRiskLimit
 import org.cryptobiotic.rlauxe.viewer.ViewerMain.MvrAction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -49,7 +50,7 @@ class AuditRoundsTable(
     private val split3: JSplitPane
     private val split4: JSplitPane
 
-    // private String auditRecordLocation = "none";
+    private var auditRecordLocation = "none";
     private var auditRecord: AuditRecordIF? = null
     var isComposite: Boolean = false
     private var config: Config? = null
@@ -97,6 +98,10 @@ class AuditRoundsTable(
         auditRoundTable.addPopupOption(
             "Show AuditRound",
             auditRoundTable.makeShowAction(infoTA, infoWindow) { bean: AuditRoundBean -> showAuditRound(bean) })
+        auditRoundTable.addPopupOption(
+            "Reread Audit Record",
+            makeAction { setAuditRecord(auditRecordLocation) }
+        )
         auditRoundTable.addPopupOption("Show sampled Mvrs", mvrAction)
 
         //   public BeanTable(Class<T> bc, PreferencesExt pstore, boolean canAddDelete, String header, String tooltip, T bean) {
@@ -173,6 +178,14 @@ class AuditRoundsTable(
         add(split4, BorderLayout.CENTER)
     }
 
+    fun makeAction(act: () -> Any): Action {
+        return object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent?) {
+                act()
+            }
+        }
+    }
+
     fun getActions(container: JPanel) { // }, contestsPanel: RlauxeContestsTable) {
         logger.debug("AuditRoundsTable getActions")
 
@@ -187,7 +200,7 @@ class AuditRoundsTable(
         // TODO put into separate thread
         val runAuditRoundAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
-                callRunRound()
+                runRound()
                 //contestsPanel.resetAuditRecord()
             }
         }
@@ -229,11 +242,13 @@ class AuditRoundsTable(
 
     override fun setAuditRecord(location: String): Boolean {
         val auditRecord = read(location)
-        if (auditRecord != null) setAuditRecord(auditRecord)
+        if (auditRecord != null) {
+            auditRecordLocation = location
+            setAuditRecord(auditRecord)
+        }
         return (auditRecord != null)
     }
 
-    // TODO when resample from SampleTable, need to reread in the audit rounds
     fun setAuditRecord(auditRecord: AuditRecordIF) {
         auditRoundTable.setBeans(null)
         contestRoundTable.setBeans(null)
@@ -403,21 +418,19 @@ class AuditRoundsTable(
         }
     }
 
-    fun callRunRound() {
+    fun runRound() {
         try {
             if (isComposite) {
                 JOptionPane.showMessageDialog(null, "Cant run Audit Round on Composite Record")
             } else {
                 logger.debug("begin runRound")
-                if (samplingChanged && lastAuditRound != null) resampleAndSaveResults(
-                    (auditRecord as AuditRecord?)!!,
-                    lastAuditRound as AuditRound
-                )
+                if (samplingChanged && lastAuditRound != null)
+                    resampleAndSaveResults( (auditRecord as AuditRecord), lastAuditRound as AuditRound )
 
                 runRound(auditRecord!!.topdir, null, null)
                 logger.debug("return from runRound")
 
-                setAuditRecord(auditRecord!!) // reread in
+                setAuditRecord(auditRecordLocation) // reread in
                 refreshAll()
             }
         } catch (e: Exception) {
@@ -622,11 +635,10 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
             return estRiskStandardBet(contestUA.Npop, noerror, haveMvrs)
         }
 
-    val maxRisk: Double?
-        get() {
-            val risk = contestRound.auditorWantRisk
-            return if (risk != null) risk else 0.05
-        }
+    fun getMaxRisk(): Double {
+        val risk = contestRound.auditorWantRisk
+        return if (risk != null) risk else auditRiskLimit
+    }
 
     fun statewide(): Boolean {
         val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
@@ -635,13 +647,15 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
         return (toks.size > 60)
     }
 
-    val target: Boolean
-        get() {
-            val reason = contestUA.contest.info().metadata.get("CORLAauditReason")
-            if (reason == null) return false
-            return reason == "state_wide_contest" || reason == "county_wide_contest"
-        }
+    fun getTarget(): String {
+        return if (targeted()) "YES" else ""
+    }
 
+    fun targeted(): Boolean {
+        val reason = contestUA.contest.info().metadata.get("CORLAauditReason")
+        if (reason == null) return false
+        return reason == "state_wide_contest" || reason == "county_wide_contest"
+    }
 
     /* public Integer getMvrsExtra() {
        if (!contestRound.getDone()) return 0;

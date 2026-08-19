@@ -200,7 +200,7 @@ public class AuditRoundsTableOld extends JPanel implements ViewerPanelIF {
         return (auditRecord != null);
     }
 
-        // TODO when resample from SampleTable, need to reread in the audit rounds
+    // TODO when resample from SampleTable, need to reread in the audit rounds
     public void setAuditRecord(AuditRecordIF auditRecord) {
         auditRoundTable.setBeans(null);
         contestRoundTable.setBeans(null);
