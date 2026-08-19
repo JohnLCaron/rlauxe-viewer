@@ -155,11 +155,16 @@ class CountyTable(
 
         val beanList = mutableListOf<CountyPoolsBean>()
         countyPools.forEach {
-            val bean = CountyPoolsBean(it, countyData[it.countyName]!!)
-            val cvrTabs = this.countyCvrMap[ it.countyName ]
-            if (cvrTabs != null)
-                bean.cvrTabs = cvrTabs.contestTabs
-            beanList.add(bean)
+            val countyData = countyData[it.countyName]
+            if (countyData != null) {
+                val bean = CountyPoolsBean(it, countyData)
+                val cvrTabs = this.countyCvrMap[it.countyName]
+                if (cvrTabs != null)
+                    bean.cvrTabs = cvrTabs.contestTabs
+                beanList.add(bean)
+            } else {
+                logger.warn("No countyData for ${it.countyName}")
+            }
         }
         countyTable.setBeans(beanList)
 

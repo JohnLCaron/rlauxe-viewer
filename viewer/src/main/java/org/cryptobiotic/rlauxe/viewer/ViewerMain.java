@@ -71,9 +71,6 @@ public class ViewerMain extends JPanel {
   private MvrTable mvrPanel;
   private AuditRoundsTable auditRoundsPanel;
 
-  // not used
-  private ContestPoolsTableOld contestPoolPanel;
-
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
   public ViewerMain(PreferencesExt prefs, float fontSize, ViewerProfile profile, String datadir) {

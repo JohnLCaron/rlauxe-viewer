@@ -54,7 +54,7 @@ are shown in the lower table. A Style tracks which contests are on a card. Each 
 
 ## Sampling Table
 
-The Sampling table compares how Auditing is done in the current ColoradoRLA software to auditing with rlauxe:
+The Sampling table compares how Auditing is done in the current ColoradoRLA software to what auditing with rlauxe might look like.
 
 ![image](images/corla/Sampling.png)
 
@@ -62,7 +62,8 @@ The results of the official ColoradoRLA audit are in the fields that start with 
 
 Simulated results using rlauxe for the audit are seen in the other fields. Typically, rlauxe uses style-based (CSD) sampling
 where the contests to be audited are specifically chosen. These are indicated by the _include_ column. You may try _what if_ 
-scenarios by setting different contests to be included, and running the simulation to see how many cards are needed, and what risk levels are achieved. Rlauxe style based sampling uses a _consistent sampling_ across all counties, and is not tied to selecting single county contests to target.
+scenarios by setting different contests to be included, and running the simulation to see how many cards are needed, and what risk levels are achieved (lower is better). 
+Rlauxe style based sampling uses _consistent sampling_ across all counties, and is not tied to selecting single county contests to target.
 
 When the simulation is run, the results are put into the individual contests in the top table, and aggregated by county in the middle table. If you select a County from the middle table, the results for all the contests in that county are shown in th bottom table.
 
@@ -76,12 +77,20 @@ In the top right are various buttons that make it easy to try different scenario
 
 ![image](../uibase/src/main/resources/resources/ui/png/goal.png) Include only the targeted contests, and set all other contests to not included.
 
-![image](../uibase/src/main/resources/resources/ui/png/risk.png) Set all "important" contest to be included, where important means
+![image](../uibase/src/main/resources/resources/ui/png/important.png) Set all "important" contest to be included, where important means
 * multicounty contests
 * contestName.startsWith("Representative to the")
 * contestName.startsWith("State")
 
-![image](../uibase/src/main/resources/resources/ui/png/add-cart.png) All selected contests are included. You can do multiple selection with the usual gestures, click and drap, Ctrl-Click, Shift-Click. If 0 or 1 rows are selected, then include all rows.
+![image](../uibase/src/main/resources/resources/ui/png/risk.png) Experimental feature to use higher risk values for close contests:
+````
+    if (contest estimated mvrs >= 250) max risk = 20 %
+    else if (contest estimated mvrs >= 150) max risk = 10 %
+    else if (contest estimated mvrs >= 50) max risk = 5 %
+    else max risk = auditRiskLimit (typically 3 %)
+````
+
+![image](../uibase/src/main/resources/resources/ui/png/add-cart.png) All selected contests are included. You can do multiple selection with the usual gestures, click and drag, Ctrl-Click, Shift-Click. If 0 or 1 rows are selected, then include all rows.
 
 ![image](../uibase/src/main/resources/resources/ui/png/remove-cart.png) All selected contests are not included. If 0 or 1 rows are selected, then set all rows to not included.
 
