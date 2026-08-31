@@ -70,6 +70,7 @@ public class ViewerMain extends JPanel {
   private CardTable cardPanel;
   private MvrTable mvrPanel;
   private AuditRoundsTable auditRoundsPanel;
+  private LogsTable logsPanel;
 
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
 
@@ -96,6 +97,7 @@ public class ViewerMain extends JPanel {
       activePanels.add(belgiumPanel);
 
     } else {
+
       if (profile.isCorla()) {
         corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
         corlaPanel.getActions(actionsPanel);
@@ -138,6 +140,10 @@ public class ViewerMain extends JPanel {
       tabbedPane.addTab("AuditRounds", auditRoundsPanel);
       activePanels.add(auditRoundsPanel);
     }
+
+    logsPanel = new LogsTable((PreferencesExt) prefs.node("LogsTable"), infoTA, infoWindow, fontSize);
+    tabbedPane.addTab("Logs", logsPanel);
+    activePanels.add(logsPanel);
 
     tabbedPane.setSelectedIndex(0);
 

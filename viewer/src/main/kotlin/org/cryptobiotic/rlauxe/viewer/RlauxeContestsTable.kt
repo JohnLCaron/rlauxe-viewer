@@ -242,6 +242,8 @@ class RlauxeContestsTable(
 
         f.format("Audit record at %s%n%n", auditRecord!!.topdir)
         f.format("%s%n", this.config!!.show())
+        f.format("  auditable contests = %d %n", this.auditRecord!!.rounds.first().contestRounds.size)
+
         if (this.lastAuditRound == null) return
 
         f.format("AuditRounds")
@@ -378,7 +380,7 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
     val voteMargin: Int
         get() {
             val minAssertion = contestUA.minAssertion()
-            return contestUA.contest.marginInVotes(minAssertion!!.assorter)
+            return if (minAssertion == null) 0 else contestUA.contest.marginInVotes(minAssertion.assorter)
         }
 
     val winners: String

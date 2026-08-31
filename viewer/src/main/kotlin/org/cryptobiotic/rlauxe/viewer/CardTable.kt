@@ -183,7 +183,7 @@ class CardTable(
         val phantom: Boolean
             get() = card.phantom()
 
-        val contests: String = card.possibleContests().contentToString()
+        val possibleContests: String = card.possibleContests().contentToString()
 
         val poolId: Int?
             get() = card.poolId()
@@ -191,7 +191,7 @@ class CardTable(
         val cardStyle: String
             get() = card.style()!!.name()
 
-        val possibleContests: String = card.style()?.possibleContests().contentToString()
+       //  val possibleContests: String = card.style()?.possibleContests().contentToString()
 
         val votes = buildString {
             if (card.votes() != null) {
