@@ -13,8 +13,8 @@ val subprojectVersion = version
 
 dependencies {
     api(project(":rlauxe-uibase"))
-    // implementation(files("/home/stormy/dev/github/rla/rlauxe/core/build/libs/rlauxe-core-0.10.3.0-uber.jar"))
-    implementation(files("../libs/rlauxe-core-0.10.3.0-uber.jar"))
+    // implementation(files("/home/stormy/dev/github/rla/rlauxe/core/build/libs/rlauxe-core-0.10.3.1-uber.jar"))
+    implementation(files("../libs/rlauxe-core-0.10.3.1-uber.jar"))
     implementation(libs.slf4j)
     implementation(libs.logback.classic)
 
@@ -26,6 +26,7 @@ dependencies {
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
+
 
 tasks.register<Jar>("uberJar") {
     archiveClassifier = "uber"
