@@ -27,6 +27,7 @@ tasks.getByName<Test>("test") {
     useJUnitPlatform()
 }
 
+
 tasks.register<Jar>("uberJar") {
     archiveClassifier = "uber"
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
