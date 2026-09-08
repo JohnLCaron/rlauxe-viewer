@@ -9,6 +9,7 @@ import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.showAssertionWithDesc
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
+import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.Assertion
@@ -19,6 +20,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
+import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable.CorlaContestBean
 import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable.CorlaContestBean.Companion.auditRiskLimit
 import org.cryptobiotic.rlauxe.viewer.ViewerMain.MvrAction
 import org.slf4j.Logger
@@ -32,6 +34,7 @@ import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
+import kotlin.collections.forEach
 
 private val logger: Logger = LoggerFactory.getLogger(AuditRoundsTable::class.java)
 
@@ -267,7 +270,10 @@ class AuditRoundsTable(
 
         var prevTotal = 0
         for (round in auditRecord.rounds) {
-            beanList.add(AuditRoundBean(round, prevTotal) {  samplingChanged = it })
+            beanList.add(AuditRoundBean(round, prevTotal) {
+                samplingChanged = it
+                contestRoundTable.refresh()
+            })
             prevTotal += round.newmvrs
         }
         auditRoundTable.setBeans(beanList)
@@ -286,7 +292,7 @@ class AuditRoundsTable(
         if (selectedRows.size < 2) selectedRows = contestRoundTable.beans
 
         for (bean in selectedRows) {
-            bean.isInclude = include
+            bean.setInclude(include)
         }
         samplingChanged = true
         contestRoundTable.refresh()
@@ -311,7 +317,7 @@ class AuditRoundsTable(
 
         // select contest with smallest margin
         // select assertion with smallest noerror
-        val minBean = beanList.filter{ !it.isDone }.minByOrNull { it.contestUA.minNoerror() ?: 0.0 }
+        val minBean = beanList.filter{ !it.isDone() }.minByOrNull { it.contestUA.minNoerror() ?: 0.0 }
         if (minBean != null) {
             contestRoundTable.setSelectedBean(minBean)
             setSelectedContest(minBean)
@@ -360,7 +366,7 @@ class AuditRoundsTable(
                                 auditList.add(AuditRoundResultBean(contestRound, assertionRound))
                             }
                             if (assertionRound.estimationResult != null) {
-                                estList.add(EstimationRoundBean(assertionRound, contestRound))
+                                estList.add(EstimationRoundBean(assertionRound, contestRound, assertionRound.estimationResult!!))
                             }
                         }
                     }
@@ -398,7 +404,7 @@ class AuditRoundsTable(
                 return
             }
 
-            val cuas: MutableList<ContestWithAssertions?> = ArrayList<ContestWithAssertions?>()
+            val cuas = mutableListOf<ContestWithAssertions>()
             for (cr in this.lastAuditRound!!.contestRounds) {
                 cuas.add(cr.contestUA)
             }
@@ -408,7 +414,7 @@ class AuditRoundsTable(
 
             logger.info(String.format("call resampleAndSaveResults"))
 
-            resampleAndSaveResults((auditRecord as AuditRecord?)!!, (lastAuditRound as AuditRound?)!!)
+            resampleAndSaveResults((auditRecord as AuditRecord), (lastAuditRound as AuditRound))
 
             auditRoundTable.refresh()
             contestRoundTable.refresh()
@@ -484,8 +490,8 @@ class AuditRoundsTable(
     fun showEstimationRound(bean : EstimationRoundBean) = buildString {
         append(estRoundTable.tableModel.showBean(bean, EstimationRoundBean.beanProperties))
 
-        if (bean.estRound!!.startingErrorRates != null) {
-            append("startingErrors = ${ bean.estRound!!.startingErrorRates()}")
+        if (bean.estRound.startingErrorRates != null) {
+            append("startingErrors = ${ bean.estRound.startingErrorRates()}")
         }
     }
 
@@ -507,7 +513,6 @@ class AuditRoundsTable(
 class AuditRoundBean(val auditRound: AuditRoundIF, val prevTotal: Int, val setChange: (Boolean) -> Unit) {
 
     fun canedit() = true
-
 
     val totalMvrs: Int
         get() = prevTotal + auditRound.newmvrs
@@ -550,9 +555,11 @@ class AuditRoundBean(val auditRound: AuditRoundIF, val prevTotal: Int, val setCh
         }
 
         // editable properties
+        @JvmStatic
         fun editableProperties(): String {
             return "mvrLimit"
         }
+
         @JvmStatic
         fun hiddenProperties() = "auditRound prevTotal setChange"
     }
@@ -562,17 +569,29 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
     val contestUA = contestRound.contestUA
     val initialStatus = contestRound.status
 
-    fun canedit() = true
+    fun canedit() = true // should be true only if last round
 
-    var isInclude: Boolean
-        get() = contestRound.included
-        set(include) {
-            val oldState = contestRound.included
-            if (oldState != include) {
-                contestRound.included = include
-                setChange(true)
-            }
+    fun isInclude() = contestRound.included
+
+    fun setInclude(include: Boolean) {
+        val oldState = contestRound.included
+        if (oldState != include) {
+            contestRound.included = include
+            setChange(true)
         }
+    }
+
+    fun isDone() = contestRound.done
+
+    fun setDone(done: Boolean) {
+        val oldState = contestRound.done
+        if (oldState != done) {
+            contestRound.done = done
+            contestRound.status = if (done) TestH0Status.AuditorRemoved else TestH0Status.InProgress
+            setChange(true)
+        }
+        if (done) setInclude(false)
+    }
 
     var mvrLimit: Int
         get() = (if (contestRound.auditorWantNewMvrs != null) contestRound.auditorWantNewMvrs else -1)!!
@@ -595,8 +614,6 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
         get() = contestRound.estMvrs / (contestRound.contestUA.Nc.toDouble())
     val estNewMvrs: Int
         get() = contestRound.estNewMvrs
-    val isDone: Boolean
-        get() = contestRound.done
     val haveNewMvrs: Int
         get() = contestRound.haveNewSampleSize
     val margin: Double?
@@ -686,8 +703,9 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
 
     companion object {
         // editable properties
+        @JvmStatic
         fun editableProperties(): String {
-            return "include mvrLimit"
+            return "include done mvrLimit"
         }
         @JvmStatic
         fun hiddenProperties() = "contestRound auditRound contestUA initialStatus setChange"
@@ -767,7 +785,7 @@ class AssertionRoundBean(val assertionRound: AssertionRound, val contestRound: C
 
     fun showPoolAssortValues(): String {
         if (this.oaAssorter != null) {
-            return this.oaAssorter!!.assortValuesForPool(3526) // TODO
+            return this.oaAssorter.assortValuesForPool(3526) // TODO
         } else return "not a OneAudit assertion"
     }
 
@@ -785,38 +803,36 @@ class AssertionRoundBean(val assertionRound: AssertionRound, val contestRound: C
 //    val startingRates: ClcaErrorRates? = null, // apriori error rates (clca only)
 //    val estimatedDistribution: List<Int>,   // distribution of estimated sample size; currently deciles
 //)
-class EstimationRoundBean(val assertionRound: AssertionRound, val contest: ContestRound?) {
-    var estRound: EstimationRoundResult? = assertionRound.estimationResult
+class EstimationRoundBean(val assertionRound: AssertionRound, val contest: ContestRound?, val estRound: EstimationRoundResult) {
 
     val round: Int
-        get() = estRound!!.roundIdx
+        get() = estRound.roundIdx
 
     val strategy: String
-        get() = estRound!!.strategy
+        get() = estRound.strategy
     val startingRates: String
-        get() = estRound!!.startingErrorRates()
+        get() = estRound.startingErrorRates()
 
     val startingPvalue: Double
         get() {
-            val t = estRound!!.startingTestStatistic
+            val t = estRound.startingTestStatistic
             if (t == 0.0) return 0.0 else return 1.0 / t
         }
     val calcNewMvrs: Int
         // TODO calc on the fly maybe
-        get() = estRound!!.calcNewMvrsNeeded
+        get() = estRound.calcNewMvrsNeeded
 
     val simulatedDistribution: String
-        get() = String.format("%s (%d)", estRound!!.deciles(), estRound!!.ntrials)
+        get() = String.format("%s (%d)", estRound.deciles(), estRound.ntrials)
 
     val lastIndex: Int
-        get() = estRound!!.lastIndex
+        get() = estRound.lastIndex
     val simMvrs: Int
-        get() = estRound!!.simMvrsNeeded
+        get() = estRound.simMvrsNeeded
     val simNewMvrs: Int
-        get() = estRound!!.simNewMvrsNeeded
+        get() = estRound.simNewMvrsNeeded
     val simPercentile: Int
-        get() = estRound!!.percentile
-
+        get() = estRound.percentile
 
 
     companion object {

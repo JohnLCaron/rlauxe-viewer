@@ -265,36 +265,39 @@ class CorlaContestsTable(
         loadAuditRecord()
     }
 
-    fun showInfo(f: Formatter) {
-        if (this.countyAudit == null) return
+    fun showInfo(): String = buildString {
+        if (countyAudit == null) return ""
 
-        f.format("Audit record at %s%n%n", countyAudit!!.topdir)
-        f.format("%s%n", this.config!!.show())
-        if (this.lastAuditRound == null) return
+        appendLine("Audit record at ${countyAudit!!.topdir}")
+        appendLine(config!!.show())
+        if (lastAuditRound != null) {
 
-        f.format("AuditRounds")
-        var totalExtra = 0
-        for (round in countyAudit!!.rounds) {
-            if (round.auditWasDone) {
-                val roundIdx = round.roundIdx
-                val nmvrs = round.samplePrns.size
-                f.format("%n  number of Mvrs in round %d = %d %n", roundIdx, nmvrs)
-                val extra = round.mvrsUnused
-                f.format("  extraBallotsUsed = %d %n", extra)
-                totalExtra += extra
+            appendLine("AuditRounds")
+            var totalExtra = 0
+            for (round in countyAudit!!.rounds) {
+                if (round.auditWasDone) {
+                    val roundIdx = round.roundIdx
+                    val nmvrs = round.samplePrns.size
+                    appendLine("  number of Mvrs in round $roundIdx = $nmvrs")
+                    val extra = round.mvrsUnused
+                    appendLine("  extraBallotsUsed = $extra")
+                    totalExtra += extra
+                }
             }
-        }
-        f.format("%n  total extraBallotsUsed = %d %n", totalExtra)
-        f.format("  total Mvrs = %d%n", this.lastAuditRound!!.nmvrs)
+            appendLine("  total extraBallotsUsed = $totalExtra")
+            appendLine("  total Mvrs = ${ lastAuditRound!!.nmvrs }")
 
-        f.format("%ntotal contests = %d %n", this.countyAudit!!.contests.size)
-        f.format("auditable contests = %d %n", this.countyAudit!!.rounds.first().contestRounds.size)
-        f.format("targeted contests = %d %n", contestTable.beans.count { it.targeted()} )
-        f.format("total cards = %d %n", this.config!!.election.totalCardCount)
+            appendLine()
+            appendLine("total contests = ${countyAudit!!.contests.size}")
+            appendLine("auditable contests = ${countyAudit!!.rounds.first().contestRounds.size}")
+            appendLine("targeted contests = ${contestTable.beans.count { it.targeted() }}")
+            appendLine("total cards = ${config!!.election.totalCardCount}")
 
-        if (countyTotal != null) {
-            f.format("%nmvrs for corla sampling = %d %n", countyTotal!!.corlaSampling)
-            f.format("%nmvrs for rlauxe sampling = %d %n", countyTotal!!.rlauxeSampling)
+            if (countyTotal != null) {
+                appendLine()
+                appendLine("mvrs for corla sampling = ${countyTotal!!.corlaSampling}")
+                appendLine("mvrs for rlauxe sampling = ${countyTotal!!.rlauxeSampling}")
+            }
         }
     }
 
@@ -411,7 +414,7 @@ class CorlaContestsTable(
 
         fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
 
-        fun samplePct() : Double {
+        fun getSamplePct() : Double {
             val pop = this.getPopulation()
             return if (pop == 0) 0.0 else 100 * this.getEstMvrs() / pop.toDouble()
         }

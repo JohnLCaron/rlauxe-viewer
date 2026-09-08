@@ -5,6 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
+import org.cryptobiotic.rlauxe.corla.ColoradoInputTable;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;
@@ -57,6 +58,8 @@ public class ViewerMain extends JPanel {
   String auditRecordDir = "none";
 
   JTabbedPane tabbedPane;
+
+  private ColoradoInputTable corlaInputPanel;
 
   private BelgiumContestsTable belgiumPanel;
 
@@ -117,11 +120,11 @@ public class ViewerMain extends JPanel {
         rlauxeContests.getActions(actionsPanel);
         tabbedPane.addTab("Contests", rlauxeContests);
         activePanels.add(rlauxeContests);
-
-        poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
-        tabbedPane.addTab("Pools", poolPanel);
-        activePanels.add(poolPanel);
       }
+
+      poolPanel = new PoolTable((PreferencesExt) prefs.node("PoolTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Pools", poolPanel);
+      activePanels.add(poolPanel);
 
       stylePanel = new StyleTable((PreferencesExt) prefs.node("Styles"), infoTA, infoWindow, fontSize);
       tabbedPane.addTab("Styles", stylePanel);
@@ -131,10 +134,10 @@ public class ViewerMain extends JPanel {
       tabbedPane.addTab("Cards", cardPanel);
       activePanels.add(cardPanel);
 
-      /*
-      mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
-      tabbedPane.addTab("Mvrs", mvrPanel);
-      activePanels.add(mvrPanel); */
+        /*
+        mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
+        tabbedPane.addTab("Mvrs", mvrPanel);
+        activePanels.add(mvrPanel); */
 
       auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
       tabbedPane.addTab("AuditRounds", auditRoundsPanel);
@@ -150,7 +153,7 @@ public class ViewerMain extends JPanel {
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
 
-      logger.debug("ViewerMain.tabbedPanel.changed, component {}", c.getClass().getName());
+      logger.debug("ColoradoInputMain.tabbedPanel.changed, component {}", c.getClass().getName());
       actionsPanel.removeAll();
 
       if (c instanceof CardTable cardTable) {
@@ -202,10 +205,8 @@ public class ViewerMain extends JPanel {
 
     AbstractAction infoAction = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        Formatter f = new Formatter();
-        showInfo(f);
         infoTA.setFont(infoTA.getFont().deriveFont(fontSize));
-        infoTA.setText(f.toString());
+        infoTA.setText(showInfo());
         infoWindow.show();
       }
     };
@@ -275,13 +276,13 @@ public class ViewerMain extends JPanel {
     add(topPanel, BorderLayout.NORTH);
     add(tabbedPane, BorderLayout.CENTER);
 
-    logger.debug("ViewerMain started");
+    logger.debug("ColoradoInputMain started");
   }
 
-  void showInfo(Formatter f) {
-    if (belgiumPanel != null) belgiumPanel.showInfo(f);
-    else if (corlaPanel != null) corlaPanel.showInfo(f);
-    else rlauxeContests.showInfo(f);
+  String showInfo() {
+    if (belgiumPanel != null) return belgiumPanel.showInfo();
+    else if (corlaPanel != null) return corlaPanel.showInfo();
+    else return rlauxeContests.showInfo();
   }
 
   // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
@@ -334,12 +335,12 @@ public class ViewerMain extends JPanel {
       store.save();
     } catch (IOException ioe) {
       ioe.printStackTrace();
-      logger.error("ViewerMain store.save() failed", ioe);
+      logger.error("ColoradoInputMain store.save() failed", ioe);
     }
   }
 
   public void exit(Boolean save) {
-    logger.info("------------- ViewerMain exiting ----------------------");
+    logger.info("------------- ColoradoInputMain exiting ----------------------");
     if (save) save();
     System.exit(0);
   }
@@ -447,19 +448,21 @@ public class ViewerMain extends JPanel {
   }
 
   public enum ViewerProfile {
-    BelgiumViewer, CorlaViewer, RlauxeViewer;
+    BelgiumViewer, CorlaViewer, RlauxeViewer, CorlaData;
 
     boolean isBelgium() { return this == BelgiumViewer; }
     boolean isCorla() { return this == CorlaViewer; }
+    boolean isCorlaData() { return this == CorlaData; }
   }
 
   public static void main(String[] args) {
-    logger.info("------------- ViewerMain starting ----------------------");
+    logger.info("------------- ColoradoInputMain starting ----------------------");
 
     ViewerProfile profile = ViewerProfile.RlauxeViewer;
     String datadir = null;
     for (int idx=0; idx < args.length; idx++) {
       String arg = args[idx];
+      if (arg.equals("-corlaData")) profile = ViewerProfile.CorlaData;
       if (arg.equals("-corlaAudit")) profile = ViewerProfile.CorlaViewer;
       if (arg.equals("-belgiumAudit")) profile = ViewerProfile.BelgiumViewer;
       if (arg.equals("-datadir")) datadir = args[idx+1];
@@ -467,23 +470,27 @@ public class ViewerMain extends JPanel {
 
     // prefs storage
     try {
-      String storeName = profile.isCorla() ? "CorlaViewer.xml" :
-                          profile.isBelgium() ? "BelgiumViewer.xml" :
-                          "RlauxeViewer.xml";
+      String storeName =
+              profile.isCorlaData() ? "CorlaData.xml" :
+              profile.isCorla() ? "CorlaViewer.xml" :
+              profile.isBelgium() ? "BelgiumViewer.xml" :
+              "RlauxeViewer.xml";
 
       String prefStore = XMLStore.makeStandardFilename(".rlauxe", storeName);
-      XMLStore storedDefaults = profile.isCorla() ? XMLStore.createFromResource("/resources/prefs/CorlaViewerDefaults.xml", null) :
-                                profile.isBelgium() ? XMLStore.createFromResource("/resources/prefs/BelgiumViewerDefaults.xml", null) :
-                                                   XMLStore.createFromResource("/resources/prefs/RlauxeViewerDefaults.xml", null);
+      XMLStore storedDefaults =
+              profile.isCorlaData() ? XMLStore.createFromResource("/resources/prefs/CorlaInputDataDefaults.xml", null) :
+              profile.isCorla() ? XMLStore.createFromResource("/resources/prefs/CorlaViewerDefaults.xml", null) :
+              profile.isBelgium() ? XMLStore.createFromResource("/resources/prefs/BelgiumViewerDefaults.xml", null) :
+                                    XMLStore.createFromResource("/resources/prefs/RlauxeViewerDefaults.xml", null);
 
       store = XMLStore.createFromFile(prefStore, storedDefaults);
       prefs = store.getPreferences();
       Debug.setStore(prefs.node("Debug"));
     } catch (IOException e) {
-      logger.error("ViewerMain store.create() failed", e);
+      logger.error("ColoradoInputMain store.create() failed", e);
     }
 
-    var fontSize = (Float) prefs.getBean(ViewerMain.FONT_SIZE, 12.0f); // getFloat() ??
+    var fontSize = (Float) prefs.getBean(ViewerMain.FONT_SIZE, 12.0f); // TODO where does this get saved ??
     ucar.ui.widget.FontUtil.init();
     resizeDefaultFonts(fontSize);
 
