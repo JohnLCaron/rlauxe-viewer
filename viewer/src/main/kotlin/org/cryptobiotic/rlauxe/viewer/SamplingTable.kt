@@ -426,7 +426,7 @@ class SamplingTable(
             lastAuditRound!!.countyStrata = countyStrata
             logger.debug(String.format("call resampleAndSaveResults wantFromPools=$countyStrata"))
             if (config!!.isUniform) {
-                lastAuditRound!!.auditorMaxNewMvrs = 8245
+                lastAuditRound!!.auditorMaxNewMvrs = 8245 // WTF !!
                 logger.debug(String.format("call resampleAndSaveResults with auditorMaxNewMvrs = 8245"))
             } else {
                 lastAuditRound!!.auditorMaxNewMvrs = null

@@ -303,38 +303,33 @@ class BelgiumContestsTable(
     /** /////////////////////////////////////////////////////////////// */
 
     //// Actions 
-    fun showInfo(f: Formatter) {
-        if (this.auditRecord == null) return
-
-        val result = buildString {
+    fun showInfo() = buildString {
+        if (auditRecord == null) append("no audit record")
 
             appendLine("Audit record at ${auditRecord!!.topdir}")
-            f.format("%s%n", config!!.show())
-            if (lastAuditRound == null) return
+            appendLine(config!!.show())
+            if (lastAuditRound != null) {
+                append("AuditRounds")
+                var totalExtra = 0
+                for (round in auditRecord!!.rounds) {
+                    if (round.auditWasDone) {
+                        val roundIdx = round.roundIdx
+                        val nmvrs = round.samplePrns.size
+                        appendLine("number of Mvrs in round $roundIdx = $nmvrs")
+                        val extra = round.mvrsUnused
+                        appendLine("  extraBallotsUsed = $extra")
+                        totalExtra += extra
+                    }
+                }
+                appendLine("  total extraBallotsUsed = $totalExtra total Mvrs = ${lastAuditRound!!.nmvrs}")
 
-            append("AuditRounds")
-            var totalExtra = 0
-            for (round in auditRecord!!.rounds) {
-                if (round.auditWasDone) {
-                    val roundIdx = round.roundIdx
-                    val nmvrs = round.samplePrns.size
-                    appendLine("number of Mvrs in round $roundIdx = $nmvrs")
-                    val extra = round.mvrsUnused
-                    appendLine("  extraBallotsUsed = $extra")
-                    totalExtra += extra
+                if (allSeats != null) {
+                    appendLine()
+                    appendLine("Party seat ranges based on contested assertions")
+                    append(allSeats!!.showAllPartySeats())
                 }
             }
-            appendLine("  total extraBallotsUsed = $totalExtra total Mvrs = ${lastAuditRound!!.nmvrs}")
-
-            if (allSeats != null) {
-                appendLine()
-                appendLine("Party seat ranges based on contested assertions")
-                append(allSeats!!.showAllPartySeats())
-            }
         }
-
-        f.format("%s", result)
-    }
 
 
     fun makeCandidatesTotal(beans: MutableList<PartyBean>): PartyBean {

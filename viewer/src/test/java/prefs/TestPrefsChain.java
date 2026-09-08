@@ -44,7 +44,7 @@ public class TestPrefsChain {
 
         } catch (IOException e) {
             System.out.println("XMLStore Creation failed " + e);
-            logger.error("ViewerMain store.create() failed", e);
+            logger.error("ColoradoInputMain store.create() failed", e);
         }
     }
 
@@ -72,7 +72,7 @@ public class TestPrefsChain {
                 store.save();
             } catch (IOException ioe) {
                 ioe.printStackTrace();
-                logger.error("ViewerMain store.save() failed", ioe);
+                logger.error("ColoradoInputMain store.save() failed", ioe);
             }
 
             String prefStore2 = XMLStore.makeStandardFilename(".rlauxeTest", storeName);
@@ -85,7 +85,7 @@ public class TestPrefsChain {
 
         } catch (IOException e) {
             System.out.println("XMLStore Creation failed " + e);
-            logger.error("ViewerMain store.create() failed", e);
+            logger.error("ColoradoInputMain store.create() failed", e);
         }
     }
 

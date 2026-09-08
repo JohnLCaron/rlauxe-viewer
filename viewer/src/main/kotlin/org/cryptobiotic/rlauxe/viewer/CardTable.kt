@@ -31,7 +31,7 @@ class CardTable(
     val infoWindow: IndependentWindow,
     fontSize: Float,
 ) : JPanel(), ViewerPanelIF {
-    
+
     private val cardTable: BeanTable<CardBean>
     var localInfo: TextHistoryPane = TextHistoryPane()
 
@@ -121,7 +121,7 @@ class CardTable(
             } else {
                 val cardPools = this.mvrManager!!.pools()
                 if (cardPools != null) {
-                    val pools= mutableMapOf<String, StyleIF>() // sorted
+                    val pools = mutableMapOf<String, StyleIF>() // sorted
                     for (pool in cardPools) {
                         val cardStyle = "P" + pool.id()
                         pools.put(cardStyle, pool)
@@ -132,7 +132,7 @@ class CardTable(
 
             val beanList = mutableListOf<CardBean>()
             var index = 1
-            cardManifest!!.cards.iterator().use { iter ->
+            cardManifest!!.cardIterable.iterator().use { iter ->
                 while (iter.hasNext() && index < ncardsToRead) {
                     val card = iter.next()
                     beanList.add(CardBean(card))
@@ -166,53 +166,55 @@ class CardTable(
         prefs.putInt("splitPos1", split1.getDividerLocation())
     }
 
-    class CardBean(val card: AuditableCard) {
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(CardTable::class.java)
+    }
+}
 
-        val id: String
-            get() = card.id()
+class CardBean(val card: AuditableCard) {
 
-        val location: String
-            get() = card.location()
+    val id: String
+        get() = card.id()
 
-        val manifestIndex: Int
-            get() = card.index()
+    val location: String
+        get() = card.location()
 
-        val prn: Long
-            get() = card.prn()
+    val manifestIndex: Int
+        get() = card.index()
 
-        val phantom: Boolean
-            get() = card.phantom()
+    val prn: Long
+        get() = card.prn()
 
-        val possibleContests: String = card.possibleContests().contentToString()
+    val phantom: Boolean
+        get() = card.phantom()
 
-        val poolId: Int?
-            get() = card.poolId()
+    val possibleContests: String = card.possibleContests().contentToString()
 
-        val cardStyle: String
-            get() = card.style()!!.name()
+    val styleId: Int
+        get() = card.styleId
 
-       //  val possibleContests: String = card.style()?.possibleContests().contentToString()
+    val poolId: Int?
+        get() = card.poolId()
 
-        val votes = buildString {
-            if (card.votes() != null) {
-                card.votes()!!.forEach { append("${it.key}:${it.value.contentToString()}, ") }
-            }
+    val cardStyle: String
+        get() = card.style()?.name() ?: "not set"
+
+   //  val possibleContests: String = card.style()?.possibleContests().contentToString()
+
+    val votes = buildString {
+        if (card.votes() != null) {
+            card.votes()!!.forEach { append("${it.key}:${it.value.contentToString()}, ") }
         }
+    }
 
-        fun show()= buildString {
-            appendLine(card.toString())
-            appendLine(card.style().toString())
-        }
-
-        companion object {
-            @JvmStatic
-            fun hiddenProperties() = "card";
-        }
-
+    fun show()= buildString {
+        appendLine(card.toString())
+        appendLine(card.style().toString())
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(CardTable::class.java)
+        @JvmStatic
+        fun hiddenProperties() = "card";
     }
 
 }

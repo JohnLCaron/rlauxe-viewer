@@ -176,7 +176,7 @@ class RlauxeContestsTable(
                 val contestMap = mutableMapOf<Int, RlauxeContestBean>()
                 val beanList = mutableListOf<RlauxeContestBean>()
 
-                val contestRoundMap: MutableMap<Int?, ContestRound?> = HashMap<Int?, ContestRound?>()
+                val contestRoundMap = mutableMapOf<Int, ContestRound>()
                 for (contestRound in lastAuditRound!!.contestRounds) {
                     contestRoundMap.put(contestRound.id, contestRound)
                 }
@@ -237,32 +237,44 @@ class RlauxeContestsTable(
         prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
-    fun showInfo(f: Formatter) {
-        if (this.auditRecord == null) return
+    fun showInfo() = buildString {
+        if (auditRecord == null) return "no audit record"
+        resetAuditRecord()
 
-        f.format("Audit record at %s%n%n", auditRecord!!.topdir)
-        f.format("%s%n", this.config!!.show())
-        f.format("  auditable contests = %d %n", this.auditRecord!!.rounds.first().contestRounds.size)
-
-        if (this.lastAuditRound == null) return
-
-        f.format("AuditRounds")
+        appendLine("Audit record at ${auditRecord!!.topdir}")
+        appendLine(" ${config!!.show()}")
+        appendLine("  auditable contests in first round = ${auditRecord!!.rounds.first().contestRounds.size}")
+        appendLine()
         var totalExtra = 0
-        var mvrsUsed = 0
+        var totalMvrs = 0
         for (round in auditRecord!!.rounds) {
             if (round.auditWasDone) {
                 val roundIdx = round.roundIdx
                 val nmvrs = round.samplePrns.size
-                f.format("%n  number of Mvrs in round %d = %d %n", roundIdx, nmvrs)
-                f.format("  mvrsUsed = %d %n", round.mvrsUsed)
-                f.format("  extraMvrs = %d %n", round.mvrsUnused)
+                appendLine("  number of Mvrs in round $roundIdx = $nmvrs")
+                appendLine("    mvrsUsed = ${round.mvrsUsed}")
+                appendLine("    extraMvrs = ${round.mvrsUnused}")
                 totalExtra += round.mvrsUnused
-                mvrsUsed = round.mvrsUsed
+                totalMvrs += round.newmvrs
             }
         }
-        f.format("%n  total mvrs used = %d %n", mvrsUsed)
-        f.format("  total extraMvrs = %d %n", totalExtra)
-        f.format("  total mvrs sampled = %d%n", this.lastAuditRound!!.nmvrs)
+        appendLine()
+        appendLine("  total mvrs used = ${totalMvrs}")
+        appendLine("  total extraMvrs = ${totalExtra}")
+
+        val contestsMap = mutableMapOf<Int, ContestRound>()
+        auditRecord!!.rounds.forEach { auditRound ->
+            auditRound.contestRounds.forEach { contestRound ->
+                contestsMap[contestRound.id] = contestRound
+            }
+        }
+        val statusMap = mutableMapOf<TestH0Status, Int>()
+        contestsMap.values.forEach { contestRound ->
+            val accum = statusMap.getOrDefault(contestRound.status, 0)
+            statusMap[contestRound.status] = accum + 1
+        }
+        appendLine("\nContest audit status (${statusMap.values.sum()} contests)")
+        statusMap.forEach { appendLine("  ${Naming.status(it.key)} = ${it.value}")}
     }
 
     fun showContest(bean: RlauxeContestBean): String {
@@ -343,6 +355,9 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
     val npop: Int
         get() = contestUA.Npop
 
+    val xpop: Int
+        get() = contestUA.Npop - contestUA.Nc
+
     val phantoms: Int
         get() = contestUA.Nphantoms
 
@@ -380,7 +395,7 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
     val voteMargin: Int
         get() {
             val minAssertion = contestUA.minAssertion()
-            return if (minAssertion == null) 0 else contestUA.contest.marginInVotes(minAssertion.assorter)
+            return if (minAssertion == null) 0 else contestUA.contest.marginInVotes(minAssertion!!.assorter)
         }
 
     val winners: String
