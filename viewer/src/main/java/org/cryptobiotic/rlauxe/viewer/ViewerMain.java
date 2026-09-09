@@ -276,7 +276,7 @@ public class ViewerMain extends JPanel {
     add(topPanel, BorderLayout.NORTH);
     add(tabbedPane, BorderLayout.CENTER);
 
-    logger.debug("ColoradoInputMain started");
+    logger.debug("VieweMain started");
   }
 
   String showInfo() {
@@ -335,12 +335,12 @@ public class ViewerMain extends JPanel {
       store.save();
     } catch (IOException ioe) {
       ioe.printStackTrace();
-      logger.error("ColoradoInputMain store.save() failed", ioe);
+      logger.error("VieweMain store.save() failed", ioe);
     }
   }
 
   public void exit(Boolean save) {
-    logger.info("------------- ColoradoInputMain exiting ----------------------");
+    logger.info("------------- ViewerMain exiting ----------------------");
     if (save) save();
     System.exit(0);
   }
@@ -456,7 +456,7 @@ public class ViewerMain extends JPanel {
   }
 
   public static void main(String[] args) {
-    logger.info("------------- ColoradoInputMain starting ----------------------");
+    logger.info("------------- ViewerMain starting ----------------------");
 
     ViewerProfile profile = ViewerProfile.RlauxeViewer;
     String datadir = null;
@@ -487,7 +487,7 @@ public class ViewerMain extends JPanel {
       prefs = store.getPreferences();
       Debug.setStore(prefs.node("Debug"));
     } catch (IOException e) {
-      logger.error("ColoradoInputMain store.create() failed", e);
+      logger.error("ViewerMain store.create() failed", e);
     }
 
     var fontSize = (Float) prefs.getBean(ViewerMain.FONT_SIZE, 12.0f); // TODO where does this get saved ??

@@ -5,14 +5,14 @@
 package org.cryptobiotic.rlauxe.corla
 
 import org.cryptobiotic.rlauxe.audit.CountyPools
-import org.cryptobiotic.rlauxe.auditcenter.Colorado2020General
-import org.cryptobiotic.rlauxe.auditcenter.Colorado2022Primary
-import org.cryptobiotic.rlauxe.auditcenter.Colorado2024General
-import org.cryptobiotic.rlauxe.auditcenter.Colorado2026PMerged
-import org.cryptobiotic.rlauxe.auditcenter.Colorado2026Primary
-import org.cryptobiotic.rlauxe.auditcenter.Colorado2026PwithCvrs
-import org.cryptobiotic.rlauxe.auditcenter.ColoradoInput
-import org.cryptobiotic.rlauxe.auditcenter.MergedContestInfo
+import org.cryptobiotic.rlauxe.corlaInput.Colorado2020General
+import org.cryptobiotic.rlauxe.corlaInput.Colorado2022Primary
+import org.cryptobiotic.rlauxe.corlaInput.Colorado2024General
+import org.cryptobiotic.rlauxe.corlaInput.Colorado2026PMerged
+import org.cryptobiotic.rlauxe.corlaInput.Colorado2026Primary
+import org.cryptobiotic.rlauxe.corlaInput.Colorado2026PwithCvrs
+import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
+import org.cryptobiotic.rlauxe.corlaInput.MergedContestInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc

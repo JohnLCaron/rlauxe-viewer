@@ -78,23 +78,27 @@ class LogsTable(
         val logsFile = Publisher(auditRecord.topdir).logsFile()
         println(logsFile)
 
-        val reader: BufferedReader = File(logsFile).bufferedReader()
-        reader.readLine() // skip header line
-
-        var lastBean : LogBean? = null
         val logsBeans = mutableListOf<LogBean>()
-        while (true) {
-            val line = reader.readLine()
-            if (line == null) break
+        try {
+            val reader: BufferedReader = File(logsFile).bufferedReader()
+            reader.readLine() // skip header line
 
-            if (isContinuation(line)) {
-                if (lastBean != null) lastBean.addContinuation(line)
-            } else {
-                lastBean = LogBean(line)
-                logsBeans.add(lastBean)
+            var lastBean: LogBean? = null
+            while (true) {
+                val line = reader.readLine()
+                if (line == null) break
+
+                if (isContinuation(line)) {
+                    if (lastBean != null) lastBean.addContinuation(line)
+                } else {
+                    lastBean = LogBean(line)
+                    logsBeans.add(lastBean)
+                }
             }
+            reader.close()
+        } catch (e: Exception) {
+            logger.error("LogsTable exception", e)
         }
-        reader.close()
 
         logsTable.setBeans(logsBeans)
         return true
