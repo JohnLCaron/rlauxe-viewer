@@ -4,14 +4,14 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
-import org.cryptobiotic.rlauxe.auditcenter.ColoradoInput
-import org.cryptobiotic.rlauxe.auditcenter.ColoradoInputWithCvrs
+import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
+import org.cryptobiotic.rlauxe.corlaInput.ColoradoInputWithCvrs
 import org.cryptobiotic.rlauxe.auditcenter.CountyContestVotes
 import org.cryptobiotic.rlauxe.auditcenter.CountyTabAllContests
-import org.cryptobiotic.rlauxe.auditcenter.StrataInfo
+import org.cryptobiotic.rlauxe.corlaInput.StrataInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.cryptobiotic.rlauxe.corlaCounty.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ucar.ui.widget.IndependentWindow

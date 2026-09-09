@@ -7,7 +7,8 @@ package org.cryptobiotic.rlauxe.corla
 
 import org.cryptobiotic.rlauxe.audit.StyleIF
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.corlaCounty.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
+import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
 import org.cryptobiotic.rlauxe.cvr.CvrRow
 import org.cryptobiotic.rlauxe.cvr.CvrSchema
 import org.cryptobiotic.rlauxe.cvr.RedactedGroup
@@ -36,8 +37,9 @@ class CountyCvrsTable(
 
     private val split1: JSplitPane
 
-    var currentSchema: CvrSchema? = null
-    var redactedGroups: List<RedactedGroup> = emptyList()
+    var corlaCvrs: CorlaCvrsIF? = null
+    // var currentSchema: CvrSchema? = null
+    // var redactedGroups: List<RedactedGroup> = emptyList()
     var poolMap: MutableMap<String, StyleIF> = mutableMapOf<String, StyleIF>()
 
     init {
@@ -75,13 +77,11 @@ class CountyCvrsTable(
         val maxRead = 11111
 
         try {
-            val corlaCvrs = countyInput.readCorlaCvrs()
-            currentSchema = corlaCvrs.schema
-            redactedGroups = corlaCvrs.redactedGroups()
+            corlaCvrs = countyInput.readCorlaCvrs()
 
             val beanList = mutableListOf<CvrRowBean>()
             var count = 0
-            corlaCvrs.cvrs().forEach {
+            corlaCvrs!!.cvrs().forEach {
                 beanList.add(CvrRowBean(it))
                 if (count++ > maxRead) return@forEach
             }
@@ -98,7 +98,7 @@ class CountyCvrsTable(
     }
 
     fun setSelectedRow(bean: CvrRowBean) {
-        localInfo.setText(bean.show(currentSchema!!))
+        localInfo.setText(bean.show(corlaCvrs!!.schema))
         localInfo.gotoTop()
     }
 

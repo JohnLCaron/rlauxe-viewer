@@ -8,6 +8,7 @@ import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.corla.CountySchemaTable.SchemaContestBean
 import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
+import org.cryptobiotic.rlauxe.cvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.cvr.RedactedGroup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,7 +21,7 @@ import javax.swing.JSplitPane
 
 private val logger: Logger = LoggerFactory.getLogger(CountySchemaTable::class.java)
 
-class CountyRedactionTable(
+class CvrStylesTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
@@ -29,26 +30,22 @@ class CountyRedactionTable(
 
     val tables = mutableListOf<BeanTable<out Any>>()
 
-    private val redactionTable: BeanTable<RedactionBean>
+    private val stylesTable: BeanTable<StyleBean>
 
     val localInfo = TextHistoryPane()
     private val split1: JSplitPane
     // private val split2: JSplitPane
 
     init {
-        redactionTable = BeanTable(
-            RedactionBean::class.java, prefs.node("redactionTable") as PreferencesExt, false,
+        stylesTable = BeanTable(
+            StyleBean::class.java, prefs.node("stylesTable") as PreferencesExt, false,
             "Cvr Redactions", "Cvr Redactions", null)
-        redactionTable.addPopupOption(
-            "Show Redaction",
-            redactionTable.makeShowAction(infoTA, infoWindow) { bean: RedactionBean -> showRedaction(bean) }
-        )
-        tables.add(redactionTable)
+        tables.add(stylesTable)
 
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, redactionTable, localInfo)
+        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, stylesTable, localInfo)
         split1.setDividerLocation(prefs.getInt("splitPos1", 200))
         // split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, styleTable)
         // split2.setDividerLocation(prefs.getInt("splitPos2", 600))
@@ -59,18 +56,14 @@ class CountyRedactionTable(
         logger.debug("CountySchemaTable init")
     }
 
-    fun showRedaction(bean: RedactionBean) = buildString {
-        append(showContestWithDesc(bean, redactionTable.tableModel, null))
-        appendLine(bean.toString())
-    }
 
     fun setCorlaCvrs(corlaCvrs: CorlaCvrsIF?) {
         if (corlaCvrs == null) return
-        val beanList = mutableListOf<RedactionBean>()
-        corlaCvrs.redactedGroups().forEach {
-            beanList.add(RedactionBean(it))
+        val beanList = mutableListOf<StyleBean>()
+        corlaCvrs.cardStyles().forEach {
+            beanList.add(StyleBean(it))
         }
-        redactionTable.setBeans(beanList)
+        stylesTable.setBeans(beanList)
     }
 
     override fun setFontSize(size: Float) {
@@ -87,20 +80,14 @@ class CountyRedactionTable(
 
     ////////////////////////////////////////////////////////////////
 
-    // data class SchemaContestInfo(val contestIdx: Int, val contestName: String, val startCol: Int, val ncols: Int) {
-    //    val isIRV: Boolean
-    //    val nchoices: Int
-    //    val voteForN: Int
-    class RedactionBean(val redaction: RedactedGroup) {
-        val groupName = redaction.groupName
-        val ncards = redaction.ncards()
-        val singleCards = redaction.singleCards
-        val totalVotes = redaction.totalVotes()
-        val contestVotes = redaction.contestVotes
+    class StyleBean(val cvrStyle: CvrCardStyle) {
+        val name = cvrStyle.name
+        val contestIds = cvrStyle.contestIds
+        val countCards = cvrStyle.countCards
 
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "redaction"
+            fun hiddenProperties() = "cvrStyle"
         }
     }
 }

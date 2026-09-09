@@ -6,7 +6,7 @@ package org.cryptobiotic.rlauxe.corla
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
-import org.cryptobiotic.rlauxe.auditcenter.ColoradoInput
+import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.slf4j.Logger
@@ -35,7 +35,7 @@ class MvrComparisonTable(
 
     private val mvrComparisonTable: BeanTable<MvrComparisonBean>
 
-    // TextHistoryPane localInfo = new TextHistoryPane();
+    val localInfo = TextHistoryPane()
     private val split1: JSplitPane
     // private val split2: JSplitPane
 
@@ -52,7 +52,7 @@ class MvrComparisonTable(
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, mvrComparisonTable, infoTA)
+        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, mvrComparisonTable, localInfo)
         split1.setDividerLocation(prefs.getInt("splitPos1", 200))
         // split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, styleTable)
         // split2.setDividerLocation(prefs.getInt("splitPos2", 600))

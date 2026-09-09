@@ -4,8 +4,9 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
-import org.cryptobiotic.rlauxe.auditcenter.ColoradoInput
-import org.cryptobiotic.rlauxe.corlaCounty.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
+import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.RlauxeAboutWindow
 import org.slf4j.Logger
@@ -58,8 +59,10 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
     var countySchemaTable: CountySchemaTable
     var countyCvrsTable: CountyCvrsTable
     var countyRedactionTable: CountyRedactionTable
+    var cvrStylesTable: CvrStylesTable
 
     var currentInput: ColoradoInput? = null
+    var currentCountyInput: CorlaCountyInput? = null
 
     init {
         fontu = FontUtil.getStandardFont(fontSize)
@@ -109,6 +112,11 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("Redactions", countyRedactionTable)
         activePanels.add(countyRedactionTable)
+
+        cvrStylesTable = CvrStylesTable((prefs.node("CvrStylesTable") as PreferencesExt),
+            infoTA, infoWindow, fontSize)
+        countyCvrTabs.addTab("CvrCardStyle", cvrStylesTable)
+        activePanels.add(cvrStylesTable)
 
         // TODO put into seperate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
@@ -169,17 +177,43 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
     }
 
     fun setCountyInput(countyInput: CorlaCountyInput) {
+        currentCountyInput = countyInput
+
         countyCvrsTable.setCountyInput(countyInput)
-        countySchemaTable.setCvrSchema(countyCvrsTable.currentSchema)
-        countyRedactionTable.setRedactions(countyCvrsTable.redactedGroups)
+        countySchemaTable.setCorlaInput(countyInput.countyName, currentInput!!, countyCvrsTable.corlaCvrs)
+        countyRedactionTable.setCorlaCvrs(countyCvrsTable.corlaCvrs)
+        cvrStylesTable.setCorlaCvrs(countyCvrsTable.corlaCvrs)
 
         topTabs.setSelectedComponent(countyCvrTabs)
         countyCvrTabs.setSelectedComponent(countySchemaTable)
         inputLabel.setText("${currentInput!!.name} county=${countyInput.countyName}")
     }
 
-    fun showInfo(): String {
-        return "not implemented"
+    fun showInfo() = buildString {
+        if (currentCountyInput != null) {
+            val cc = currentCountyInput!!
+            appendLine("electionName = ${cc.electionName}")
+            appendLine("countyName = ${cc.countyName}")
+            appendLine("manifestSource = ${cc.manifestSource}")
+            appendLine("cvrsSource = ${cc.cvrsSource}")
+            appendLine()
+            val corlaCvrs = countyCvrsTable.corlaCvrs!!
+            appendLine("         cvrs = ${nfn(corlaCvrs.cvrs().size, 6)}")
+            val redactedCvrs = corlaCvrs.redactedGroups().sumOf { it.ncards() }
+            appendLine("redacted cvrs = ${nfn(redactedCvrs, 6)}")
+            appendLine("   total cvrs = ${nfn(corlaCvrs.cvrs().size + redactedCvrs, 6)}")
+            appendLine()
+            appendLine("# contests = ${corlaCvrs.schema.contests.size}")
+            appendLine("# redactedGroups = ${corlaCvrs.redactedGroups().size}")
+            appendLine("# cardStyles = ${corlaCvrs.cardStyles().size}")
+            val sumCardStyles = corlaCvrs.cardStyles().sumOf { it.countCards}
+            appendLine("sum cardStyles.count = ${sumCardStyles}")
+
+            appendLine()
+            appendLine("cvr file election name = ${corlaCvrs.electionName}")
+            appendLine("cvr file version = ${corlaCvrs.versionName}")
+
+        }
     }
 
     // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
