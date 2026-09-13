@@ -182,6 +182,7 @@ fun <T> printTable(
         sb2.append("| " + beanCsv.replace(',', '|'))
     }
 
+    // TODO user settable
     val file = "/home/stormy/rla/temp/" + name + ".csv"
     try {
         FileOutputStream(file).use { fout ->

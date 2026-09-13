@@ -4,14 +4,10 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.corla.CountySchemaTable.SchemaContestBean
 import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
 import org.cryptobiotic.rlauxe.cvr.CvrCardStyle
-import org.cryptobiotic.rlauxe.cvr.RedactedGroup
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -19,7 +15,7 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
-private val logger: Logger = LoggerFactory.getLogger(CountySchemaTable::class.java)
+private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class CvrStylesTable(
     val prefs: PreferencesExt,
@@ -53,7 +49,7 @@ class CvrStylesTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("CountySchemaTable init")
+        logger.debug { "CountySchemaTable init" }
     }
 
 

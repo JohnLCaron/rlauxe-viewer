@@ -5,7 +5,6 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.corla.ColoradoInputTable;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;
@@ -59,8 +58,6 @@ public class ViewerMain extends JPanel {
 
   JTabbedPane tabbedPane;
 
-  private ColoradoInputTable corlaInputPanel;
-
   private BelgiumContestsTable belgiumPanel;
 
   private CorlaContestsTable corlaPanel = null;
@@ -71,8 +68,8 @@ public class ViewerMain extends JPanel {
   private StyleTable stylePanel;
   private PoolTable poolPanel;
   private CardTable cardPanel;
-  private MvrTable mvrPanel;
   private AuditRoundsTable auditRoundsPanel;
+  private MvrsTable mvrsTable;
   private LogsTable logsPanel;
 
   java.util.ArrayList<ViewerPanelIF> activePanels = new ArrayList<ViewerPanelIF>();
@@ -134,14 +131,13 @@ public class ViewerMain extends JPanel {
       tabbedPane.addTab("Cards", cardPanel);
       activePanels.add(cardPanel);
 
-        /*
-        mvrPanel = new MvrTable((PreferencesExt) prefs.node("MvrTable"), fontSize);
-        tabbedPane.addTab("Mvrs", mvrPanel);
-        activePanels.add(mvrPanel); */
-
       auditRoundsPanel = new AuditRoundsTable((PreferencesExt) prefs.node("AuditStateTable"), infoTA, infoWindow, fontSize, mvrAction);
       tabbedPane.addTab("AuditRounds", auditRoundsPanel);
       activePanels.add(auditRoundsPanel);
+
+      mvrsTable = new MvrsTable((PreferencesExt) prefs.node("MvrsTable"), infoTA, infoWindow, fontSize);
+      tabbedPane.addTab("Mvrs", mvrsTable);
+      activePanels.add(mvrsTable);
     }
 
     logsPanel = new LogsTable((PreferencesExt) prefs.node("LogsTable"), infoTA, infoWindow, fontSize);
@@ -156,33 +152,26 @@ public class ViewerMain extends JPanel {
       logger.debug("ColoradoInputMain.tabbedPanel.changed, component {}", c.getClass().getName());
       actionsPanel.removeAll();
 
-      if (c instanceof CardTable cardTable) {
-        cardTable.setSelectedTab();
-      } else if (c instanceof MvrTable mvrTable) {
-        mvrTable.setSelectedTab();
-      } else if (c instanceof SamplingTable samplingTable) {
-        samplingTable.setSelectedTab();
-      }
+        switch (c) {
+            case CardTable cardTable -> cardTable.setSelectedTab();
+            case MvrTable mvrTable -> mvrTable.setSelectedTab();
+            case SamplingTable samplingTable -> samplingTable.setSelectedTab();
+            default -> {
+            }
+        }
 
       // actions on right side of Audit record chooser
-      if (c instanceof BelgiumContestsTable belgium) {
-        belgium.getActions(actionsPanel);
-
-      } else if (c instanceof CorlaContestsTable corla) {
-        corla.getActions(actionsPanel);
-
-      } else if (c instanceof RlauxeContestsTable contests) {
-        contests.getActions(actionsPanel);
-
-      } else if (c instanceof org.cryptobiotic.rlauxe.viewer.AuditRoundsTable auditRound) {
-        auditRound.getActions(actionsPanel); // , rlauxeContests); // TODO wont take second argument
-
-      } else if (c instanceof CountyTable countyPools) {
-        countyPools.getActions(actionsPanel);
-
-      } else if (c instanceof SamplingTable samplingTable) {
-        samplingTable.getActions(actionsPanel);
-      }
+        switch (c) {
+            case BelgiumContestsTable belgium -> belgium.getActions(actionsPanel);
+            case CorlaContestsTable corla -> corla.getActions(actionsPanel);
+            case RlauxeContestsTable contests -> contests.getActions(actionsPanel);
+            case AuditRoundsTable auditRound ->
+                    auditRound.getActions(actionsPanel); // , rlauxeContests); // TODO wont take second argument
+            case CountyTable countyPools -> countyPools.getActions(actionsPanel);
+            case SamplingTable samplingTable -> samplingTable.getActions(actionsPanel);
+            default -> {
+            }
+        }
 
       validate();
     });
@@ -276,7 +265,7 @@ public class ViewerMain extends JPanel {
     add(topPanel, BorderLayout.NORTH);
     add(tabbedPane, BorderLayout.CENTER);
 
-    logger.debug("VieweMain started");
+    logger.debug("ViewerMain started");
   }
 
   String showInfo() {
@@ -304,11 +293,12 @@ public class ViewerMain extends JPanel {
       for (var vpanel : activePanels) {
         vpanel.setAuditRecord(auditRecordDir);
       }
+      logger.info("ViewerMain.setAuditRecord to {}", auditRecordDir);
       return true;
 
     } catch (Exception e) {
       JOptionPane.showMessageDialog(null, e.getMessage());
-      logger.error("AuditRoundsTable.setAuditRecord failed", e);
+      logger.error("ViwerMain.setAuditRecord failed", e);
     }
     return false;
   }
@@ -335,7 +325,7 @@ public class ViewerMain extends JPanel {
       store.save();
     } catch (IOException ioe) {
       ioe.printStackTrace();
-      logger.error("VieweMain store.save() failed", ioe);
+      logger.error("ViewerMain store.save() failed", ioe);
     }
   }
 
@@ -415,7 +405,7 @@ public class ViewerMain extends JPanel {
 
   static void showFonts(Formatter f) {
     UIDefaults uid = UIManager.getLookAndFeelDefaults();
-    var copyKeys = new HashSet<Object>(uid.keySet());
+    var copyKeys = new HashSet<>(uid.keySet());
     for (Object key : copyKeys) { // concurrent modification
       var what = uid.get(key);
       if (what instanceof FontUIResource) {
@@ -430,7 +420,7 @@ public class ViewerMain extends JPanel {
   // I believe you need to update the UIManager with a FontUIResource, not just a Font.
   static void resizeDefaultFonts(float fontSize) {
     UIDefaults uid = UIManager.getLookAndFeelDefaults();
-    var copyKeys = new HashSet<Object>(uid.keySet());
+    var copyKeys = new HashSet<>(uid.keySet());
     for (Object key : copyKeys) { // concurrent modification
       var what = uid.get(key);
       if (what instanceof FontUIResource) {
@@ -442,7 +432,9 @@ public class ViewerMain extends JPanel {
   public class MvrAction extends AbstractAction {
     public int roundIdx;
     public void actionPerformed(ActionEvent e) {
-      mvrPanel.setAuditRecord(auditRecordDir, roundIdx);
+      mvrsTable.setAuditRecord(auditRecordDir);
+      mvrsTable.readCards(roundIdx);
+
       tabbedPane.setSelectedIndex(4);
     }
   }

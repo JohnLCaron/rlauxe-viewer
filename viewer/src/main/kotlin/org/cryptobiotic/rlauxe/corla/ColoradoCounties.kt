@@ -4,6 +4,7 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInputWithCvrs
 import org.cryptobiotic.rlauxe.auditcenter.CountyContestVotes
@@ -11,9 +12,10 @@ import org.cryptobiotic.rlauxe.auditcenter.CountyTabAllContests
 import org.cryptobiotic.rlauxe.corlaInput.StrataInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.cryptobiotic.rlauxe.beans.printTable
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyCvrs
+import org.cryptobiotic.rlauxe.corlaInput.CountyInputData
+import org.cryptobiotic.rlauxe.corlaInput.readCountyInputData
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -23,14 +25,12 @@ import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
-private val logger: Logger = LoggerFactory.getLogger(ColoradoCounties::class.java)
-
 class ColoradoCounties(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
     fontSize: Float,
-    val setCountyInput: (CorlaCountyInput) -> Unit,
+    val setCountyInput: (CorlaCountyCvrs) -> Unit,
 ) : JPanel(), SubPanelIF {
 
     val tables = mutableListOf<BeanTable<out Any>>()
@@ -49,12 +49,13 @@ class ColoradoCounties(
         )
         countyTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
             val selected = countyTable.getSelectedBean()
-            if (selected != null) {
-                setSelectedCounty(selected)
-            }
-        })
+            if (selected != null) setSelectedCounty(selected) })
         countyTable.addPopupOption(
-            "Show CountyCvrs",
+            "Show County Summary",
+            countyTable.makeShowAction(infoTA, infoWindow) { bean: CountyTabBean -> showCounty(bean) }
+        )
+        countyTable.addPopupOption(
+            "Set CountyCvrs to this county",
             countyTable.makeActionOnCurrentBean { bean: CountyTabBean? ->
                 if (bean?.corlaCountyInput != null) {
                     setCountyInput(bean.corlaCountyInput)
@@ -63,6 +64,11 @@ class ColoradoCounties(
             }
         )
         tables.add(countyTable)
+        countyTable.addPopupOption(
+            "Print Table",
+            countyTable.makeShowAction(infoTA, infoWindow)
+            { printTable(countyTable, CountyTabBean.beanProperties,"CountyRedactions") }
+        )
 
         countyContestTable = BeanTable(
             CountyContestVotesBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
@@ -85,7 +91,7 @@ class ColoradoCounties(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("CountyPoolTable init")
+        logger.debug { "CountyPoolTable init" }
     }
 
     fun setColoradoInput(input: ColoradoInput) {
@@ -93,13 +99,26 @@ class ColoradoCounties(
         val strataMap: Map<String, StrataInfo> = input.strataMap
 
         val requireCountyInput = (input is ColoradoInputWithCvrs)
-        val inputWithCvrs = if (input is ColoradoInputWithCvrs) input as ColoradoInputWithCvrs else null
+        val inputWithCvrs: ColoradoInputWithCvrs? = if (input is ColoradoInputWithCvrs) input else null
+
+        val filename = when(input.name) {
+            "Colorado2020General" -> "/home/stormy/datadrive/rla/cases/corlaState/2020/countyInputData.csv"
+            "Colorado2026PwithCvrs" -> "/home/stormy/datadrive/rla/cases/corlaState/2026p/countyInputData.csv"
+            else -> null
+        }
+        val inputDataMap = if (filename == null) emptyMap() else
+            readCountyInputData(filename).associateBy{ it.county }
+
+        logger.info { (inputDataMap.toString()) }
 
         val countyContests = mutableListOf<CountyTabBean>()
-        input.countyTabsAllContests().forEach {
-            val corlaCountyInput = inputWithCvrs?.corlaCountyInput(it.key)
-            if (!requireCountyInput || (corlaCountyInput != null))
-                countyContests.add(CountyTabBean(it.key, it.value, strataMap[it.key], corlaCountyInput))
+        input.countyTabsAllContests().forEach { (county, countyTab) ->
+            val corlaCountyInput = inputWithCvrs?.corlaCountyCvrs(county)
+            if (!requireCountyInput || (corlaCountyInput != null)) {
+                logger.info { "$county = ${inputDataMap[county]}" }
+
+                countyContests.add(CountyTabBean(county, countyTab, strataMap[county], corlaCountyInput, inputDataMap[county]))
+            }
         }
         countyTable.setBeans(countyContests)
     }
@@ -125,40 +144,55 @@ class ColoradoCounties(
         //prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
-    /* fun showCanonicalContest(bean: CanonicalContestBean) = buildString {
-        append(showContestWithDesc(bean, contestTable.tableModel, null))
-
-        appendLine(bean.contest.toString())
-    } */
+    fun showCounty(bean: CountyTabBean) = buildString {
+        appendLine(countyTable.tableModel.showBean(bean, CountyTabBean.beanProperties))
+        appendLine(bean.show())
+    }
 
     //////////////////////////////////////////////////////
 
-    class CountyTabBean(val county: String, val countyTab: CountyTabAllContests, val strata: StrataInfo?, val corlaCountyInput: CorlaCountyInput?) {
+    class CountyTabBean(val county: String, val countyTab: CountyTabAllContests, val strata: StrataInfo?,
+                        val corlaCountyInput: CorlaCountyCvrs?, val data: CountyInputData?) {
         val ncontests = countyTab.contests.size
         val nmvrs = strata?.nmvrs ?: 0
         val population = strata?.ballotCardCount ?: 0
-        val hasCountyCvrs = (corlaCountyInput != null)
+        val hasCvrs = (corlaCountyInput != null)
+
+        fun getManifestCount() =  data?.manifestCount ?: 0
+        fun getNcvrs() =  data?.ncvrs ?: 0
+        fun getCvrNoManifest() =  data?.cvrNoManifest ?: 0
+        fun getNredactedCvrs() =  data?.nredactedCvrs ?: 0
+        fun getNgroups() =  data?.ngroups ?: 0
+        fun getMinCardsForVote() =  data?.minCards ?: 0
+        fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
+        fun getMissing() =  if (data != null) (population - getNcvrs()) else 0
 
         fun show() = buildString {
-            appendLine(countyTab.toString())
+            appendLine("Contest Tabulations for this County")
+            appendLine(countyTab.show())
         }
 
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "countyTab strata corlaCountyInput"
+            fun hiddenProperties() = "countyTab strata corlaCountyInput data"
 
             @JvmStatic
             val beanProperties = listOf(
-                TableBeanProperty("countyName", "county name"),
-                TableBeanProperty("countyPoolId", "county name"),
+                TableBeanProperty("county", "county name"),
+                TableBeanProperty("ncontests", "number of contests from CountyTabAllContests"),
+                TableBeanProperty("nmvrs", "corla uniform sampling MVRs in the county"),
                 TableBeanProperty("population", "county population from round.ballotCardCount"),
-                TableBeanProperty("totalCards", "number of cvrs in the pool"),
-                TableBeanProperty("diffCards", "population - totalCards"),
-                TableBeanProperty("diffCardsPct", "(population - totalCards)/population"),
-                TableBeanProperty("acNvotes", "auditcenter.votes"),
-                TableBeanProperty("cvrNvotes", "cvr.votes"),
-                TableBeanProperty("diffNvotes", "auditcenter.votes - cvr.votes"),
-                TableBeanProperty("pctDiffNvotes", "(auditcenter.votes - cvr.votes)/auditcenter.votes"),
+                TableBeanProperty("hasCvrs", "has county CVRs"),
+                // TableBeanProperty("nrows", "number of rows in the CVR file"),
+
+                TableBeanProperty("manifestCount", "number of entries in the manifest"),
+                TableBeanProperty("ncvrs", "count of Cvrs that match entries in the Manifest"),
+                TableBeanProperty("cvrNoManifest", "count of Cvrs that dont match entries in the Manifest"),
+                TableBeanProperty("nredactedCvrs", "number of redacted cvrs given in CVR file"),
+                TableBeanProperty("ngroups", "number of redacted groups"),
+                TableBeanProperty("totalCvrs", "ncvrs + redactedCvrs"),
+                TableBeanProperty("missing", "manifestCount - ncvrs"),
+                TableBeanProperty("minCardsForVote", "minimum cards needed for missing votes"),
             )
         }
     }
@@ -185,5 +219,9 @@ class ColoradoCounties(
             )
 
         }
+    }
+
+    companion object {
+        private val logger = KotlinLogging.logger("ColoradoCounties")
     }
 }

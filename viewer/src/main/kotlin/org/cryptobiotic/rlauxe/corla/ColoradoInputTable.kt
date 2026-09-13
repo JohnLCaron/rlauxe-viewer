@@ -4,6 +4,7 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.CountyPools
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2020General
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2022Primary
@@ -38,7 +39,7 @@ import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 import kotlin.text.split
 
-private val logger: Logger = LoggerFactory.getLogger(ColoradoInputTable::class.java)
+private val logger = KotlinLogging.logger("ColoradoInputTable")
 
 class ColoradoInputTable(
     val prefs: PreferencesExt,
@@ -117,7 +118,7 @@ class ColoradoInputTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("CountyPoolTable init")
+        logger.debug { "CountyPoolTable init" }
     }
 
     // actions on right side of Audit record chooser
@@ -159,7 +160,6 @@ class ColoradoInputTable(
 
     fun showCanonicalContest(bean: CanonicalContestBean) = buildString {
         append(showContestWithDesc(bean, contestTable.tableModel, null))
-
         appendLine(bean.contest.toString())
     }
 
