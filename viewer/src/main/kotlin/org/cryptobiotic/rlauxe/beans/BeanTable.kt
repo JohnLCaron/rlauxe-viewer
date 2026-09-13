@@ -332,7 +332,10 @@ class BeanTable<T>(
 
     fun setBeans(beans: List<T>?) {
         this.beans.clear()
-        if (beans != null) this.beans.addAll(beans)
+        if (beans != null) {
+            this.beans.addAll(beans)
+            setHeader("$header (${beans.size} rows)")
+        }
         tableModel.fireTableDataChanged() // this should make the jtable update
         revalidate()
     }

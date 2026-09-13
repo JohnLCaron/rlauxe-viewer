@@ -14,7 +14,6 @@ import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.*
-import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
@@ -537,12 +536,23 @@ class CorlaContestsTable(
             return getNvotes() - getCvrNvotes()
         }
 
+        fun getPoolPct(): Int {
+            val poolPct = contestUA.contest.info().metadata.get("PoolPct") ?: return -1
+            return poolPct.toInt()
+        }
+
+        fun getPhantomPct(): Int {
+            val poolPct = contestUA.contest.info().metadata.get("PhantomPct")
+            if (poolPct != null && poolPct.isNotEmpty()) return poolPct.toInt()
+            return roundToClosest(100.0 * (getPhantoms() / getPopulation().toDouble()))
+        }
+
         // Nc - cvrs.ncards / Nc
         fun getPctNvotesMissing() : Int {
             return roundToClosest(100 * getDiffNvotes() / getNvotes().toDouble())
         }
 
-        fun getPopulation() = contestUA.population()
+        fun  getPopulation() = contestUA.population()
 
         fun getPhantoms() = contestUA.Nphantoms
 

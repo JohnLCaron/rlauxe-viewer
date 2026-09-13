@@ -3,6 +3,7 @@
 * See LICENSE for license information.
 */
 package org.cryptobiotic.rlauxe.viewer
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AssertionRound
 import org.cryptobiotic.rlauxe.audit.AuditRoundIF
 import org.cryptobiotic.rlauxe.audit.Config
@@ -24,8 +25,6 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.viewer.ViewerMain.ViewerProfile
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -36,6 +35,8 @@ import java.awt.event.ActionEvent
 import java.util.*
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
+
+private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class BelgiumContestsTable(
     val prefs: PreferencesExt, 
@@ -143,7 +144,7 @@ class BelgiumContestsTable(
         setLayout(BorderLayout())
         add(split2, BorderLayout.CENTER)
 
-        logger.debug("BelgiumAuditPanel init")
+        logger.debug { "BelgiumAuditPanel init" }
     }
 
     fun getActions(container: JPanel) {
@@ -190,7 +191,7 @@ class BelgiumContestsTable(
                     bean.mvrLimitBack = limit.limit
                     bean.contestRound.haveSampleSize = limit.limit
                     foundit = true
-                    logger.debug("read contest limit {}", limit)
+                    logger.debug { "read contest limit $limit" }
                 }
             }
             if (!foundit) {
@@ -212,18 +213,18 @@ class BelgiumContestsTable(
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)
 
-        logger.debug("setAuditRecord " + auditRecordLocation + " with profile " + profile)
+        logger.debug { "setAuditRecord " + auditRecordLocation + " with profile " + profile }
 
         try {
             this.auditRecordLocation = auditRecordLocation
             val record = read(auditRecordLocation)
             if (record == null) return false
             if (record.rounds.isEmpty()) {
-                logger.info("{} first round was not started", auditRecordLocation) // TODO plan B
+                logger.info { "$auditRecordLocation first round was not started" } // TODO plan B
                 return false
             }
             if (record !is CompositeAuditRecord) {
-                logger.info("{} must be CompositeAuditRecord", auditRecordLocation)
+                logger.info { "$auditRecordLocation must be CompositeAuditRecord" }
                 return false
             }
             this.auditRecord = record
@@ -265,7 +266,7 @@ class BelgiumContestsTable(
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
-            logger.error("setAuditRecord failed", e)
+            logger.error(e){"setAuditRecord failed"}
         }
 
         return true
@@ -273,14 +274,14 @@ class BelgiumContestsTable(
 
     fun setSelectedContest(contestBean: ContestBean) {
         assertionTable.setBeans(null)
-        logger.debug("select contest ${contestBean.id} assertions")
+        logger.debug { "select contest ${contestBean.id} assertions" }
 
         val beanList = mutableListOf<AssertionRoundBean>()
         contestBean.contestRound.assertionRounds.forEach { ar ->
             val bean = AssertionRoundBean(ar, contestBean.contestRound)
             beanList.add(bean)
         }
-        logger.debug("add ${beanList.size} assertions")
+        logger.debug { "add ${beanList.size} assertions" }
 
         if (beanList.isEmpty()) return
 
@@ -387,10 +388,6 @@ class BelgiumContestsTable(
     fun showAssertion(bean: AssertionRoundBean) = buildString {
         appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.contestUA, bean.assertion))
         append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
-    }
-
-    companion object {
-        private val logger: Logger = LoggerFactory.getLogger(BelgiumContestsTable::class.java)
     }
 }
 

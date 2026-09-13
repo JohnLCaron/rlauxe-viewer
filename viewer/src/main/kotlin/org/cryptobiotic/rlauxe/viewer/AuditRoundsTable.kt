@@ -4,6 +4,7 @@
  */
 package org.cryptobiotic.rlauxe.viewer
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.*
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
@@ -20,11 +21,8 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
-import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable.CorlaContestBean
 import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable.CorlaContestBean.Companion.auditRiskLimit
 import org.cryptobiotic.rlauxe.viewer.ViewerMain.MvrAction
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -34,9 +32,8 @@ import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
-import kotlin.collections.forEach
 
-private val logger: Logger = LoggerFactory.getLogger(AuditRoundsTable::class.java)
+private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class AuditRoundsTable(
     private val prefs: PreferencesExt, infoTA: TextHistoryPane, infoWindow: IndependentWindow, fontSize: Float, mvrCall: MvrAction
@@ -190,7 +187,7 @@ class AuditRoundsTable(
     }
 
     fun getActions(container: JPanel) { // }, contestsPanel: RlauxeContestsTable) {
-        logger.debug("AuditRoundsTable getActions")
+        logger.debug { "AuditRoundsTable getActions" }
 
         val startAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
@@ -262,7 +259,7 @@ class AuditRoundsTable(
         this.auditRecord = auditRecord
         this.isComposite = (this.auditRecord is CompositeAuditRecord)
         this.samplingChanged = false
-        logger.debug("AuditRoundsTable setAuditRecord ${auditRecord.topdir}")
+        logger.debug { "AuditRoundsTable setAuditRecord ${auditRecord.topdir}" }
 
         this.config = auditRecord.config
         this.auditRiskLimit = config!!.riskLimit
@@ -412,7 +409,7 @@ class AuditRoundsTable(
             val nrounds = auditRecord!!.rounds.size
             if (nrounds == 0) return
 
-            logger.info(String.format("call resampleAndSaveResults"))
+            logger.info{"call resampleAndSaveResults"}
 
             resampleAndSaveResults((auditRecord as AuditRecord), (lastAuditRound as AuditRound))
 
@@ -420,7 +417,7 @@ class AuditRoundsTable(
             contestRoundTable.refresh()
         } catch (e: Exception) {
             JOptionPane.showMessageDialog(null, e.message)
-            logger.error("resample failed", e)
+            logger.error(e){"resample failed"}
         }
     }
 
@@ -429,19 +426,19 @@ class AuditRoundsTable(
             if (isComposite) {
                 JOptionPane.showMessageDialog(null, "Cant run Audit Round on Composite Record")
             } else {
-                logger.debug("begin runRound")
+                logger.debug { "begin runRound" }
                 if (samplingChanged && lastAuditRound != null)
                     resampleAndSaveResults( (auditRecord as AuditRecord), lastAuditRound as AuditRound )
 
                 runRound(auditRecord!!.topdir, null, null)
-                logger.debug("return from runRound")
+                logger.debug { "return from runRound" }
 
                 setAuditRecord(auditRecordLocation) // reread in
                 refreshAll()
             }
         } catch (e: Exception) {
             JOptionPane.showMessageDialog(null, e.message)
-            logger.error("runAuditRound failed", e)
+            logger.error(e) {"runAuditRound failed"}
         }
     }
 
@@ -461,7 +458,7 @@ class AuditRoundsTable(
             return sb.toString()
         } catch (e: Exception) {
             JOptionPane.showMessageDialog(null, e.message)
-            logger.error("runRoundAgain failed", e)
+            logger.error(e){"runRoundAgain failed"}
             return e.message ?: ""
         }
     }
@@ -502,10 +499,6 @@ class AuditRoundsTable(
             append("measuredErrors = ${ bean.auditResultRound.clcaErrorTracker!!.measuredClcaErrorCounts() }")
             append("measuredErrorTypes = ${ bean.auditResultRound.clcaErrorTracker!!.measuredClcaErrorCounts().show() }")
         }
-    }
-
-    companion object {
-        private val logger: Logger = LoggerFactory.getLogger(AuditRoundsTable::class.java)
     }
 }
 
@@ -822,8 +815,9 @@ class EstimationRoundBean(val assertionRound: AssertionRound, val contest: Conte
         // TODO calc on the fly maybe
         get() = estRound.calcNewMvrsNeeded
 
-    val simulatedDistribution: String
-        get() = String.format("%s (%d)", estRound.deciles(), estRound.ntrials)
+    fun getSimulatedDistribution(): String {
+        return "${ estRound.deciles() } (${ estRound.ntrials })"
+    }
 
     val lastIndex: Int
         get() = estRound.lastIndex

@@ -4,13 +4,12 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
-import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyCvrs
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.RlauxeAboutWindow
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.prefs.Debug
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FontUtil
@@ -62,7 +61,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
     var cvrStylesTable: CvrStylesTable
 
     var currentInput: ColoradoInput? = null
-    var currentCountyInput: CorlaCountyInput? = null
+    var currentCountyInput: CorlaCountyCvrs? = null
 
     init {
         fontu = FontUtil.getStandardFont(fontSize)
@@ -166,7 +165,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         add(topPanel, BorderLayout.NORTH)
         add(topTabs, BorderLayout.CENTER)
 
-        logger.debug("ColoradoInputMain started")
+        logger.debug{"ColoradoInputMain started"}
     }
 
     fun setInput(input: ColoradoInput) {
@@ -174,9 +173,10 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         countyTabPanel.setColoradoInput(input)
         mvrComparisonPanel.setColoradoInput(input)
         inputLabel.setText(input.name)
+        logger.info{"ViewerMain.setAuditRecord to $auditRecordDir"}
     }
 
-    fun setCountyInput(countyInput: CorlaCountyInput) {
+    fun setCountyInput(countyInput: CorlaCountyCvrs) {
         currentCountyInput = countyInput
 
         countyCvrsTable.setCountyInput(countyInput)
@@ -199,12 +199,12 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
             appendLine()
             val corlaCvrs = countyCvrsTable.corlaCvrs!!
             appendLine("         cvrs = ${nfn(corlaCvrs.cvrs().size, 6)}")
-            val redactedCvrs = corlaCvrs.redactedGroups().sumOf { it.ncards() }
-            appendLine("redacted cvrs = ${nfn(redactedCvrs, 6)}")
-            appendLine("   total cvrs = ${nfn(corlaCvrs.cvrs().size + redactedCvrs, 6)}")
+            val nredactedCvrs = corlaCvrs.redaction().nredactedCvrs()
+            appendLine("redacted cvrs = ${nfn(nredactedCvrs, 6)}")
+            appendLine("   total cvrs = ${nfn(corlaCvrs.cvrs().size + nredactedCvrs, 6)}")
             appendLine()
             appendLine("# contests = ${corlaCvrs.schema.contests.size}")
-            appendLine("# redactedGroups = ${corlaCvrs.redactedGroups().size}")
+            appendLine("# redactedGroups = ${corlaCvrs.redaction().groups().size}")
             appendLine("# cardStyles = ${corlaCvrs.cardStyles().size}")
             val sumCardStyles = corlaCvrs.cardStyles().sumOf { it.countCards}
             appendLine("sum cardStyles.count = ${sumCardStyles}")
@@ -228,7 +228,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
     }
 
     fun save() {
-        logger.debug("save")
+        logger.debug{"save"}
 
         for (vpanel in activePanels) {
             vpanel.saveState()
@@ -249,12 +249,12 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
             store!!.save()
         } catch (ioe: IOException) {
             ioe.printStackTrace()
-            logger.error("ColoradoInputMain store.save() failed", ioe)
+            logger.error(ioe){"store.save() failed"}
         }
     }
 
     fun exit(save: Boolean) {
-        logger.info("------------- ColoradoInputMain exiting ----------------------")
+        logger.info { "------------- ColoradoInputMain exiting ----------------------" }
         if (save) save()
         System.exit(0)
     }
@@ -337,7 +337,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(ColoradoInputMain::class.java)
+        private val logger = KotlinLogging.logger("ColoradoInputMain")
 
         const val FRAME_SIZE: String = "FrameSize"
         const val INFO_BOUNDS: String = "InfoBounds"
@@ -349,18 +349,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         private var ui: ColoradoInputMain? = null
 
         ///////////////////////\///////////////////////
-        fun showFonts(f: Formatter) {
-            val uid = UIManager.getLookAndFeelDefaults()
-            val copyKeys = HashSet<Any>(uid.keys)
-            for (key in copyKeys) { // concurrent modification
-                val what = uid.get(key)
-                if (what is FontUIResource) {
-                    f.format("key=%s class=%s what=%s class=%s%n", key, key.javaClass, what, what.javaClass)
-                }
-            }
-        }
-
-        // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
+         // iterates over the keys stored in UIManager/UIDefaults, and for each key that's a Font,
         // derives a new font with the target point size, , and then puts that key and new font in UIManager.
         // Afterwards, the code calls SwingUtilities.updateComponentTreeUI() on the frame, and then packs the frame.
         // I believe you need to update the UIManager with a FontUIResource, not just a Font.
@@ -377,7 +366,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            logger.info("------------- ColoradoInputMain starting ----------------------")
+            logger.info{"------------- ColoradoInputMain starting ----------------------"}
 
             // prefs storage
             try {
@@ -390,7 +379,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
                 prefs = store!!.getPreferences()
                 Debug.setStore(prefs!!.node("Debug"))
             } catch (e: IOException) {
-                logger.error("ColoradoInputMain store.create() failed", e)
+                logger.error(e) {"ColoradoInputMain store.create() failed"}
             }
 
             val fontSize = prefs!!.getBean(FONT_SIZE, 12.0f) as Float // getFloat() ??

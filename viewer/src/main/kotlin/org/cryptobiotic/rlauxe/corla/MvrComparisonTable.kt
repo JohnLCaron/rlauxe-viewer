@@ -4,13 +4,12 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -19,10 +18,8 @@ import java.io.File
 import java.nio.charset.Charset
 import javax.swing.JPanel
 import javax.swing.JSplitPane
-import kotlin.math.log
 
-// TODO change to kotlin logging
-private val logger: Logger = LoggerFactory.getLogger(MvrComparisonTable::class.java)
+private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class MvrComparisonTable(
     val prefs: PreferencesExt,
@@ -60,7 +57,7 @@ class MvrComparisonTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("CountyPoolTable init")
+        logger.debug { "CountyPoolTable init" }
     }
 
     fun setColoradoInput(input: ColoradoInput) {
@@ -129,7 +126,7 @@ class MvrComparisonTable(
             fun checkHeaders(input: ColoradoInput, headers: List<String>) {
                 headers.forEach {
                     if (!headerSet.contains(it))
-                        logger.warn("Header $it is not present in ${input.name}")
+                        logger.warn { "Header $it is not present in ${input.name}" }
                 }
             }
 

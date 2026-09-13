@@ -4,6 +4,7 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.CanonicalContest
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
@@ -11,8 +12,6 @@ import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
 import org.cryptobiotic.rlauxe.cvr.SchemaColumnInfo
 import org.cryptobiotic.rlauxe.cvr.SchemaContestInfo
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -22,7 +21,7 @@ import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
-private val logger: Logger = LoggerFactory.getLogger(CountySchemaTable::class.java)
+private val logger = KotlinLogging.logger("CountyCvrsTable")
 
 class CountySchemaTable(
     val prefs: PreferencesExt,
@@ -73,7 +72,7 @@ class CountySchemaTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("CountySchemaTable init")
+        logger.debug { "CountySchemaTable init" }
     }
 
     fun showSchemaContest(bean: SchemaContestBean) = buildString {
@@ -139,7 +138,7 @@ class CountySchemaTable(
 
     fun setSelectedContest(bean: SchemaContestBean) {
         val beanList = mutableListOf<SchemaChoiceBean>()
-        var start = bean.scontest.startCol
+        val start = bean.scontest.startCol
         repeat(bean.scontest.ncols) {
             beanList.add(SchemaChoiceBean(this, bean, currentCorlaCvrs!!.schema.columns[start+it]))
         }

@@ -26,7 +26,8 @@ public class Naming {
                 return "SuccessFullCount";
             case AcceptNull:
                 return "FailedFullCount";
-
+            case InProgress:
+                return "0:InProgress";
         }
         return status.toString();
     }
