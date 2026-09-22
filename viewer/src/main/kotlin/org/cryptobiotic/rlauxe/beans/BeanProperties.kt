@@ -59,7 +59,8 @@ object BeanProperties {
         // contests.add(TableBeanProperty("samplePct", "estMvrs/population size"))
 
         // Belgium
-        contests.add(TableBeanProperty("NFailures", "number of contested assertions"))
+        contests.add(TableBeanProperty("failNodes", "number of failure nodes from CandSeatRangeBuilder.countContestedSeats()"))
+        contests.add(TableBeanProperty("fail", "number of contested assertions"))
         contests.add(TableBeanProperty("nseats", "nseats to win"))
 
         // ContestRound

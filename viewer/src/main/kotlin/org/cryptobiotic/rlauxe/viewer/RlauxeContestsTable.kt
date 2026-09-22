@@ -197,6 +197,8 @@ class RlauxeContestsTable(
                 if (minBean != null) contestTable.setSelectedBean(minBean)
                 oneshotMvrs = auditRecord!!.readOneShotMvrs()
 
+                setSelectedContest(beanList.first())
+
             } catch (e: Exception) {
                 e.printStackTrace()
                 JOptionPane.showMessageDialog(null, e.message)
@@ -212,12 +214,12 @@ class RlauxeContestsTable(
 
         if (contestBean.contestRound != null) {
             for (ar in contestBean.contestRound.assertionRounds) {
-                val bean = RlauxeAssertionBean(contestBean, ar.assertion, ar)
+                val bean = RlauxeAssertionBean(contestBean.contestUA, contestBean.contestRound, ar.assertion, ar)
                 beanList.add(bean)
             }
         } else {
             for (ar in contestBean.contestUA.assertions) {
-                val bean: RlauxeAssertionBean = RlauxeAssertionBean(contestBean, ar, null)
+                val bean: RlauxeAssertionBean = RlauxeAssertionBean(contestBean.contestUA, null, ar, null)
                 beanList.add(bean)
             }
         }
@@ -426,8 +428,7 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
     }
 }
 
-class RlauxeAssertionBean(val contestBean: RlauxeContestBean, val assertion: Assertion, val assertionRound: AssertionRound?) {
-    val cua: ContestWithAssertions = contestBean.contestUA
+class RlauxeAssertionBean(val cua: ContestWithAssertions, val contestRound: ContestRound?, val assertion: Assertion, val assertionRound: AssertionRound?) {
     val candidates = cua.contest.info().candidateIdToName
     val cassertion: ClcaAssertion?
     var oaAssorter: OneAuditClcaAssorter? = null
@@ -462,7 +463,7 @@ class RlauxeAssertionBean(val contestBean: RlauxeContestBean, val assertion: Ass
                 return (assertion.assorter as DHondtAssorter).loserNameRound()
             }
             val loser = assertion.assorter.loser()
-            return candidates[loser]!!
+            return candidates[loser] ?: "N/A"
         }
 
     val desc: String
@@ -472,12 +473,13 @@ class RlauxeAssertionBean(val contestBean: RlauxeContestBean, val assertion: Ass
         get() {
             if (cassertion == null) return 0.0
             val noerror = cassertion.noerror
-            val haveMvrs = contestBean.haveMvrs
             return estRiskStandardBet(cua.Npop, noerror, haveMvrs)
         }
 
     val estMvrs: Int
         get() = assertionRound?.estNewMvrs ?: 0
+
+    val haveMvrs: Int = if (contestRound == null) 0 else contestRound.haveSampleSize
 
     val margin: Double
         get() = if (cassertion != null) cassertion.cassorter.assorterMargin else assertion.assorter.dilutedMargin()
@@ -506,7 +508,7 @@ class RlauxeAssertionBean(val contestBean: RlauxeContestBean, val assertion: Ass
 
     companion object {
         @JvmStatic
-        fun hiddenProperties() = "contestBean assertion assertionRound cua candidates cassertion oaAssorter"
+        fun hiddenProperties() = "cua contestRound assertion assertionRound candidates cassertion oaAssorter"
     }
 }
 
