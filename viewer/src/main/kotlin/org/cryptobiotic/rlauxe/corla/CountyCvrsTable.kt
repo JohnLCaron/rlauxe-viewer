@@ -8,10 +8,10 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.StyleIF
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyCvrs
-import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
-import org.cryptobiotic.rlauxe.cvr.CvrRow
-import org.cryptobiotic.rlauxe.cvr.CvrSchema
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CvrRow
+import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.util.sfn
 import ucar.ui.widget.IndependentWindow
@@ -37,7 +37,7 @@ class CountyCvrsTable(
 
     private val split1: JSplitPane
 
-    var corlaCvrs: CorlaCvrsIF? = null
+    var corlaCvrs: CorlaRawCvrsIF? = null
 
     // var currentSchema: CvrSchema? = null
     // var redactedGroups: List<RedactedGroup> = emptyList()
@@ -71,7 +71,7 @@ class CountyCvrsTable(
         localInfo.setFontSize(size)
     }
 
-    fun setCountyInput(countyInput: CorlaCountyCvrs) {
+    fun setCountyInput(countyInput: CorlaCountyInput) {
         val maxRead = 11111
 
         try {
@@ -114,7 +114,7 @@ class CvrRowBean(val row: CvrRow) {
 
     val votes = buildString {
         row.contestVotes.forEach {
-            append("${it.contestId}: ${it.candVotes}, ")
+            append("${it.contestId}: ${it.candVotes()}, ")
         }
     }
 
@@ -123,12 +123,12 @@ class CvrRowBean(val row: CvrRow) {
         row.contestVotes.forEach {
             val contest = schema.contests.get(it.contestId)
             append("  contest: ${sfn(contest.contestName, 60)} (${nfn(it.contestId, 3)}), ")
-            appendLine(" candidate votes: ${it.candVotes}")
+            appendLine(" candidate votes: ${it.candVotes()}")
         }
     }
 
     companion object {
         @JvmStatic
-        fun hiddenProperties() = "row";
+        fun hiddenProperties() = "row"
     }
 }

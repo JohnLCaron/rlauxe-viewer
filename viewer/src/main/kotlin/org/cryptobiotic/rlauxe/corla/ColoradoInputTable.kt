@@ -18,6 +18,7 @@ import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.core.ContestInfo
+import org.cryptobiotic.rlauxe.corla.ColoradoCounties.CountyTabBean
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.strata.Strata
 import org.cryptobiotic.rlauxe.util.ContestTabulation
@@ -155,11 +156,11 @@ class ColoradoInputTable(
         tables.forEach { it.saveState(false) }
 
         prefs.putInt("splitPos1", split1.getDividerLocation())
-        //prefs.putInt("splitPos2", split2.getDividerLocation())
+        // prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
     fun showCanonicalContest(bean: CanonicalContestBean) = buildString {
-        append(showContestWithDesc(bean, contestTable.tableModel, null))
+        appendLine(contestTable.tableModel.showBean(bean, CanonicalContestBean.beanProperties))
         appendLine(bean.contest.toString())
     }
 
@@ -232,12 +233,33 @@ class ColoradoInputTable(
         companion object {
             @JvmStatic
             fun hiddenProperties() = "mcontest contest"
+
+            @JvmStatic
+            val beanProperties = listOf(
+                TableBeanProperty("auditReason", "from round"),
+                TableBeanProperty("countyPoolId", "county name"),
+                TableBeanProperty("marginInVotes", "from round.min_margin"),
+                TableBeanProperty("nsamples", "from round.optimistic_samples_to_audit"),
+                TableBeanProperty("nc", "contest population from round.contestBallotBardBount"),
+                TableBeanProperty("npop", "county population from round.ballotCardCount"),
+                TableBeanProperty("riskLimit", "from round.risk_limit"),
+                TableBeanProperty("voteForN", "from round.winners_allowed"),
+
+                TableBeanProperty("name", "contest name"),
+                TableBeanProperty("countyMvrs", "count of county mvrs over all counties with this contest"),
+                TableBeanProperty("statewideMvrs", "count of statewide mvrs over all counties with this contest"),
+                TableBeanProperty("NCounties", "number of counties, or county name if only one"),
+                TableBeanProperty("counties", "list of counties from tabulateCountyFile"),
+                TableBeanProperty("choices", "list of choices/candidates"),
+                TableBeanProperty("targeted", "if targeted for audit"),
+                TableBeanProperty("NCand", "number of choices / candidates"),
+            )
         }
     }
 
     //////////////////////////////////////////////////////
 
-    class CountyPoolsBean(val countyPool: CountyPools, val countyData: Strata) {
+    /* class CountyPoolsBean(val countyPool: CountyPools, val countyData: Strata) {
         val countyName = countyPool.countyName
         val countyPoolId = countyPool.countyPoolId
         val totalCards = countyPool.cardCount
@@ -344,5 +366,5 @@ class ColoradoInputTable(
             )
 
         }
-    }
+    } */
 }

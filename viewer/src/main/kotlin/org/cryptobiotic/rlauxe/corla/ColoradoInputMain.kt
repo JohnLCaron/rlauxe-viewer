@@ -6,7 +6,7 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
-import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyCvrs
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.RlauxeAboutWindow
@@ -55,13 +55,13 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
     var countyTabPanel: ColoradoCounties
     var mvrComparisonPanel: MvrComparisonTable
 
-    var countySchemaTable: CountySchemaTable
     var countyCvrsTable: CountyCvrsTable
     var countyRedactionTable: CountyRedactionTable
-    var cvrStylesTable: CvrStylesTable
+    var countySchemaTable: CountySchemaTable
+    var countyMvrTable: CountyMvrTable
 
     var currentInput: ColoradoInput? = null
-    var currentCountyInput: CorlaCountyCvrs? = null
+    var currentCountyInput: CorlaCountyInput? = null
 
     init {
         fontu = FontUtil.getStandardFont(fontSize)
@@ -96,12 +96,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         topTabs.addTab("CountyCvrs", countyCvrTabs);
         topTabs.setSelectedIndex(0)
 
-        // cvr
-        countySchemaTable = CountySchemaTable((prefs.node("countySchemaTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("Contests", countySchemaTable)
-        activePanels.add(countySchemaTable)
-
+        // countyCvrs
         countyCvrsTable = CountyCvrsTable((prefs.node("countyCvrsTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("Cvrs", countyCvrsTable)
@@ -112,10 +107,15 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         countyCvrTabs.addTab("Redactions", countyRedactionTable)
         activePanels.add(countyRedactionTable)
 
-        cvrStylesTable = CvrStylesTable((prefs.node("CvrStylesTable") as PreferencesExt),
+        countySchemaTable = CountySchemaTable((prefs.node("countySchemaTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("CvrCardStyle", cvrStylesTable)
-        activePanels.add(cvrStylesTable)
+        countyCvrTabs.addTab("CountySchema", countySchemaTable)
+        activePanels.add(countySchemaTable)
+
+        countyMvrTable = CountyMvrTable((prefs.node("countyMvrTable") as PreferencesExt),
+            infoTA, infoWindow, fontSize)
+        countyCvrTabs.addTab("CountyMvrs", countyMvrTable)
+        activePanels.add(countyMvrTable)
 
         // TODO put into seperate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
@@ -176,16 +176,16 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         logger.info{"ViewerMain.setAuditRecord to $auditRecordDir"}
     }
 
-    fun setCountyInput(countyInput: CorlaCountyCvrs) {
+    fun setCountyInput(countyInput: CorlaCountyInput) {
         currentCountyInput = countyInput
 
         countyCvrsTable.setCountyInput(countyInput)
         countySchemaTable.setCorlaInput(countyInput.countyName, currentInput!!, countyCvrsTable.corlaCvrs)
         countyRedactionTable.setCorlaCvrs(countyCvrsTable.corlaCvrs)
-        cvrStylesTable.setCorlaCvrs(countyCvrsTable.corlaCvrs)
+        countyMvrTable.setColoradoInput(currentInput!!, countyInput.countyName)
 
         topTabs.setSelectedComponent(countyCvrTabs)
-        countyCvrTabs.setSelectedComponent(countySchemaTable)
+        countyCvrTabs.setSelectedComponent(countyCvrsTable)
         inputLabel.setText("${currentInput!!.name} county=${countyInput.countyName}")
     }
 

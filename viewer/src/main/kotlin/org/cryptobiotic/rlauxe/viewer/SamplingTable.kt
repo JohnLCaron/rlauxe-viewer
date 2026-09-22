@@ -37,6 +37,7 @@ import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
+// TODO County specific sampling tool
 class SamplingTable(
     private val prefs: PreferencesExt,
     infoTA: TextHistoryPane,
