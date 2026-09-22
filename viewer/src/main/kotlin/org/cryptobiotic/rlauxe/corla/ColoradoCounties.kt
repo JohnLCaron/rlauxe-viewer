@@ -163,7 +163,7 @@ class ColoradoCounties(
         val hasCvrs = (corlaCountyInput != null)
 
         fun getManifestCount() =  data?.manifestCount ?: 0
-        fun getCvrUnredacted() =  data?.ncvrs ?: 0
+        fun getCvrUnredacted() =  data?.unredactedCvrs ?: 0
         fun getCvrRedacted() =  data?.redactedCvrs ?: 0
         fun getCvrInManifest() =  data?.cvrInManifest ?: 0
         fun getCvrNoManifest() =  data?.cvrNoManifest ?: 0

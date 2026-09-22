@@ -23,6 +23,7 @@ import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.dhondt.*
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
+import org.cryptobiotic.rlauxe.persist.json.writeDHondtAssertionContestsJson
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.viewer.ViewerMain.ViewerProfile
 import ucar.ui.widget.BAMutil
@@ -46,13 +47,16 @@ class BelgiumContestsTable(
     statusButton: JButton, 
     val profile: ViewerProfile,
 ) : JPanel(), ViewerPanelIF {
+
     var auditData: AuditData
     var allSeats: AllSeats? = null
     var coalitionTotal: PartyBean? = null
     var partyNames = emptyMap<Int, String>()
+    val tables = mutableListOf<BeanTable<out Any>>()
+
 
     private val contestTable: BeanTable<ContestBean>
-    private val assertionTable: BeanTable<AssertionRoundBean>
+    private val assertionTable: BeanTable<RlauxeAssertionBean>
     private val partyTable: BeanTable<PartyBean>
 
     private val split1: JSplitPane
@@ -103,10 +107,15 @@ class BelgiumContestsTable(
             contestTable.makeShowAction(infoTA, infoWindow)
                 { printTable(contestTable, BeanProperties.contests,"BelgiumContests") }
         )
+        contestTable.addPopupOption(
+            "Save assertions to Json file for lean analyzer",
+            contestTable.makeShowAction(infoTA, infoWindow) { bean: ContestBean -> showAssertionsJson(bean) }
+        )
+        tables.add(contestTable)
 
         assertionTable =
             BeanTable(
-                AssertionRoundBean::class.java,
+                RlauxeAssertionBean::class.java,
                 prefs.node("assertionTable") as PreferencesExt,
                 false,
                 "Assertions",
@@ -115,8 +124,9 @@ class BelgiumContestsTable(
             )
         assertionTable.addPopupOption(
             "Show Assertion",
-            assertionTable.makeShowAction(assertTA, assertWindow) { bean: Any? -> showAssertion(bean as AssertionRoundBean) }
+            assertionTable.makeShowAction(assertTA, assertWindow) { bean: Any? -> showAssertion(bean as RlauxeAssertionBean) }
         )
+        tables.add(assertionTable)
 
         partyTable =
             BeanTable(
@@ -132,6 +142,7 @@ class BelgiumContestsTable(
             partyTable.makeShowAction(infoTA, infoWindow)
                 { bean: PartyBean -> bean.show() }
         )
+        tables.add(partyTable)
 
         setFontSize(fontSize)
 
@@ -202,13 +213,6 @@ class BelgiumContestsTable(
         repaint()
     }
 
-    override fun setFontSize(size: Float) {
-        assertTA.setFontSize(size)
-        contestTable.setFontSize(size)
-        assertionTable.setFontSize(size)
-        partyTable.setFontSize(size)
-    }
-
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)
@@ -276,10 +280,17 @@ class BelgiumContestsTable(
         assertionTable.setBeans(null)
         logger.debug { "select contest ${contestBean.id} assertions" }
 
-        val beanList = mutableListOf<AssertionRoundBean>()
-        contestBean.contestRound.assertionRounds.forEach { ar ->
-            val bean = AssertionRoundBean(ar, contestBean.contestRound)
-            beanList.add(bean)
+        val beanList = mutableListOf<RlauxeAssertionBean>()
+        if (contestBean.contestRound != null) {
+            for (ar in contestBean.contestRound.assertionRounds) {
+                val bean = RlauxeAssertionBean(contestBean.contestUA, contestBean.contestRound, ar.assertion, ar)
+                beanList.add(bean)
+            }
+        } else {
+            for (ar in contestBean.contestUA.assertions) {
+                val bean = RlauxeAssertionBean(contestBean.contestUA, null, ar, null)
+                beanList.add(bean)
+            }
         }
         logger.debug { "add ${beanList.size} assertions" }
 
@@ -290,13 +301,14 @@ class BelgiumContestsTable(
         assertionTable.setBeans(beanList)
     }
 
+    override fun setFontSize(size: Float) {
+        tables.forEach { it.setFontSize(size) }
+    }
+
     override fun saveState() {
+        tables.forEach { it.saveState(false) }
+
         prefs.putBeanObject(ViewerMain.INFO_BOUNDS, assertWindow.getBounds())
-
-        contestTable.saveState(false)
-        assertionTable.saveState(false)
-        partyTable.saveState(false)
-
         prefs.putInt("splitPos1", split1.getDividerLocation())
         prefs.putInt("splitPos2", split2.getDividerLocation())
     }
@@ -385,20 +397,32 @@ class BelgiumContestsTable(
         }
     }
 
-    fun showAssertion(bean: AssertionRoundBean) = buildString {
-        appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.contestUA, bean.assertion))
-        append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
+    fun showAssertionsJson(bean: ContestBean) = buildString {
+        if (allSeats == null || lastAuditRound == null) return ""
+        val org = writeDHondtAssertionContestsJson(lastAuditRound!!.contestRounds, allSeats!!, "/home/stormy/rla/temp/assertions.json")
+        append(org)
+    }
+
+    //fun showAssertion(bean: AssertionRoundBean) = buildString {
+    //    appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.contestUA, bean.assertion))
+    //    append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
+    //}
+    fun showAssertion(bean: RlauxeAssertionBean): String {
+        val assn = if (bean.cassertion != null) bean.cassertion else bean.assertion
+        return showAssertionWithDesc(bean, assertionTable.tableModel, bean.cua, assn)
     }
 }
 
 class AuditData (val statusButton: JButton) {
     var useMvrs: Int = 0
     var contestedSeats: Int = 0
+    var contestedAssertions: Int = 0
     var beans: MutableList<ContestBean>? = null
 
     fun updateStatus() {
         useMvrs = countMvrs()
-        contestedSeats = countContestsSeats()
+        contestedSeats = countContestedSeats()
+        contestedAssertions = countContestedAssertions()
 
         SwingUtilities.invokeLater {
             statusButton.setText(String.format("mvrs=%d failures=%d", useMvrs, contestedSeats))
@@ -409,7 +433,7 @@ class AuditData (val statusButton: JButton) {
     fun setNewBeans(beans: MutableList<ContestBean>) {
         this.beans = beans
         useMvrs = countMvrs()
-        contestedSeats = countContestsSeats()
+        contestedSeats = countContestedSeats()
         SwingUtilities.invokeLater {
             statusButton.setText(String.format("mvrs=%d failures=%d", useMvrs, contestedSeats))
         }
@@ -423,13 +447,30 @@ class AuditData (val statusButton: JButton) {
         return total
     }
 
-    fun countContestsSeats(): Int {
+    fun countContestedAssertions(): Int {
+        var total = 0
+        for (contestBean in beans!!) {
+            if (contestBean.contestRound != null) {
+                var fail = 0
+                for (ar in contestBean.contestRound.assertionRounds) {
+                    val bean = RlauxeAssertionBean(contestBean.contestUA, contestBean.contestRound, ar.assertion, ar)
+                    if (bean.estRisk > ContestBean.alpha) fail++
+                }
+                contestBean.fail = fail
+                total += fail
+            }
+        }
+
+        return total
+    }
+
+    fun countContestedSeats(): Int {
         var total = 0
         for (bean in beans!!) {
             val contest = bean.contestUA.contest
             if (contest is DHondtContest) {
                 val count = contest.countContestedSeats(bean.contestRound)
-                bean.nFailures = count
+                bean.failNodes = count
                 total += count
             }
         }
@@ -437,12 +478,12 @@ class AuditData (val statusButton: JButton) {
     }
 }
 
-// TODO can this share a ContestBean ?
 class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
     var mvrLimitBack: Int = -1
     var contestUA: ContestWithAssertions
     var orgSampleSize: Int
-    var nFailures: Int = 0
+    var failNodes: Int = 0
+    var fail: Int = 0
     val contest: DHondtContest
 
     init {
@@ -563,6 +604,7 @@ class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
     }
 }
 
+// try using RlauxeAssertionBean
 class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionRound) {
     val cua: ContestWithAssertions
     val cassertion: ClcaAssertion
@@ -618,7 +660,7 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
 
     val scoreDiff = contestBean.contestUA.contest.marginInVotes(assorter)
 
-    // an attempt to define a range that might contain all the disputed assertions
+    // TODO an attempt to define a range that might contain all the disputed assertions
     fun getScoreRange() : Int {
         return if (assorter is DHondtAssorter) assorter.scoreRange(cua.Npop, contestBean.haveMvrs, alpha)
         else -1
