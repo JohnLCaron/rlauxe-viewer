@@ -13,7 +13,7 @@ import org.cryptobiotic.rlauxe.corlaInput.StrataInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.printTable
-import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyCvrs
+import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
 import org.cryptobiotic.rlauxe.corlaInput.CountyInputData
 import org.cryptobiotic.rlauxe.corlaInput.readCountyInputData
 import ucar.ui.widget.IndependentWindow
@@ -30,7 +30,7 @@ class ColoradoCounties(
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
     fontSize: Float,
-    val setCountyInput: (CorlaCountyCvrs) -> Unit,
+    val setCountyInput: (CorlaCountyInput) -> Unit,
 ) : JPanel(), SubPanelIF {
 
     val tables = mutableListOf<BeanTable<out Any>>()
@@ -45,11 +45,12 @@ class ColoradoCounties(
     init {
         countyTable = BeanTable(
             CountyTabBean::class.java, prefs.node("countyTable") as PreferencesExt, false,
-            "countyTabsAllContests", "CountyTab", null
+            "CorlaCountyData", "CorlaCountyInput", null
         )
         countyTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
             val selected = countyTable.getSelectedBean()
             if (selected != null) setSelectedCounty(selected) })
+
         countyTable.addPopupOption(
             "Show County Summary",
             countyTable.makeShowAction(infoTA, infoWindow) { bean: CountyTabBean -> showCounty(bean) }
@@ -113,7 +114,7 @@ class ColoradoCounties(
 
         val countyContests = mutableListOf<CountyTabBean>()
         input.countyTabsAllContests().forEach { (county, countyTab) ->
-            val corlaCountyInput = inputWithCvrs?.corlaCountyCvrs(county)
+            val corlaCountyInput = inputWithCvrs?.corlaCountyInput(county)
             if (!requireCountyInput || (corlaCountyInput != null)) {
                 logger.info { "$county = ${inputDataMap[county]}" }
 
@@ -151,21 +152,27 @@ class ColoradoCounties(
 
     //////////////////////////////////////////////////////
 
+    // data class CountyInputData(val county: String, val manifestCount: Int, val ncvrs, val cvrInManifest: Int, val cvrNoManifest:Int,
+//    val manifestNoCvr: Int, val ngroups: Int, val minCards: Int)
+
     class CountyTabBean(val county: String, val countyTab: CountyTabAllContests, val strata: StrataInfo?,
-                        val corlaCountyInput: CorlaCountyCvrs?, val data: CountyInputData?) {
+                        val corlaCountyInput: CorlaCountyInput?, val data: CountyInputData?) {
         val ncontests = countyTab.contests.size
         val nmvrs = strata?.nmvrs ?: 0
         val population = strata?.ballotCardCount ?: 0
         val hasCvrs = (corlaCountyInput != null)
 
         fun getManifestCount() =  data?.manifestCount ?: 0
-        fun getNcvrs() =  data?.ncvrs ?: 0
+        fun getCvrUnredacted() =  data?.ncvrs ?: 0
+        fun getCvrRedacted() =  data?.redactedCvrs ?: 0
+        fun getCvrInManifest() =  data?.cvrInManifest ?: 0
         fun getCvrNoManifest() =  data?.cvrNoManifest ?: 0
-        fun getNredactedCvrs() =  data?.nredactedCvrs ?: 0
+        fun getManifestNoCvr() =  data?.manifestNoCvr ?: 0
         fun getNgroups() =  data?.ngroups ?: 0
         fun getMinCardsForVote() =  data?.minCards ?: 0
-        fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
-        fun getMissing() =  if (data != null) (population - getNcvrs()) else 0
+
+        // fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
+        fun getMissing() =  if (data != null) (population - getCvrUnredacted() - getCvrRedacted()) else 0
 
         fun show() = buildString {
             appendLine("Contest Tabulations for this County")
@@ -186,12 +193,14 @@ class ColoradoCounties(
                 // TableBeanProperty("nrows", "number of rows in the CVR file"),
 
                 TableBeanProperty("manifestCount", "number of entries in the manifest"),
-                TableBeanProperty("ncvrs", "count of Cvrs that match entries in the Manifest"),
+                TableBeanProperty("cvrUnredacted", "count of unredacted Cvrs"),
+                TableBeanProperty("cvrRedacted", "count of redacted Cvrs"),
+                TableBeanProperty("cvrInManifest", "count of Cvrs that match entries in the Manifest"),
                 TableBeanProperty("cvrNoManifest", "count of Cvrs that dont match entries in the Manifest"),
-                TableBeanProperty("nredactedCvrs", "number of redacted cvrs given in CVR file"),
+                TableBeanProperty("manifestNoCvr", "count of Manifest entries that dont match cvrs"),
                 TableBeanProperty("ngroups", "number of redacted groups"),
-                TableBeanProperty("totalCvrs", "ncvrs + redactedCvrs"),
-                TableBeanProperty("missing", "manifestCount - ncvrs"),
+                // TableBeanProperty("totalCvrs", "ncvrs + redactedCvrs"),
+                TableBeanProperty("missing", "manifestCount - (cvrUnredacted + cvrRedacted)"),
                 TableBeanProperty("minCardsForVote", "minimum cards needed for missing votes"),
             )
         }

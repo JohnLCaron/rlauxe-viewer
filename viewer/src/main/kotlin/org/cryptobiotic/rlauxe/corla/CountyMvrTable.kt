@@ -21,7 +21,7 @@ import javax.swing.JSplitPane
 
 private val logger = KotlinLogging.logger("CvrStylesTable")
 
-class MvrComparisonTable(
+class CountyMvrTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
@@ -42,7 +42,7 @@ class MvrComparisonTable(
         // problem is it does a static parsing of the beans....we need a new table each time
         mvrComparisonTable = BeanTable(
             MvrComparisonBean::class.java, prefs.node("countyTable") as PreferencesExt, false,
-            "All Mvrs", "Mvr", null
+            "Mvrs for county", "Mvr", null
         )
         tables.add(mvrComparisonTable)
 
@@ -60,9 +60,9 @@ class MvrComparisonTable(
         logger.debug { "CountyPoolTable init" }
     }
 
-    fun setColoradoInput(input: ColoradoInput) {
+    fun setColoradoInput(input: ColoradoInput, county: String) {
         mvrComparisonTable.setBeans(emptyList())
-        val (header, lines) = readContestComparisonCsv(input.mvrComparisonFile, county=null)
+        val (header, lines) = readContestComparisonCsv(input.mvrComparisonFile, county)
         MvrComparisonBean.checkHeaders(input, header)
 
         val mvrComparisions = mutableListOf<MvrComparisonBean>()
@@ -145,28 +145,4 @@ class MvrComparisonTable(
             )
         }
     }
-}
-
-// return header, list of lines
-fun readContestComparisonCsv(filename: String, county: String?): Pair<List<String>, List<List<String>>> {
-    val file = File(filename)
-    val parser = CSVParser.parse(file, Charset.forName("ISO-8859-1"), CSVFormat.DEFAULT) // TODO
-    val records = parser.iterator()
-
-    val header = records.next()
-    val lines = mutableListOf<List<String>>()
-    var count = 0
-    try {
-        while (records.hasNext()) {
-            val cols = records.next().toList()
-            if (county == null || cols.first() == county) {
-                lines.add(cols)
-                count++
-            }
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-
-    return Pair(header.toList(), lines)
 }

@@ -8,10 +8,12 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.CanonicalContest
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
+import org.cryptobiotic.rlauxe.corla.CvrStylesTable.StyleBean
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
-import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
-import org.cryptobiotic.rlauxe.cvr.SchemaColumnInfo
-import org.cryptobiotic.rlauxe.cvr.SchemaContestInfo
+import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
+import org.cryptobiotic.rlauxe.corlacvr.SchemaColumnInfo
+import org.cryptobiotic.rlauxe.corlacvr.SchemaContestInfo
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -23,6 +25,7 @@ import javax.swing.event.ListSelectionListener
 
 private val logger = KotlinLogging.logger("CountyCvrsTable")
 
+// add another table for contests that use CountyCvrs
 class CountySchemaTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
@@ -34,18 +37,20 @@ class CountySchemaTable(
 
     private val contestTable: BeanTable<SchemaContestBean>
     private val choiceTable: BeanTable<SchemaChoiceBean>
-    var currentCorlaCvrs : CorlaCvrsIF? = null
+    private val stylesTable: BeanTable<SchemaStyleBean>
+
+    var currentCorlaCvrs : CorlaRawCvrsIF? = null
     var currentStateInput: ColoradoInput? = null
     var currentCountyName: String? = null
 
     // TextHistoryPane localInfo = new TextHistoryPane();
     private val split1: JSplitPane
-    // private val split2: JSplitPane
+    private val split2: JSplitPane
 
     init {
         contestTable = BeanTable(
             SchemaContestBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
-            "Cvr Schema Contests", "Cvr Schema Contest", null)
+            "Contest Schema", "SchemaContestInfo", null)
         contestTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
             val selected = contestTable.getSelectedBean()
             if (selected != null) setSelectedContest(selected) })
@@ -57,20 +62,25 @@ class CountySchemaTable(
 
         choiceTable = BeanTable(
             SchemaChoiceBean::class.java, prefs.node("choiceTable") as PreferencesExt, false,
-            "Choices", "Cvr Schema Choices", null
+            "Choices", "SchemaColumnInfo", null
         )
         tables.add(choiceTable)
+
+        stylesTable = BeanTable(
+            SchemaStyleBean::class.java, prefs.node("stylesTable") as PreferencesExt, false,
+            "Styles", "CvrCardStyle", null)
+        tables.add(stylesTable)
 
         setFontSize(fontSize)
 
         // layout of tables
         split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, choiceTable)
-        split1.setDividerLocation(prefs.getInt("splitPos1", 200))
-        // split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, styleTable)
-        // split2.setDividerLocation(prefs.getInt("splitPos2", 600))
+        split1.setDividerLocation(prefs.getInt("splitPos1", 600))
+        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, stylesTable)
+        split2.setDividerLocation(prefs.getInt("splitPos2", 1000))
 
         setLayout(BorderLayout())
-        add(split1, BorderLayout.CENTER)
+        add(split2, BorderLayout.CENTER)
 
         logger.debug { "CountySchemaTable init" }
     }
@@ -123,7 +133,7 @@ class CountySchemaTable(
         }
     }
 
-    fun setCorlaInput(countyName: String, stateInput: ColoradoInput, corlaCvrs: CorlaCvrsIF?) {
+    fun setCorlaInput(countyName: String, stateInput: ColoradoInput, corlaCvrs: CorlaRawCvrsIF?) {
         if (corlaCvrs == null) return
         currentStateInput = stateInput
         currentCorlaCvrs = corlaCvrs
@@ -134,6 +144,12 @@ class CountySchemaTable(
             beanList.add(SchemaContestBean(this, it))
         }
         contestTable.setBeans(beanList)
+
+        val styleList = mutableListOf<SchemaStyleBean>()
+        corlaCvrs.cardStyles().forEach {
+            styleList.add(SchemaStyleBean(it))
+        }
+        stylesTable.setBeans(styleList)
     }
 
     fun setSelectedContest(bean: SchemaContestBean) {
@@ -184,7 +200,7 @@ class CountySchemaTable(
     //    val nchoices: Int
     //    val voteForN: Int
     class SchemaContestBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestInfo) {
-        val contest = scontest.contestIdx
+        val contestIdx = scontest.contestIdx
         val contestName = scontest.contestName
         val startCol = scontest.startCol
         val ncols = scontest.ncols
@@ -201,8 +217,8 @@ class CountySchemaTable(
     }
 
     class SchemaChoiceBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestBean, colInfo: SchemaColumnInfo) {
-        val contest = colInfo.contestIdx
-        val choice = colInfo.choice
+        val contestIdx = colInfo.contestIdx
+        val choice = colInfo.choiceName
         val party = colInfo.headerName
         val colno = colInfo.colno
 
@@ -211,6 +227,19 @@ class CountySchemaTable(
         companion object {
             @JvmStatic
             fun hiddenProperties() = "schemaTable scontest colInfo"
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////
+
+    class SchemaStyleBean(val cvrStyle: CvrCardStyle) {
+        val name = cvrStyle.name
+        val contestIdxs = cvrStyle.contestIds
+        val countCards = cvrStyle.countCards
+
+        companion object {
+            @JvmStatic
+            fun hiddenProperties() = "cvrStyle"
         }
     }
 

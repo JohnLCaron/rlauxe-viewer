@@ -6,8 +6,8 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
-import org.cryptobiotic.rlauxe.cvr.CvrCardStyle
+import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -53,7 +53,7 @@ class CvrStylesTable(
     }
 
 
-    fun setCorlaCvrs(corlaCvrs: CorlaCvrsIF?) {
+    fun setCorlaCvrs(corlaCvrs: CorlaRawCvrsIF?) {
         if (corlaCvrs == null) return
         val beanList = mutableListOf<StyleBean>()
         corlaCvrs.cardStyles().forEach {
@@ -73,9 +73,6 @@ class CvrStylesTable(
         //prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
-
-    ////////////////////////////////////////////////////////////////
-
     class StyleBean(val cvrStyle: CvrCardStyle) {
         val name = cvrStyle.name
         val contestIds = cvrStyle.contestIds
@@ -86,4 +83,5 @@ class CvrStylesTable(
             fun hiddenProperties() = "cvrStyle"
         }
     }
+
 }

@@ -7,8 +7,8 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.cvr.CorlaCvrsIF
-import org.cryptobiotic.rlauxe.cvr.RedactedGroup
+import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.RedactedGroup
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -38,10 +38,10 @@ class CountyRedactionTable(
     init {
         redactionTable = BeanTable(
             RedactionBean::class.java, prefs.node("redactionTable") as PreferencesExt, false,
-            "Cvr Redactions", "Cvr Redactions", null)
-        redactionTable.addListSelectionListener { e: ListSelectionEvent? ->
-            val bean = redactionTable.getSelectedBean()
-            if (bean != null) setSelectedRow(bean) }
+            "Redaction Aggregations", "RedactionGroup", null)
+        //redactionTable.addListSelectionListener { e: ListSelectionEvent? ->
+        //    val bean = redactionTable.getSelectedBean()
+        //    if (bean != null) setSelectedRow(bean) }
         redactionTable.addPopupOption(
             "Show Redaction",
             redactionTable.makeShowAction(infoTA, infoWindow) { bean: RedactionBean -> showRedaction(bean) }
@@ -51,6 +51,10 @@ class CountyRedactionTable(
         cvrTable = BeanTable(
             CvrRowBean::class.java, prefs.node("cvrTable") as PreferencesExt, false,
             "Redacted Cvr Row", "CvrRow", null
+        )
+        cvrTable.addPopupOption (
+            "Show Redacted Cvr",
+            cvrTable.makeShowAction(infoTA, infoWindow) { bean: CvrRowBean -> showCvr(bean) }
         )
         tables.add(cvrTable)
 
@@ -70,27 +74,43 @@ class CountyRedactionTable(
 
     fun showRedaction(bean: RedactionBean) = buildString {
         append(showContestWithDesc(bean, redactionTable.tableModel, null))
-        appendLine(bean.toString())
+        appendLine("Accumulation")
+        bean.redactedGroup.candVotes.forEach {
+            appendLine(it)
+        }
     }
 
-    fun setCorlaCvrs(corlaCvrs: CorlaCvrsIF?) {
+    fun showCvr(bean: CvrRowBean) = buildString {
+        appendLine(bean.row)
+        appendLine("B${bean.row.batchId}_T${bean.row.tabulatorNum}_R${bean.row.recordId}") // example B28_T30_R68
+    }
+
+    fun setCorlaCvrs(corlaCvrs: CorlaRawCvrsIF?) {
         if (corlaCvrs == null) return
+        val redaction = corlaCvrs.redaction()
         val beanList = mutableListOf<RedactionBean>()
-        corlaCvrs.redaction().groups().forEach {
+        redaction.groups().forEach {
             beanList.add(RedactionBean(it))
         }
         //if (corlaCvrs.redaction().redactedRows() != null)
         //    beanList.add(RedactionBean(corlaCvrs.redaction().redactedRows()!!))
         redactionTable.setBeans(beanList)
+
+        val beanList2 = mutableListOf<CvrRowBean>()
+        redaction.redactedRows().forEach { redactedRow ->
+            beanList2.add(CvrRowBean(redactedRow))
+        }
+        cvrTable.setBeans(beanList2)
     }
 
+    /*
     fun setSelectedRow(bean: RedactionBean) {
         val beanList = mutableListOf<CvrRowBean>()
-        bean.redaction.redactedRows.forEach { redactedRow ->
+        bean.redactedGroup.redactedRows().forEach { redactedRow ->
             beanList.add(CvrRowBean(redactedRow))
         }
         cvrTable.setBeans(beanList)
-    }
+    } */
 
     override fun setFontSize(size: Float) {
         tables.forEach { it.setFontSize(size) }
@@ -107,17 +127,16 @@ class CountyRedactionTable(
     //    val isIRV: Boolean
     //    val nchoices: Int
     //    val voteForN: Int
-    class RedactionBean(val redaction: RedactedGroup) {
-        val groupName = redaction.groupName
-        val nlines = redaction.nlines
-        val fixedNcards = redaction.fixedNcards
-        val ncards = redaction.ncards()
-        val minVotes = redaction.minCards()
-        val singleCards = redaction.singleCards
-        val totalVotes = redaction.totalVotes()
-        val contestVotes = redaction.contestVotes
-        val contests = redaction.contests()
-        val nredactedRows: Int = redaction.redactedRows.size
+    class RedactionBean(val redactedGroup: RedactedGroup) {
+        val groupName = redactedGroup.groupName
+        val nlines = redactedGroup.nlines
+        val fixedNcards = redactedGroup.fixedNcards
+        val ncards = redactedGroup.ncards()
+        val minVotes = redactedGroup.minCards()
+        val singleCards = redactedGroup.singleCards
+        val totalVotes = redactedGroup.totalVotes()
+        // val contestVotes = redactedGroup.contestVotes // TOSO show I think
+        val contests = redactedGroup.contests()
 
         companion object {
             @JvmStatic
