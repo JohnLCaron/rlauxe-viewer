@@ -168,11 +168,12 @@ class ColoradoCounties(
         fun getCvrInManifest() =  data?.cvrInManifest ?: 0
         fun getCvrNoManifest() =  data?.cvrNoManifest ?: 0
         fun getManifestNoCvr() =  data?.manifestNoCvr ?: 0
-        fun getNgroups() =  data?.ngroups ?: 0
+        fun getNredacted() =  data?.countNredacted ?: 0
         fun getMinCardsForVote() =  data?.minCards ?: 0
 
         // fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
         fun getMissing() =  if (data != null) (population - getCvrUnredacted() - getCvrRedacted()) else 0
+        fun getPhantoms() =  if (data != null) (population - getManifestCount()) else 0
 
         fun show() = buildString {
             appendLine("Contest Tabulations for this County")
@@ -190,7 +191,7 @@ class ColoradoCounties(
                 TableBeanProperty("nmvrs", "corla uniform sampling MVRs in the county"),
                 TableBeanProperty("population", "county population from round.ballotCardCount"),
                 TableBeanProperty("hasCvrs", "has county CVRs"),
-                // TableBeanProperty("nrows", "number of rows in the CVR file"),
+                TableBeanProperty("phantoms", "population - manifestCount"),
 
                 TableBeanProperty("manifestCount", "number of entries in the manifest"),
                 TableBeanProperty("cvrUnredacted", "count of unredacted Cvrs"),
@@ -198,7 +199,7 @@ class ColoradoCounties(
                 TableBeanProperty("cvrInManifest", "count of Cvrs that match entries in the Manifest"),
                 TableBeanProperty("cvrNoManifest", "count of Cvrs that dont match entries in the Manifest"),
                 TableBeanProperty("manifestNoCvr", "count of Manifest entries that dont match cvrs"),
-                TableBeanProperty("ngroups", "number of redacted groups"),
+                TableBeanProperty("nredacted", "number of redacted rows added by Anonymizer"),
                 // TableBeanProperty("totalCvrs", "ncvrs + redactedCvrs"),
                 TableBeanProperty("missing", "manifestCount - (cvrUnredacted + cvrRedacted)"),
                 TableBeanProperty("minCardsForVote", "minimum cards needed for missing votes"),
