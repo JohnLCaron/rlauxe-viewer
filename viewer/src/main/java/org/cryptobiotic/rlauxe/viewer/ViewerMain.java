@@ -154,7 +154,6 @@ public class ViewerMain extends JPanel {
 
         switch (c) {
             case CardTable cardTable -> cardTable.setSelectedTab();
-            case MvrTable mvrTable -> mvrTable.setSelectedTab();
             case SamplingTable samplingTable -> samplingTable.setSelectedTab();
             default -> {
             }

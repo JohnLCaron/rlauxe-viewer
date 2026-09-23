@@ -52,7 +52,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
     var activePanels = mutableListOf<SubPanelIF>()
 
     var corlaInputPanel: ColoradoInputTable
-    var countyTabPanel: ColoradoCounties
+    var countyTabPanel: Counties
     var mvrComparisonPanel: MvrComparisonTable
 
     var countyCvrsTable: CountyCvrsTable
@@ -83,7 +83,7 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         topTabs.addTab("Colorado Input", corlaInputPanel)
         activePanels.add(corlaInputPanel)
 
-        countyTabPanel = ColoradoCounties((prefs.node("ColoradoCounties") as PreferencesExt),
+        countyTabPanel = Counties((prefs.node("Counties") as PreferencesExt),
             infoTA, infoWindow, fontSize) { setCountyInput(it) }
         topTabs.addTab("Counties", countyTabPanel)
         activePanels.add(countyTabPanel)
@@ -233,9 +233,6 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
         for (vpanel in activePanels) {
             vpanel.saveState()
         }
-
-        //fileChooser.save()
-        //auditRecordDirCB.save()
 
         if (infoWindow != null) {
             prefs!!.putBeanObject(INFO_BOUNDS, infoWindow!!.getBounds())
@@ -407,9 +404,4 @@ class ColoradoInputMain(prefs: PreferencesExt, fontSize: Float) : JPanel() {
             frame!!.setVisible(true)
         }
     }
-}
-
-interface SubPanelIF {
-    fun setFontSize(size: Float)
-    fun saveState()
 }
