@@ -5,7 +5,6 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.audit.CountyPools
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2020General
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2022Primary
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2024General
@@ -16,17 +15,6 @@ import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlaInput.MergedContestInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.core.ContestInfo
-import org.cryptobiotic.rlauxe.corla.ColoradoCounties.CountyTabBean
-import org.cryptobiotic.rlauxe.estimate.Vunder
-import org.cryptobiotic.rlauxe.strata.Strata
-import org.cryptobiotic.rlauxe.util.ContestTabulation
-import org.cryptobiotic.rlauxe.util.dfn
-import org.cryptobiotic.rlauxe.util.nfn
-import org.cryptobiotic.rlauxe.util.trunc
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -38,7 +26,6 @@ import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
-import kotlin.text.split
 
 private val logger = KotlinLogging.logger("ColoradoInputTable")
 
@@ -72,7 +59,7 @@ class ColoradoInputTable(
             CanonicalContestBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
             "Canonical Contests", "Merged Canonical Contest Information", null)
         contestTable.addPopupOption(
-            "Show Canonical Contest",
+            "Show Row",
             contestTable.makeShowAction(infoTA, infoWindow) { bean: CanonicalContestBean -> showCanonicalContest(bean) }
         )
         tables.add(contestTable)

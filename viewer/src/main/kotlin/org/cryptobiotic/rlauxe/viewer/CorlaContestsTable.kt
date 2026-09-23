@@ -14,6 +14,7 @@ import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.*
+import org.cryptobiotic.rlauxe.corla.SubPanelIF
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
@@ -45,7 +46,7 @@ class CorlaContestsTable(
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
     fontSize: Float,
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), ViewerPanelIF, SubPanelIF {
     var countyTotal: CountyBean? = null
 
     private val contestTable: BeanTable<CorlaContestBean>

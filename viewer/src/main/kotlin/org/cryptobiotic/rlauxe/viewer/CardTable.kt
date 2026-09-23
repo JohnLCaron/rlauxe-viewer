@@ -168,26 +168,15 @@ class CardTable(
 }
 
 class CardBean(val card: AuditableCard) {
-
     val id = card.id()
-
     val location = card.location()
-
     val manifestIndex = card.index()
-
     val prn = card.prn()
-
     val phantom = card.phantom()
-
     val possibleContests: String = card.possibleContests().contentToString()
-
     val styleId = card.styleId
-
     val poolId = card.poolId()
-
     val cardStyle = card.style()?.name() ?: "not set"
-
-   //  val possibleContests: String = card.style()?.possibleContests().contentToString()
 
     val votes = buildString {
         if (card.votes() != null) {
