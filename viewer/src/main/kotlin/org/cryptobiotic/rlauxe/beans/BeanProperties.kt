@@ -110,6 +110,9 @@ object BeanProperties {
         contests.add(TableBeanProperty("estNcards", "estimated ncards in this county and contest"))
         contests.add(TableBeanProperty("pctDiffNvotes", "diffNvotes / auditcenter.nvotes"))
         contests.add(TableBeanProperty("voteForN", "allowed number of votes"))
+
+        // CountySampling
+        contests.add(TableBeanProperty("NCvrs", "number of cards for this contest and county"))
     }
 
     // CorlaContestsTable.contestCountyTable

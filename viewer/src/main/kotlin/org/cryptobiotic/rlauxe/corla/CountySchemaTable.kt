@@ -8,7 +8,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.CanonicalContest
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.corla.CvrStylesTable.StyleBean
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle

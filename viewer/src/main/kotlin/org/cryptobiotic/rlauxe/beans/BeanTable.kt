@@ -12,6 +12,7 @@ import ucar.ui.widget.PopupMenu
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
+import java.awt.Font
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.util.*
@@ -355,6 +356,12 @@ class BeanTable<T>(
         get() = jtable
 
     fun setFontSize(size: Float) {
+        // Create a font with the same name and style, but a larger size (e.g., 24)
+        val largeFont = Font(boolCellEditor.getFont().getName(), boolCellEditor.getFont().getStyle(), size.toInt());
+
+        // Apply the font to the checkbox
+        boolCellEditor.setFont(largeFont);
+
         jtable.setFont(jtable.getFont().deriveFont(size))
         jtable.setRowHeight(size.toInt() + 4)
         refresh()

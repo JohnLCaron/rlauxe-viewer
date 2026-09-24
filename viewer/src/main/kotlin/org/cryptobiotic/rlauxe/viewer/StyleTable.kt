@@ -9,6 +9,7 @@ import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
+import org.cryptobiotic.rlauxe.viewer.PoolTable.PoolBean
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,6 +28,7 @@ class StyleTable(
     infoWindow: IndependentWindow?,
     fontSize: Float,
 ) : JPanel(), ViewerPanelIF {
+
     private val styleTable: BeanTable<StyleBean>
     var localInfo: TextHistoryPane = TextHistoryPane()
 
@@ -108,6 +110,15 @@ class StyleTable(
         return true
     }
 
+    fun setCounty(wantCounty: String) {
+        val beanList = mutableListOf<StyleBean>()
+        for (bean in styleTable.beans) {
+            if (bean.getCounty() == wantCounty)
+                beanList.add(bean)
+        }
+        styleTable.setBeans(beanList)
+    }
+
     fun setSelectedPool(bean: StyleBean) {
         localInfo.setText(bean.show())
         localInfo.gotoTop()
@@ -121,31 +132,23 @@ class StyleTable(
 
 
     class StyleBean(val style: StyleIF) {
-
-        val styleName: String
-            get() = style.name()
-
-        val id: Int
-            get() = style.id()
-
-        val ncards: Int
-            get() = style.ncards()
-
-        val exactContests: Boolean
-            get() = style.hasExactContests()
-
+        val styleName = style.name()
+        val id = style.id()
+        val ncards= style.ncards()
+        val exactContests= style.hasExactContests()
+        val ncontests= style.possibleContests().size
         val contests: String
             get() {
                 val ids = style.possibleContests().toList().sorted()
                 return ids.toString()
             }
 
-        val ncontests: Int
-            get() = style.possibleContests().size
-
-        fun show(): String {
-            return style.toString()
+        fun getCounty(): String {
+            return if (styleName.indexOf(":") > 0) styleName.substring(0, styleName.indexOf(":"))
+            else if (styleName.indexOf("-") > 0) styleName.substring(0, styleName.indexOf("-"))
+            else "N/A"
         }
+        fun show() = style.toString()
 
         companion object {
             @JvmStatic

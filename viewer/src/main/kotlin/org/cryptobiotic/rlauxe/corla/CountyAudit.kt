@@ -8,56 +8,58 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.verify.VerifyContests
-import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable
-import org.cryptobiotic.rlauxe.viewer.RlauxeContestsTable
-import org.cryptobiotic.rlauxe.viewer.SamplingTable
+import org.cryptobiotic.rlauxe.viewer.PoolTable
+import org.cryptobiotic.rlauxe.viewer.StyleTable
 import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
 import ucar.ui.prefs.ComboBox
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FileManager
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JLabel
 import javax.swing.JOptionPane
 import javax.swing.JPanel
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 
 /** County oriented auditing  */
 class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fontSize) {
     var fileChooser: FileManager
     var auditRecordDirCB: ComboBox<String>
 
-    var contestTable: CountySampling
-    // var samplingTable: SamplingTable
+    var contestTable: CountyContests
+    var samplingTable: CountySampling
+    var poolTable: PoolTable
+    var styleTable: StyleTable
 
     init {
         ////////////////////////////////////////////
         // topTabs
-        /* corlaInputPanel = ColoradoInputTable((prefs.node("ColoradoInputTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize) { setInput(it) }
-        corlaInputPanel.getActions(actionsPanel)
-        topTabs.addTab("Colorado Input", corlaInputPanel)
-        activePanels.add(corlaInputPanel) */
-
-        contestTable =
-            CountySampling((prefs.node("CountySampling") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-        contestTable.getActions(actionsPanel)
-        topTabs.addTab("CountySampling", contestTable)
+        contestTable = CountyContests((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize)  { setCounty(it) }
+        topTabs.addTab("CountyContests", contestTable)
         activePanels.add(contestTable)
 
-        /* samplingTable =
-            SamplingTable((prefs.node("SamplingTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-        samplingTable.getActions(actionsPanel)
+        samplingTable = CountySampling((prefs.node("CountySampling") as PreferencesExt), infoTA, infoWindow, fontSize)
         topTabs.addTab("Sampling", samplingTable)
-        activePanels.add(samplingTable) */
+        activePanels.add(samplingTable)
+
+        poolTable = PoolTable((prefs.node("PoolTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("Pools", poolTable)
+        activePanels.add(poolTable)
+
+        styleTable = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("Styles", styleTable)
+        activePanels.add(styleTable)
 
         // TODO put into seperate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
                 val verifier = VerifyContests(auditRecordDir, false)
                 infoTA.setText(verifier.verify().toString())
-                infoWindow!!.show()
+                infoWindow.show()
             }
         }
         // Verify-icon.png
@@ -68,7 +70,7 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
             override fun actionPerformed(e: ActionEvent) {
                 infoTA.setFont(infoTA.getFont().deriveFont(fontSize))
                 infoTA.setText(showInfo())
-                infoWindow!!.show()
+                infoWindow.show()
             }
         }
         BAMutil.setActionProperties(infoAction, "Info-icon.png", "info on Election Record", false, 'I'.code, -1)
@@ -76,13 +78,26 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
 
         val refreshAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
-                // setAuditRecord()
+                setAuditRecord()
             }
         }
         BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-'.code, -1)
         BAMutil.addActionToContainer(leftPanel, refreshAction)
 
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
+
+        topTabs.addChangeListener(ChangeListener { e: ChangeEvent? ->
+            val c: Component = topTabs.getSelectedComponent()
+            actionsPanel.removeAll()
+
+            // actions on right side of Audit record chooser
+            when {
+                c is CountyContests  -> c.getActions(actionsPanel)
+                c is CountySampling -> c.getActions(actionsPanel)
+                else -> {}
+            }
+            validate()
+        })
 
         ////////////////////////////////////////////
         this.fileChooser = FileManager(CorlaMain.frame, "", null, prefs.node("FileManager") as PreferencesExt?)
@@ -139,7 +154,11 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
     fun setAuditRecord(): Boolean {
         try {
             val auditRecord = read(auditRecordDir)
-            if (auditRecord == null) return false
+            if (auditRecord == null) {
+                logger.debug{ "read record failed "}
+                return false
+            }
+
             contestTable.setAuditRecord(auditRecordDir)
             for (vpanel in activePanels) {
                 if (vpanel is ViewerPanelIF) vpanel.setAuditRecord(auditRecordDir)
@@ -153,15 +172,23 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
         return false
     }
 
+    fun setCounty(county: String) {
+        samplingTable.setCounty(county)
+        topTabs.setSelectedComponent(samplingTable)
+
+        poolTable.setCounty(county)
+        styleTable.setCounty(county)
+    }
+
     fun showInfo() = buildString {
         /* if (currentCountyInput != null) {
-            val cc = currentCountyInput!!
+            val cc = currentCountyInput
             appendLine("electionName = ${cc.electionName}")
             appendLine("countyName = ${cc.countyName}")
             appendLine("manifestSource = ${cc.manifestSource}")
             appendLine("cvrsSource = ${cc.cvrsSource}")
             appendLine()
-            val corlaCvrs = countyCvrsTable.corlaCvrs!!
+            val corlaCvrs = countyCvrsTable.corlaCvrs
             appendLine("         cvrs = ${nfn(corlaCvrs.cvrs().size, 6)}")
             val nredactedCvrs = corlaCvrs.redaction().nredactedCvrs()
             appendLine("redacted cvrs = ${nfn(nredactedCvrs, 6)}")

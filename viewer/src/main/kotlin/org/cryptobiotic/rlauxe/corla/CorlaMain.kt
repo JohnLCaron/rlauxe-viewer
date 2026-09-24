@@ -158,7 +158,7 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
         add(topPanel, BorderLayout.NORTH)
         add(topTabs, BorderLayout.CENTER)
 
-        logger.debug{"ColoradoInputMain started"}
+        logger.debug{"CorlaMain started"}
     }
 
     abstract fun name(): String

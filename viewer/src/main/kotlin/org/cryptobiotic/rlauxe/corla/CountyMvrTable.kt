@@ -21,6 +21,7 @@ import javax.swing.JSplitPane
 
 private val logger = KotlinLogging.logger("CvrStylesTable")
 
+// readContestComparisonCsv to compare cvrs and mvrs
 class CountyMvrTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,

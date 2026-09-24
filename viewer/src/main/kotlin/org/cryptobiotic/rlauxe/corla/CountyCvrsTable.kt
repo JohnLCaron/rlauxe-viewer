@@ -25,6 +25,7 @@ import javax.swing.event.ListSelectionEvent
 
 private val logger = KotlinLogging.logger("CountyCvrsTable")
 
+// countyInput.readCorlaCvrs()
 class CountyCvrsTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
