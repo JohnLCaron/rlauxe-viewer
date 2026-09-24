@@ -301,6 +301,38 @@ class CorlaContestsTable(
         }
     }
 
+    /*
+    Contest 'Carbondale and Rural Fire Protection District Ballot Issue 7B' (45) PLURALITY voteForN=1 votes={0=5640, 1=2010} undervotes=614, winners=[0] Nc=8264 Nphantoms=0 Nu=614 sumVotes=7650 Npop=8264 hasStyle=true
+   minAssertion= 0/1 votes=5640/2010 diff=3630 dilutedMargin=0.439255 noerror=0.6407
+
+   0 'Yes/For': votes=5640 (73.73%)  (winner)
+   1 'No/Against': votes=2010 (26.27%)
+    Total=7650
+Metadata
+  CORLAhaveMvrs=298
+  CORLAstrataNcards=43334
+  CORLAsample=80
+  CORLAauditReason=opportunistic_benefits
+  CORLAmarginInVotes=3630
+  CORLAcounties=[Garfield, Gunnison, Pitkin]
+  CORLAcountyMvrs=69
+  CORLAstatewideNmvrs=0
+  PoolPct=8
+
+sortedVotes   = {0=5640, 1=2010}
+
+         county auditcenter   cvrs
+                ncards nvotes ncards nvotes
+       Garfield   7542   6978   7329   6781
+         Pitkin    722    672    709    660
+          Total   8264   7650   8038   7441
+
+ac   = ContestTabulation(id=45 isIrv=false, voteForN=1, votes=[0=5640, 1=2010], nvotes=7650 ncards=8264, undervotes=614
+cvrs = ContestTabulation(id=45 isIrv=false, voteForN=1, votes=[0=5496, 1=1945], nvotes=7441 ncards=8038, undervotes=597
+acNvotes = 7650, cvrNvotes = 7441 diff = 209
+acNu = 614, cvrNu = 597 diff = 17
+     */
+
     fun showContest(bean: CorlaContestBean) = buildString {
         append( showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
         appendLine()

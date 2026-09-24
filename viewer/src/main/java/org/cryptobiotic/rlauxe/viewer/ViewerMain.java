@@ -148,8 +148,6 @@ public class ViewerMain extends JPanel {
 
     tabbedPane.addChangeListener(e -> {
       Component c = tabbedPane.getSelectedComponent();
-
-      logger.debug("ColoradoInputMain.tabbedPanel.changed, component {}", c.getClass().getName());
       actionsPanel.removeAll();
 
         switch (c) {

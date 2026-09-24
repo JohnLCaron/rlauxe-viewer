@@ -116,6 +116,15 @@ class PoolTable(
         return true
     }
 
+    fun setCounty(wantCounty: String) {
+        val beanList = mutableListOf<PoolBean>()
+        for (bean in poolTable.beans) {
+            if (bean.getCounty() == wantCounty)
+            beanList.add(bean)
+        }
+        poolTable.setBeans(beanList)
+    }
+
     fun setSelectedPool(bean: PoolBean) {
         val beanList = mutableListOf<ContestTabBean>()
         for (tab in bean.pool.contestTabs.values) {
@@ -135,19 +144,11 @@ class PoolTable(
 
     /**/////////////////////////////////////////////////////////////// */
     class PoolBean (val pool: CardPool) {
-
-        val name: String
-            get() = pool.name()
-
-        val id: Int
-            get() = pool.id()
-
-        val singleStyle: Boolean
-            get() = pool.hasExactContests()
-
-        val ncards: Int
-            get() = pool.ncards()
-
+        val name = pool.name()
+        val id = pool.id()
+        val singleStyle = pool.hasExactContests()
+        val ncards = pool.ncards()
+        val ncontests = pool.possibleContests().size
         val contests = buildString {
                 val ids = pool.possibleContests()
                 for (id in ids) {
@@ -155,11 +156,11 @@ class PoolTable(
                 }
             }
 
-        val ncontests: Int
-            get() = pool.possibleContests().size
-
-        val className: String
-            get() = pool.javaClass.getSimpleName()
+        fun getCounty(): String {
+            return if (name.indexOf(":") > 0) name.substring(0, name.indexOf(":"))
+            else if (name.indexOf("-") > 0) name.substring(0, name.indexOf("-"))
+            else "N/A"
+        }
 
         fun show(): String {
             return pool.toString()
@@ -177,19 +178,13 @@ class PoolTable(
         val contestId = info.id
         val contestName = info.name
 
-        val isIrv: String
-            get() = (if (contestTab.isIrv) "yes" else "")
-        val voteForN: Int
-            get() = vunder.voteForN
+        val isIrv = (if (contestTab.isIrv) "yes" else "")
+        val voteForN = vunder.voteForN
 
-        val nCards: Int
-            get() = vunder.ncards
-        val undervotes: Int
-            get() = vunder.undervotes
-        val nVotes: Int
-            get() = vunder.nvotes
-        val missing: Int
-            get() = vunder.missing
+        val nCards = vunder.ncards
+        val undervotes = vunder.undervotes
+        val nVotes = vunder.nvotes
+        val missing = vunder.missing
         val votes: String
             get() {
                 if (!contestTab.isIrv) return vunder.cands().toString()
@@ -205,7 +200,6 @@ class PoolTable(
             fun hiddenProperties() = "pool contestTab info vunder"
         }
     }
-
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(PoolTable::class.java)
