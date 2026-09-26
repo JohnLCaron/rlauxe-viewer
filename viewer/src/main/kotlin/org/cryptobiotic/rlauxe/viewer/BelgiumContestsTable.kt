@@ -383,14 +383,15 @@ class BelgiumContestsTable(
         partyTable.repaint()
     }
 
-    fun showContest(bean: ContestBean) = buildString {
-        append(showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
+    fun showContest(bean:ContestBean) = buildString {
+        appendLine(showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
         appendLine()
-
-        if (bean.contestUA.contest is DHondtContest) {
-            append((bean.contestUA.contest as DHondtContest).showRelaxedAssertions(bean.contestRound))
-        }
+        appendLine("Relaxed Assertions (experimental)")
+        append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound))
+        appendLine("Relaxed Assertion Report (experimental)")
+        append((bean.contestUA.contest as DHondtContest).showRelaxedAssertionReport(bean.contestRound))
     }
+
 
     fun showAssertionsJson(bean: ContestBean) = buildString {
         if (allSeats == null || lastAuditRound == null) return ""

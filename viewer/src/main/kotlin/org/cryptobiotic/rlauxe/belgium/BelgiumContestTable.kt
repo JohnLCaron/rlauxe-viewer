@@ -20,16 +20,18 @@ import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.AssorterIF
 import org.cryptobiotic.rlauxe.core.ClcaAssertion
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
-import org.cryptobiotic.rlauxe.corla.CorlaMain
-import org.cryptobiotic.rlauxe.corla.CountyAudit
-import org.cryptobiotic.rlauxe.dhondt.*
+import org.cryptobiotic.rlauxe.dhondt.AllSeats
+import org.cryptobiotic.rlauxe.dhondt.CandidateSeats
+import org.cryptobiotic.rlauxe.dhondt.Coalition
+import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
+import org.cryptobiotic.rlauxe.dhondt.DHondtContest
+// import org.cryptobiotic.rlauxe.dhondt.*
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.persist.json.writeDHondtAssertionContestsJson
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.viewer.RlauxeAssertionBean
 import org.cryptobiotic.rlauxe.viewer.ViewerMain
-import org.cryptobiotic.rlauxe.viewer.ViewerMain.ViewerProfile
 import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -48,7 +50,8 @@ class BelgiumContestTable(
     infoTA: TextHistoryPane, 
     infoWindow: IndependentWindow, 
     fontSize: Float,
-    statusButton: JLabel,
+    val headerLabel: JLabel,
+    statusButton: JButton,
     val showLogsAction: (String) -> Any,
 ) : JPanel(), ViewerPanelIF {
 
@@ -68,10 +71,12 @@ class BelgiumContestTable(
     private var auditRecordLocation: String? = "none"
     private var auditRecord: CompositeAuditRecord? = null
     private var config: Config? = null
+    private var electionName: String = ""
     private var lastAuditRound: AuditRoundIF? = null // may be null
 
     private val assertTA = TextHistoryPane()
-    private val assertWindow  = IndependentWindow("Assertion", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(assertTA))
+    private val assertWindow =
+        IndependentWindow("Assertion", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(assertTA))
 
     init {
         val bounds = prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
@@ -87,7 +92,14 @@ class BelgiumContestTable(
         }) */
 
         contestTable =
-            BeanTable(ContestBean::class.java, prefs.node("contestTable") as PreferencesExt, false, "Contests", "Contests", null)
+            BeanTable(
+                ContestBean::class.java,
+                prefs.node("contestTable") as PreferencesExt,
+                false,
+                "Contests",
+                "Contests",
+                null
+            )
         contestTable.addListSelectionListener {
             val contest = contestTable.getSelectedBean()
             if (contest != null) {
@@ -108,9 +120,9 @@ class BelgiumContestTable(
             }
         )
         contestTable.addPopupOption(
-            "Print Contests", 
+            "Print Contests",
             contestTable.makeShowAction(infoTA, infoWindow)
-                { printTable(contestTable, BeanProperties.contests,"BelgiumContests") }
+            { printTable(contestTable, BeanProperties.contests, "BelgiumContests") }
         )
         contestTable.addPopupOption(
             "Save assertions to Json file for lean analyzer",
@@ -129,7 +141,10 @@ class BelgiumContestTable(
             )
         assertionTable.addPopupOption(
             "Show Assertion",
-            assertionTable.makeShowAction(assertTA, assertWindow) { bean: Any? -> showAssertion(bean as RlauxeAssertionBean) }
+            assertionTable.makeShowAction(
+                assertTA,
+                assertWindow
+            ) { bean: Any? -> showAssertion(bean as RlauxeAssertionBean) }
         )
         tables.add(assertionTable)
 
@@ -145,7 +160,7 @@ class BelgiumContestTable(
         partyTable.addPopupOption(
             "Show Party",
             partyTable.makeShowAction(infoTA, infoWindow)
-                { bean: PartyBean -> bean.show() }
+            { bean: PartyBean -> bean.show() }
         )
         tables.add(partyTable)
 
@@ -164,14 +179,14 @@ class BelgiumContestTable(
     }
 
     fun getActions(container: JPanel) {
-            val limitAction: AbstractAction = object : AbstractAction() {
-                override fun actionPerformed(e: ActionEvent?) {
-                    applySampleLimits()
-                }
+        val limitAction: AbstractAction = object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent?) {
+                applySampleLimits()
             }
-            BAMutil.setActionProperties(limitAction, "speedometer.png", "reread sample limits", false, 'L'.code, -1)
-            BAMutil.addActionToContainer(container, limitAction)
-            /*
+        }
+        BAMutil.setActionProperties(limitAction, "speedometer.png", "reread sample limits", false, 'L'.code, -1)
+        BAMutil.addActionToContainer(container, limitAction)
+        /*
             AbstractAction saveAction = new AbstractAction() {
                 public void actionPerformed(ActionEvent e) {
                     saveConfig();
@@ -223,8 +238,10 @@ class BelgiumContestTable(
             this.lastAuditRound = auditRecord!!.rounds.last()
 
             this.config = auditRecord!!.config
-            ContestBean.alpha = config!!.riskLimit
+            this.electionName = auditRecord!!.name()
+            headerLabel.setText(electionName)
 
+            ContestBean.alpha = config!!.riskLimit
             val beanList: MutableList<ContestBean> = ArrayList<ContestBean>()
             for (contestRound in lastAuditRound!!.contestRounds) {
                 if (contestRound.contestUA.preAuditStatus == TestH0Status.InProgress) {
@@ -241,24 +258,24 @@ class BelgiumContestTable(
             // parties
             partyNames = auditRecord!!.readPartyNames()
             val sampleLimits = auditRecord!!.readSampleLimits()
-            allSeats = makeAllSeats(this.lastAuditRound!!, sampleLimits)
+            allSeats = null // makeAllSeats(this.lastAuditRound!!, sampleLimits)
             val candBeans: MutableList<PartyBean> = ArrayList<PartyBean>()
-            for (candidateSeat in allSeats!!.candidateSums) {
+            /* for (candidateSeat in allSeats!!.candidateSums) {
                 if (candidateSeat.maxSeats > 0) {
-                    val bean = PartyBean(candidateSeat)  { updateCandidateTotal() }
+                    val bean = PartyBean(candidateSeat) { updateCandidateTotal() }
                     candBeans.add(bean)
                 }
             }
             coalitionTotal = makeCandidatesTotal(candBeans)
             candBeans.add(coalitionTotal!!)
 
-            candBeans.sortByDescending { it.reportedSeats }
+            candBeans.sortByDescending { it.reportedSeats } */
             partyTable.setBeans(candBeans)
 
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
-            logger.error(e){"setAuditRecord failed"}
+            logger.error(e) { "setAuditRecord failed" }
         }
 
         return true
@@ -308,6 +325,7 @@ class BelgiumContestTable(
     fun showInfo() = buildString {
         if (auditRecord == null) append("no audit record")
         appendLine("Audit record at ${auditRecord!!.topdir}")
+        appendLine("ElectionName = ${electionName}")
         appendLine(config!!.show())
         if (lastAuditRound != null) {
             append("AuditRounds")
@@ -327,12 +345,12 @@ class BelgiumContestTable(
             if (allSeats != null) {
                 appendLine()
                 appendLine("Party seat ranges based on contested assertions")
-                append(allSeats!!.showAllPartySeats())
+                // append(allSeats!!.showAllPartySeats())
             }
         }
     }
 
-    fun makeCandidatesTotal(beans: MutableList<PartyBean>): PartyBean {
+    /* fun makeCandidatesTotal(beans: MutableList<PartyBean>): PartyBean {
         val candidates = mutableSetOf<Int>()
         for (bean in beans) {
             candidates.add(bean.partyId)
@@ -374,24 +392,30 @@ class BelgiumContestTable(
         totalBean.coal = coal
         totalBean.candidateSeats = cand
         partyTable.repaint()
-    }
+    } */
 
     fun showContest(bean: ContestBean) = buildString {
-        append(showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
+        appendLine(showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
         appendLine()
-
-        if (bean.contestUA.contest is DHondtContest) {
-            append((bean.contestUA.contest as DHondtContest).showRelaxedAssertions(bean.contestRound))
-        }
+        //appendLine("Relaxed Assertion Report (experimental)-------------------------------------")
+        //append((bean.contestUA.contest as DHondtContest).showRelaxedAssertionReport(bean.contestRound))
+        appendLine("Relaxed Assertions (experimental)------------------------------------------")
+        append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound))
+        appendLine()
     }
 
     fun showAssertionsJson(bean: ContestBean) = buildString {
         if (allSeats == null || lastAuditRound == null) return ""
-        val org = writeDHondtAssertionContestsJson(lastAuditRound!!.contestRounds, allSeats!!, "/home/stormy/rla/temp/assertions.json")
-        append(org)
+        return ""
+        /* val org = writeDHondtAssertionContestsJson(
+            lastAuditRound!!.contestRounds,
+            allSeats!!,
+            "/home/stormy/rla/temp/assertions.json"
+        )
+        append(org) */
     }
 
-    //fun showAssertion(bean: AssertionRoundBean) = buildString {
+    //fun showAssertion(bean: AssertionRoundBean) = buildString { // TODO
     //    appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.contestUA, bean.assertion))
     //    append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
     //}
@@ -399,74 +423,73 @@ class BelgiumContestTable(
         val assn = if (bean.cassertion != null) bean.cassertion else bean.assertion
         return showAssertionWithDesc(bean, assertionTable.tableModel, bean.cua, assn)
     }
-}
 
-class AuditData (val statusButton: JLabel) {
-    var useMvrs: Int = 0
-    var contestedSeats: Int = 0
-    var contestedAssertions: Int = 0
-    var beans: MutableList<ContestBean>? = null
+    inner class AuditData(val statusButton: JButton) {
+        var useMvrs: Int = 0
+        var contestedSeats: Int = 0
+        var contestedAssertions: Int = 0
+        var beans: MutableList<ContestBean>? = null
 
-    fun updateStatus() {
-        useMvrs = countMvrs()
-        contestedSeats = countContestedSeats()
-        contestedAssertions = countContestedAssertions()
+        fun updateStatus() {
+            useMvrs = countMvrs()
+            contestedSeats = countContestedSeats()
+            contestedAssertions = countContestedAssertions()
 
-        SwingUtilities.invokeLater {
-            statusButton.setText(String.format("mvrs=%d failures=%d", useMvrs, contestedSeats))
-            statusButton.repaint()
+            SwingUtilities.invokeLater {
+                statusButton.setText("mvrs=$useMvrs failures=$contestedSeats")
+                // statusButton.repaint()
+            }
         }
-    }
 
-    fun setNewBeans(beans: MutableList<ContestBean>) {
-        this.beans = beans
-        useMvrs = countMvrs()
-        contestedSeats = countContestedSeats()
-        SwingUtilities.invokeLater {
-            statusButton.setText(String.format("mvrs=%d failures=%d", useMvrs, contestedSeats))
+        fun setNewBeans(beans: MutableList<ContestBean>) {
+            this.beans = beans
+            useMvrs = countMvrs()
+            contestedSeats = countContestedSeats()
+            SwingUtilities.invokeLater {
+                statusButton.setText("mvrs=$useMvrs failures=$contestedSeats")
+            }
         }
-    }
 
-    fun countMvrs(): Int {
-        var total = 0
-        for (bean in beans!!) {
-            total += bean.haveMvrs
+        fun countMvrs(): Int {
+            var total = 0
+            for (bean in beans!!) {
+                total += bean.haveMvrs
+            }
+            return total
         }
-        return total
-    }
 
-    fun countContestedAssertions(): Int {
-        var total = 0
-        for (contestBean in beans!!) {
-            if (contestBean.contestRound != null) {
+        fun countContestedAssertions(): Int {
+            var total = 0
+            for (contestBean in beans!!) {
                 var fail = 0
                 for (ar in contestBean.contestRound.assertionRounds) {
-                    val bean = RlauxeAssertionBean(contestBean.contestUA, contestBean.contestRound, ar.assertion, ar)
+                    val bean =
+                        RlauxeAssertionBean(contestBean.contestUA, contestBean.contestRound, ar.assertion, ar)
                     if (bean.estRisk > ContestBean.alpha) fail++
                 }
                 contestBean.fail = fail
                 total += fail
             }
+
+            return total
         }
 
-        return total
-    }
-
-    fun countContestedSeats(): Int {
-        var total = 0
-        for (bean in beans!!) {
-            val contest = bean.contestUA.contest
-            if (contest is DHondtContest) {
-                val count = contest.countContestedSeats(bean.contestRound)
-                bean.failNodes = count
-                total += count
+        fun countContestedSeats(): Int {
+            var total = 0
+            for (bean in beans!!) {
+                val contest = bean.contestUA.contest
+                if (contest is DHondtContest) {
+                    val count = contest.countContestedSeats(bean.contestRound)
+                    bean.failNodes = count
+                    total += count
+                }
             }
+            return total
         }
-        return total
     }
 }
 
-class ContestBean(val contestRound: ContestRound, val auditData: AuditData) {
+class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestTable.AuditData) {
     var mvrLimitBack: Int = -1
     var contestUA: ContestWithAssertions
     var orgSampleSize: Int
@@ -655,6 +678,8 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
     }
 
     companion object {
+        val alpha = .05
+
         @JvmStatic
         fun hiddenProperties() = "contestBean assertionRound cassertion cua assorter candidates"
     }

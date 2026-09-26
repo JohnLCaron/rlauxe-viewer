@@ -13,8 +13,8 @@ val subprojectVersion = version
 
 dependencies {
     api(project(":rlauxe-uibase"))
-    implementation(files("/home/stormy/dev/github/rla/rlauxe/cases/build/libs/rlauxe-cases-0.10.4.3-uber.jar"))
-    // implementation(files("../libs/rlauxe-cases-0.10.4.3-uber.jar"))
+    // implementation(files("/home/stormy/dev/github/rla/rlauxe/cases/build/libs/rlauxe-cases-0.10.4.4-uber.jar"))
+    implementation(files("../libs/rlauxe-cases-0.10.4.4-uber.jar"))
     implementation(libs.flatlaf)
     implementation(libs.slf4j)
     implementation(libs.logback.classic)
@@ -34,7 +34,7 @@ tasks.register<Jar>("uberJar") {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
-        attributes("Main-Class" to "org.cryptobiotic.rlauxe.viewer.ViewerMain")
+        attributes("Main-Class" to "org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain")
         attributes("Implementation-Title" to subprojectName)
         attributes("Implementation-Version" to subprojectVersion)
     }

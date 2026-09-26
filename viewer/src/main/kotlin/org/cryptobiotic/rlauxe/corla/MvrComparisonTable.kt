@@ -10,6 +10,7 @@ import org.apache.commons.csv.CSVParser
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt

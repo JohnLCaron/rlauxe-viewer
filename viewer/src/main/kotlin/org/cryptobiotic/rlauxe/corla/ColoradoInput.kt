@@ -9,14 +9,14 @@ import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.verify.VerifyContests
+import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import ucar.ui.widget.BAMutil
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-// obsolete
-class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fontSize) {
+class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
 
     var corlaInputPanel: ColoradoInputTable
     var countyTabPanel: Counties
@@ -103,21 +103,8 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, f
         BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-'.code, -1)
         BAMutil.addActionToContainer(leftPanel, refreshAction)
 
-        // this.leftPanel.add(inputLabel)
-
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
-
-        ////////////////////////////////////////////////////////////////
-        // top layout
-        this.topPanel = JPanel(BorderLayout())
-        this.topPanel.add(leftPanel, BorderLayout.WEST)
-        this.topPanel.add(statusLabel, BorderLayout.CENTER)
-        this.topPanel.add(rightPanel, BorderLayout.EAST)
-
-        // main layout
-        setLayout(BorderLayout())
-        add(topPanel, BorderLayout.NORTH)
-        add(topTabs, BorderLayout.CENTER)
+        headerLabel.setText("headerLabel from ${name()}")
 
         logger.debug{"ColoradoInput started"}
     }
@@ -131,7 +118,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, f
         currentInput = input
         countyTabPanel.setColoradoInput(input)
         mvrComparisonPanel.setColoradoInput(input)
-        statusLabel.setText(input.name)
+        headerLabel.setText(input.name)
         logger.info{"ViewerMain.setAuditRecord to $auditRecordDir"}
     }
 
@@ -145,7 +132,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, f
 
         topTabs.setSelectedComponent(countyCvrTabs)
         countyCvrTabs.setSelectedComponent(countyCvrsTable)
-        statusLabel.setText("${currentInput!!.name} county ${countyInput.countyName}")
+        headerLabel.setText("${currentInput!!.name} : ${countyInput.countyName} County")
     }
 
     fun showInfo() = buildString {

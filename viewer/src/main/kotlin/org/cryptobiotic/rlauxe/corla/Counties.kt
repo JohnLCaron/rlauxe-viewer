@@ -16,6 +16,7 @@ import org.cryptobiotic.rlauxe.beans.printTable
 import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
 import org.cryptobiotic.rlauxe.corlaInput.CountyInputData
 import org.cryptobiotic.rlauxe.corlaInput.readCountyInputData
+import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt

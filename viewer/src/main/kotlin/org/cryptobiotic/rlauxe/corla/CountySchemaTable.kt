@@ -13,6 +13,7 @@ import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.corlacvr.SchemaColumnInfo
 import org.cryptobiotic.rlauxe.corlacvr.SchemaContestInfo
+import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt

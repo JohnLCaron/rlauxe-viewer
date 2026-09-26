@@ -9,6 +9,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.PoolTable
+import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import org.cryptobiotic.rlauxe.viewer.StyleTable
 import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
 import ucar.ui.prefs.ComboBox
@@ -17,17 +18,13 @@ import ucar.ui.widget.FileManager
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Font
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JLabel
 import javax.swing.JOptionPane
-import javax.swing.JPanel
-import javax.swing.event.ChangeEvent
-import javax.swing.event.ChangeListener
 
 /** County oriented auditing  */
-class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fontSize) {
+class CountyAudit(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     var fileChooser: FileManager
     var auditRecordDirCB: ComboBox<String>
 
@@ -86,22 +83,21 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
         BAMutil.addActionToContainer(leftPanel, refreshAction)
 
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
-
-        topTabs.addChangeListener(ChangeListener { e: ChangeEvent? ->
+        topTabs.addChangeListener {
             val c: Component = topTabs.getSelectedComponent()
             actionsPanel.removeAll()
 
             // actions on right side of Audit record chooser
             when {
-                c is CountyContests  -> c.getActions(actionsPanel)
+                c is CountyContests -> c.getActions(actionsPanel)
                 c is CountySampling -> c.getActions(actionsPanel)
                 else -> {}
             }
             validate()
-        })
+        }
 
         ////////////////////////////////////////////
-        this.fileChooser = FileManager(CorlaMain.frame, "", null, prefs.node("FileManager") as PreferencesExt?)
+        this.fileChooser = FileManager(RlauxeViewerMain.frame, "", null, prefs.node("FileManager") as PreferencesExt?)
         this.auditRecordDirCB = ComboBox<String>(prefs.node("auditRecordDirCB") as PreferencesExt?)
         this.auditRecordDirCB.addChangeListener {
             if (this.eventOk) {
@@ -131,18 +127,6 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
         BAMutil.addActionToContainer(leftPanel, fileAction)
         this.leftPanel.add(JLabel("Audit Record: "))
         this.leftPanel.add(auditRecordDirCB)
-
-        ////////////////////////////////////////////////////////////////
-        // top layout
-        this.topPanel = JPanel(BorderLayout())
-        this.topPanel.add(leftPanel, BorderLayout.WEST)
-        // this.topPanel.add(auditRecordDirCB, BorderLayout.CENTER)
-        this.topPanel.add(rightPanel, BorderLayout.EAST)
-
-        // main layout
-        setLayout(BorderLayout())
-        add(topPanel, BorderLayout.NORTH)
-        add(topTabs, BorderLayout.CENTER)
 
         logger.debug{"CountyAudit started"}
     }
@@ -178,6 +162,7 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
     fun setCounty(county: String) {
         samplingTable.setCounty(county)
         topTabs.setSelectedComponent(samplingTable)
+        headerLabel.setText("$county County")
 
         poolTable.setCounty(county)
         styleTable.setCounty(county)

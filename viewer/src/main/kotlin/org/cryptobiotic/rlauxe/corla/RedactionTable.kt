@@ -9,6 +9,7 @@ import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.RedactedGroup
+import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt

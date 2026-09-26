@@ -14,7 +14,6 @@ import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.*
-import org.cryptobiotic.rlauxe.corla.SubPanelIF
 import org.cryptobiotic.rlauxe.estimate.Vunder
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
@@ -38,7 +37,6 @@ import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
-import javax.swing.event.ListSelectionListener
 
 // used for both Contests and Sampling tabs
 class CorlaContestsTable(
