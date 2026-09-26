@@ -1,9 +1,9 @@
 # Belgium (D'Hondt) Viewer
-_06/29/2026_
+_09/26/2026_
 
 To bring up the specialized Belgium Audit viewer, add -belgiumAudit to the command line:
 
-`java -jar viewer/build/libs/rlauxe-viewer-uber.jar -belgiumAudit`
+`java -jar viewer/build/libs/rlauxe-viewer-uber.jar -BelgiumContests`
 
 Use the Audit Record chooser to navigate to the top of the Belgium Audit Record, and select it.
 

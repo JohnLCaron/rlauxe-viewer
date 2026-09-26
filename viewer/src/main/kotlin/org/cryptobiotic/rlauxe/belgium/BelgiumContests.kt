@@ -6,15 +6,12 @@ package org.cryptobiotic.rlauxe.belgium
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditRoundIF
 import org.cryptobiotic.rlauxe.audit.Config
-import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.corla.CorlaMain
-import org.cryptobiotic.rlauxe.dhondt.*
+import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.viewer.LogsTable
 import org.cryptobiotic.rlauxe.viewer.ViewerMain
-import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
 import ucar.ui.prefs.ComboBox
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FileManager
@@ -22,13 +19,15 @@ import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fontSize) {
+class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     var fileChooser: FileManager
     var auditRecordDirCB: ComboBox<String>
+    val statusButton = JButton("status")
 
     val contestTable: BelgiumContestTable
     val logsTable: LogsTable
@@ -46,18 +45,33 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs,
         this.assertWindow.setBounds(bounds)
 
         contestTable = BelgiumContestTable((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize,
-            statusLabel)  { setLogsForContest(it) }
-        topTabs.addTab("CountyContests", contestTable)
+            headerLabel, statusButton)  { setLogsForContest(it) }
+        topTabs.addTab("Constituency", contestTable)
         activePanels.add(contestTable)
 
         logsTable = LogsTable((prefs.node("LogsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
         topTabs.addTab("Logs", logsTable)
         activePanels.add(logsTable)
 
+        // default
         topTabs.setSelectedIndex(0)
+        contestTable.getActions(actionsPanel)
+
+        this.rightPanel.add(actionsPanel, BorderLayout.EAST)
+        topTabs.addChangeListener {
+            val c: Component = topTabs.getSelectedComponent()
+            actionsPanel.removeAll()
+
+            // actions on right side of Audit record chooser
+            when {
+                c is BelgiumContestTable -> c.getActions(actionsPanel)
+                else -> {}
+            }
+            validate()
+        }
 
         ////////////////////////////////////////////
-        this.fileChooser = FileManager(CorlaMain.frame, "", null, prefs.node("FileManager") as PreferencesExt?)
+        this.fileChooser = FileManager(frame, "", null, prefs.node("FileManager") as PreferencesExt?)
         this.auditRecordDirCB = ComboBox<String>(prefs.node("auditRecordDirCB") as PreferencesExt?)
         this.auditRecordDirCB.addChangeListener {
             if (this.eventOk) {
@@ -74,6 +88,24 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs,
             }
         }
 
+        val infoAction: AbstractAction = object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent) {
+                infoTA.setFont(infoTA.getFont().deriveFont(fontSize))
+                infoTA.setText(contestTable.showInfo())
+                infoWindow.show()
+            }
+        }
+        BAMutil.setActionProperties(infoAction, "Info-icon.png", "info on Election Record", false, 'I'.code, -1)
+        BAMutil.addActionToContainer(leftPanel, infoAction)
+
+        val refreshAction: AbstractAction = object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent) {
+                setAuditRecord()
+            }
+        }
+        BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-'.code, -1)
+        BAMutil.addActionToContainer(leftPanel, refreshAction)
+
         // choose the audit record
         val fileAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
@@ -88,23 +120,12 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs,
         this.leftPanel.add(JLabel("Audit Record: "))
         this.leftPanel.add(auditRecordDirCB)
 
-        ////////////////////////////////////////////////////////////////
-        // top layout
-        this.topPanel = JPanel(BorderLayout())
-        this.topPanel.add(leftPanel, BorderLayout.WEST)
-        // this.topPanel.add(auditRecordDirCB, BorderLayout.CENTER)
-        this.topPanel.add(rightPanel, BorderLayout.EAST)
-
-        // main layout
-        setLayout(BorderLayout())
-        add(topPanel, BorderLayout.NORTH)
-        add(topTabs, BorderLayout.CENTER)
+        rightPanel.add(statusButton, BorderLayout.WEST)
 
         logger.debug { "BelgiumAuditPanel init" }
     }
 
-
-    override fun name() = "Belgium Contests Viewer"
+    override fun name() = "Belgium d'Hondt Audit"
 
     fun setLogsForContest(contest: String) {
         logger.debug { "setLogsForContest $contest" }
