@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.List;
 import java.util.prefs.Preferences;
 
+// obsolete - do not use
+
 /**
  * Create a User Preferences Panel or Dialog.
  *
@@ -840,7 +842,7 @@ public class PrefPanel extends JPanel {
         substore = (PreferencesExt) prefs.node("Dialog");
 
       if (substore != null) {
-        Rectangle r = (Rectangle) substore.getBean("Bounds", null);
+        Rectangle r = (Rectangle) substore.getBean("PrefPanelBounds", null);
         if (r != null)
           setBounds(r);
       }
@@ -867,12 +869,12 @@ public class PrefPanel extends JPanel {
       addComponentListener(new ComponentAdapter() {
         public void componentMoved(ComponentEvent e) {
           if (substore != null)
-            substore.putBeanObject("Bounds", getBounds());
+            substore.putBeanObject("PrefPanelBounds", getBounds());
         }
 
         public void componentResized(ComponentEvent e) {
           if (substore != null)
-            substore.putBeanObject("Bounds", getBounds());
+            substore.putBeanObject("PrefPanelBounds", getBounds());
         }
       });
 
@@ -903,10 +905,10 @@ public class PrefPanel extends JPanel {
 
       // persistent state
       if (substore != null) {
-        Rectangle b = (Rectangle) substore.getBean("Bounds", null);
+        Rectangle b = (Rectangle) substore.getBean("PrefPanelBounds", null);
         if (b != null)
           setBounds(b);
-        substore.putBeanObject("Bounds", getBounds());
+        substore.putBeanObject("PrefPanelBounds", getBounds());
       }
     }
   }

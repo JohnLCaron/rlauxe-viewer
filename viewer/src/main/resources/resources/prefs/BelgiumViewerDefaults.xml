@@ -395,42 +395,6 @@
         <node name='Debug'>
             <map/>
         </node>
-        <node name='FileManager'>
-            <map>
-                <beanObject key='Bounds'>
-                    <object class="java.awt.Rectangle" id="Rectangle0">
-                        <void class="java.awt.Rectangle" method="getField">
-                            <string>x</string>
-                            <void method="set">
-                                <object idref="Rectangle0"/>
-                                <int>66</int>
-                            </void>
-                        </void>
-                        <void class="java.awt.Rectangle" method="getField">
-                            <string>y</string>
-                            <void method="set">
-                                <object idref="Rectangle0"/>
-                                <int>151</int>
-                            </void>
-                        </void>
-                        <void class="java.awt.Rectangle" method="getField">
-                            <string>width</string>
-                            <void method="set">
-                                <object idref="Rectangle0"/>
-                                <int>1338</int>
-                            </void>
-                        </void>
-                        <void class="java.awt.Rectangle" method="getField">
-                            <string>height</string>
-                            <void method="set">
-                                <object idref="Rectangle0"/>
-                                <int>904</int>
-                            </void>
-                        </void>
-                    </object>
-                </beanObject>
-            </map>
-        </node>
         <node name='MvrTable'>
             <map>
                 <entry key='splitPos1' value='72'/>

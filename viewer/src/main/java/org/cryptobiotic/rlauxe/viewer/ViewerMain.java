@@ -91,7 +91,8 @@ public class ViewerMain extends JPanel {
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 
     if (profile.isBelgium()) {
-      belgiumPanel = new BelgiumContestsTable((PreferencesExt) prefs.node("BelgiumAuditTable"), infoTA, infoWindow, fontSize, statusButton, profile);
+      var bprefs = (PreferencesExt) prefs.node("BelgiumAuditTable");
+      belgiumPanel = new BelgiumContestsTable(bprefs, infoTA, infoWindow, fontSize, statusButton, profile, new ShowLogsAction());
       belgiumPanel.getActions(actionsPanel);
       tabbedPane.addTab("Contests", belgiumPanel);
       activePanels.add(belgiumPanel);
@@ -433,6 +434,15 @@ public class ViewerMain extends JPanel {
       mvrsTable.readCards(roundIdx);
 
       tabbedPane.setSelectedIndex(4);
+    }
+  }
+
+  // TODO port to kotlin
+  public class ShowLogsAction extends AbstractAction {
+    public String contest;
+    public void actionPerformed(ActionEvent e) {
+      logsPanel.setContest(contest);
+      tabbedPane.setSelectedIndex(1);
     }
   }
 

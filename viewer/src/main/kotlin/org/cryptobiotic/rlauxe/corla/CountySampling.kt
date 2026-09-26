@@ -64,6 +64,11 @@ class CountySampling(
     private var samplingChanged = false
     private var onlyShowInprogressContests = false
 
+    var wantNmvrs = emptyMap<Int, Int>()
+
+    // fun sampleCountyCvrs(wantNmvrs: Map<Int, Int>, cvrs: List<AuditableCard>, maxSamples: Int, ntrials: Int): List<Int> {
+    var dist = emptyList<Int>()
+
     init {
         localWindow.setBounds(prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
 
@@ -87,7 +92,7 @@ class CountySampling(
         setLayout(BorderLayout())
         add(countyContestTable, BorderLayout.CENTER)
 
-        logger.debug { "CountyContests init" }
+        logger.debug { "CountySampling init" }
     }
 
     override fun setFontSize(size: Float) {
@@ -148,9 +153,8 @@ class CountySampling(
     }
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-// Actions
-
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    // Actions
 
     // actions on right side of Audit record chooser
     fun getActions(container: JPanel) {
@@ -227,32 +231,32 @@ class CountySampling(
                 setInclude(false)
             }
         }
-        BAMutil.setActionProperties(
-            excludeAllAction,
-            "remove-cart.png",
-            "Exclude selected Contests",
-            false,
-            'T'.code,
-            -1
-        )
-        BAMutil.addActionToContainer(container, excludeAllAction)
+        BAMutil.setActionProperties(excludeAllAction, "remove-cart.png", "Exclude selected Contests", false, 'T'.code, -1)
 
+        BAMutil.addActionToContainer(container, excludeAllAction)
         val reportAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
                 localTA.setText(reportRisks())
                 localWindow.show()
             }
         }
-        BAMutil.setActionProperties(reportAction, "count.png", "Show Risk Report", false, 'T'.code, -1)
+        BAMutil.setActionProperties(reportAction, "count.png", "Show Sampling Report", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, reportAction)
 
         logger.debug { "CountyContests.getActions" }
     }
 
     fun reportRisks() = buildString {
-        // countMvrsByCounty()
-        appendLine("rlauxe nmvrs = ${totalBean!!.rlauxeSampling}")
-        appendLine(" corla nmvrs = ${totalBean!!.corlaSampling}")
+        logger.debug { "call reportRisks" }
+        appendLine(county)
+        appendLine("wantNmvrs = ${wantNmvrs.toSortedMap()}")
+        appendLine("sumWantNmvrs = ${wantNmvrs.values.sum()}")
+        appendLine("dist = ${calcDecilesFromInt(dist)}")
+
+        if (totalBean != null) {
+            appendLine("rlauxe nmvrs = ${totalBean!!.rlauxeSampling}")
+            appendLine(" corla nmvrs = ${totalBean!!.corlaSampling}")
+        }
 
         var countU = IntArray(5)
         var countS = IntArray(5)
@@ -288,9 +292,10 @@ class CountySampling(
         val under = listOf("maxRisk", "5%", "10%", "20%", "30%")
         appendLine("|               | rlauxe  |   corla  |")
         appendLine("|---------------|---------|----------|")
-        repeat(under.size) {
-            appendLine("| under ${sfn(under[it], 7)} |   ${nfn(countS[it], 3)}   |    ${nfn(countU[it], 3)}   |")
-        }
+        //repeat(under.size) {
+       //     appendLine("| under ${sfn(under[it], 7)} |         val lastWinningScore = winnerScores.last()\n" +
+        //            "        val lastWinner = parties.find { it.id == lastWinningScore.candidate }!!population  ${nfn(countS[it], 3)}   |    ${nfn(countU[it], 3)}   |")
+        //}
 
         appendLine()
         appendLine("style based sampling")
@@ -332,10 +337,10 @@ class CountySampling(
 
             logger.debug { "call sampleCountyCvrs for=$county" }
 
-            val wantNmvrs = countyContestTable.beans.filter { it.isInclude() }.map { Pair(it.getId(), it.getCountyMvrs())}.toMap()
+            wantNmvrs = countyContestTable.beans.filter { it.isInclude() }.map { Pair(it.getId(), it.getCountyMvrs())}.toMap()
 
             // fun sampleCountyCvrs(wantNmvrs: Map<Int, Int>, cvrs: List<AuditableCard>, maxSamples: Int, ntrials: Int): List<Int> {
-            val dist: List<Int> = sampleCountyCvrs(countyAudit!!, county, wantNmvrs, config?.maxSamples?: 10_000, 10)
+            dist = sampleCountyCvrs(countyAudit!!, county, wantNmvrs, config?.maxSamples?: 10_000, 10)
 
             val sampleReport = buildString {
                 appendLine(county)
@@ -344,10 +349,8 @@ class CountySampling(
                 appendLine("dist = ${calcDecilesFromInt(dist)}")
             }
 
-            println(sampleReport)
             localTA.setText(sampleReport)
-            localWindow.show()
-
+            wantNmvrs
             countyContestTable.refresh()
             samplingChanged = false // perhaps not needed
 
@@ -505,13 +508,13 @@ class CountySamplingBean(val tab: ContestTabulation, val contestRound: ContestRo
         if (minAssertion == null) return 0
         val noerror = minAssertion.noerror
 
-        return estSampleSizeStandardBet(contestUA.population(), noerror, maxRisk)
+        return estSampleSizeStandardBet(getNpop(), noerror, maxRisk)
     }
 
     fun getName() = contestUA.name
     fun getId() = contestUA.id
     fun getNc() = contestUA.Nc
-    fun getPopulation() = contestUA.population()
+    fun getNpop() = contestUA.Npop
 
     fun getNCvrs() = tab.ncards()
     fun getNVotes() = tab.nvotes()
@@ -523,15 +526,15 @@ class CountySamplingBean(val tab: ContestTabulation, val contestRound: ContestRo
 
     fun getEstRisk(): Double {
         val haveMvrs = this.getHaveMvrs()
-        return estRiskStandardBet(contestUA.population(), getNoerror(), haveMvrs)
+        return estRiskStandardBet(getNpop(), getNoerror(), haveMvrs)
     }
 
     fun getEstMvrs(): Int {
-        return estSampleSizeStandardBet(contestUA.population(), getNoerror(), maxrisk())
+        return estSampleSizeStandardBet(getNpop(), getNoerror(), maxrisk())
     }
 
     fun getCountyMvrs(): Int {
-        return if (getPopulation() == 0) 0 else roundToClosest( getEstMvrs() * (getNCvrs()/getPopulation().toDouble()))
+        return if (getNpop() == 0) 0 else roundToClosest( getEstMvrs() * (getNCvrs()/getNpop().toDouble()))
     }
 
     fun getHaveMvrs() = havemvrs()

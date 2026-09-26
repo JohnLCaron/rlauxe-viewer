@@ -4,8 +4,11 @@
  */
 package org.cryptobiotic.rlauxe.corla
 
+import com.formdev.flatlaf.FlatLightLaf
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.cryptobiotic.rlauxe.belgium.BelgiumContests
 import org.cryptobiotic.rlauxe.viewer.RlauxeAboutWindow
+
 import ucar.ui.prefs.Debug
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FontUtil
@@ -15,6 +18,8 @@ import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
 import ucar.util.prefs.XMLStore
 import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Font
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import java.awt.event.WindowAdapter
@@ -36,7 +41,8 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
     var infoTA: TextHistoryPane
     var infoWindow: IndependentWindow
     var topPanel: JPanel
-    var inputLabel: JButton = JButton("")
+
+    var statusLabel = JLabel("")
 
     var eventOk: Boolean = true
     var auditRecordDir: String = "none"
@@ -45,20 +51,10 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
     var countyCvrTabs  = JTabbedPane(JTabbedPane.TOP)
     var activePanels = mutableListOf<SubPanelIF>()
 
-    /* var corlaInputPanel: ColoradoInputTable
-    var countyTabPanel: Counties
-    var mvrComparisonPanel: MvrComparisonTable
-
-    var countyCvrsTable: CountyCvrsTable
-    var countyRedactionTable: CountyRedactionTable
-    var countySchemaTable: CountySchemaTable
-    var countyMvrTable: CountyMvrTable
-
-    var currentInput: ColoradoInput? = null
-    var currentCountyInput: CorlaCountyInput? = null */
-
     init {
         fontu = FontUtil.getStandardFont(fontSize)
+        statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD, fontSize + 5.0f));
+        statusLabel.setHorizontalAlignment(JLabel.CENTER); // Centers text inside the label's area
 
         // Popup info window
         this.infoTA = TextHistoryPane(true)
@@ -68,80 +64,6 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
         val bounds = prefs.getBean(INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
         this.infoWindow.setBounds(bounds)
 
-        ////////////////////////////////////////////
-        /* topTabs
-        corlaInputPanel = ColoradoInputTable((prefs.node("ColoradoInputTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize) { setInput(it) }
-        corlaInputPanel.getActions(actionsPanel)
-        topTabs.addTab("Colorado Input", corlaInputPanel)
-        activePanels.add(corlaInputPanel)
-
-        countyTabPanel = Counties((prefs.node("Counties") as PreferencesExt),
-            infoTA, infoWindow, fontSize) { setCountyInput(it) }
-        topTabs.addTab("Counties", countyTabPanel)
-        activePanels.add(countyTabPanel)
-
-        mvrComparisonPanel = MvrComparisonTable((prefs.node("mvrComparisonPanel") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        topTabs.addTab("Mvr Comparisons", mvrComparisonPanel)
-        activePanels.add(mvrComparisonPanel)
-
-        topTabs.addTab("CountyCvrs", countyCvrTabs);
-        topTabs.setSelectedIndex(0)
-
-        // countyCvrs
-        countyCvrsTable = CountyCvrsTable((prefs.node("countyCvrsTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("Cvrs", countyCvrsTable)
-        activePanels.add(countyCvrsTable)
-
-        countyRedactionTable = CountyRedactionTable((prefs.node("countyRedactionTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("Redactions", countyRedactionTable)
-        activePanels.add(countyRedactionTable)
-
-        countySchemaTable = CountySchemaTable((prefs.node("countySchemaTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("CountySchema", countySchemaTable)
-        activePanels.add(countySchemaTable)
-
-        countyMvrTable = CountyMvrTable((prefs.node("countyMvrTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("CountyMvrs", countyMvrTable)
-        activePanels.add(countyMvrTable)
-
-        // TODO put into seperate thread
-        val verifyAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent) {
-                val verifier = VerifyContests(auditRecordDir, false)
-                infoTA.setText(verifier.verify().toString())
-                infoWindow!!.show()
-            }
-        }
-        // Verify-icon.png
-        BAMutil.setActionProperties(verifyAction, "Verify-icon.png", "Verify Audit Record", false, 'V'.code, -1)
-        BAMutil.addActionToContainer(leftPanel, verifyAction)
-
-        val infoAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent) {
-                infoTA.setFont(infoTA.getFont().deriveFont(fontSize))
-                infoTA.setText(showInfo())
-                infoWindow!!.show()
-            }
-        }
-        BAMutil.setActionProperties(infoAction, "Info-icon.png", "info on Election Record", false, 'I'.code, -1)
-        BAMutil.addActionToContainer(leftPanel, infoAction)
-
-        val refreshAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent) {
-                // setAuditRecord()
-            }
-        }
-        BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-'.code, -1)
-        BAMutil.addActionToContainer(leftPanel, refreshAction)
-
-        this.rightPanel.add(actionsPanel, BorderLayout.EAST) */
-
         /////////////////////////////////////////////////////////////////////
         val mb = makeMenuBar()
         frame!!.setJMenuBar(mb)
@@ -150,7 +72,7 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
         // top layout
         this.topPanel = JPanel(BorderLayout())
         this.topPanel.add(leftPanel, BorderLayout.WEST)
-        this.topPanel.add(inputLabel, BorderLayout.CENTER)
+        this.topPanel.add(statusLabel, BorderLayout.CENTER)
         this.topPanel.add(rightPanel, BorderLayout.EAST)
 
         // main layout
@@ -195,12 +117,12 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
             store!!.save()
         } catch (ioe: IOException) {
             ioe.printStackTrace()
-            logger.error(ioe){"store.save() failed"}
+            logger.error(ioe){ "store.save() failed" }
         }
     }
 
     fun exit(save: Boolean) {
-        logger.info { "------------- CorlaMain exiting ----------------------" }
+        logger.info { "------------- CorlaMain ${name()} exiting ----------------------" }
         if (save) save()
         System.exit(0)
     }
@@ -218,14 +140,7 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
                 resizeFonts(fontu.incrFontSize().getSize2D())
             }
         }
-        BAMutil.setActionProperties(
-            incrFontAction,
-            "format-font-size-increase-icon.png",
-            "Increase Font Size",
-            false,
-            '+'.code,
-            -1
-        )
+        BAMutil.setActionProperties(incrFontAction, "format-font-size-increase-icon.png", "Increase Font Size", false, '+'.code, -1)
         BAMutil.addActionToMenu(sysMenu, incrFontAction)
 
         val decrFontAction: AbstractAction = object : AbstractAction() {
@@ -233,14 +148,7 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
                 resizeFonts(fontu.decrFontSize().getSize2D())
             }
         }
-        BAMutil.setActionProperties(
-            decrFontAction,
-            "format-font-size-decrease-icon.png",
-            "Decrease Font Size",
-            false,
-            '-'.code,
-            -1
-        )
+        BAMutil.setActionProperties(decrFontAction, "format-font-size-decrease-icon.png", "Decrease Font Size", false, '-'.code, -1)
         BAMutil.addActionToMenu(sysMenu, decrFontAction)
 
         val saveAction: AbstractAction = object : AbstractAction() {
@@ -312,6 +220,9 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
         @JvmStatic
         fun main(args: Array<String>) {
             logger.info{"------------- CorlaMain starting ----------------------"}
+            FlatLightLaf.setup();
+            UIManager.put( "TabbedPane.showTabSeparators", true );
+            UIManager.put( "TabbedPane.selectedBackground", Color.white );
 
             var type = "CountyAudit"
             var datadir = ""
@@ -320,9 +231,9 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
                 if (arg == "-datadir") datadir = args[idx + 1]
                 if (arg == "-CountyAudit") type = "CountyAudit"
                 if (arg == "-ColoradoInput") type = "ColoradoInput"
+                if (arg == "-BelgiumContests") type = "BelgiumContests"
             }
 
-            // prefs storage
             var preffs: PreferencesExt? = null
             try {
                 val storeName = "CorlaInputData.xml"
@@ -337,19 +248,27 @@ abstract class CorlaMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() 
                 logger.error(e) {"CorlaMain store.create() failed"}
                 return
             }
-            val prefsx = if (type == "ColoradoInput") preffs!!.node("ColoradoInput") as PreferencesExt
-                else preffs!!.node("CountyAudit") as PreferencesExt
+            val prefsx = when (type) {
+                "ColoradoInput" -> preffs!!.node("ColoradoInput") as PreferencesExt
+                "CountyAudit" -> preffs!!.node("CountyAudit") as PreferencesExt
+                "BelgiumContests" -> preffs!!.node("BelgiumContests") as PreferencesExt
+                else -> throw RuntimeException()
+            }
 
             Debug.setStore(prefsx.node("Debug"))
-            val fontSize = prefsx.getBean(FONT_SIZE, 12.0f) as Float // getFloat() ??
+            val fontSize = prefsx.getBean(FONT_SIZE, 12.0f) as Float
             FontUtil.init()
             resizeDefaultFonts(fontSize)
 
             // put UI in a JFrame
             // JFrame.setDefaultLookAndFeelDecorated(true);
             frame = JFrame(type)
-            ui = if (type == "ColoradoInput") ColoradoInput(prefsx, fontSize)
-                 else CountyAudit(prefsx, fontSize)
+            ui = when (type) {
+                "ColoradoInput" -> ColoradoInput(prefsx, fontSize)
+                "CountyAudit" -> CountyAudit(prefsx, fontSize)
+                "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
+                else -> throw RuntimeException()
+            }
 
             frame!!.setIconImage(BAMutil.getImage("rlauxe-logo.png"))
             frame!!.addWindowListener(object : WindowAdapter() {

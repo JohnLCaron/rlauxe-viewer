@@ -4,6 +4,7 @@
  */
 package org.cryptobiotic.rlauxe.viewer
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.CardPool
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.core.ContestInfo
@@ -14,8 +15,6 @@ import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.ContestTabulationIF
 import org.cryptobiotic.rlauxe.util.sumContestTabulations
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -23,7 +22,6 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
-import javax.swing.event.ListSelectionListener
 
 class PoolTable(
     private val prefs: PreferencesExt,
@@ -68,7 +66,7 @@ class PoolTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("poolTable init")
+        logger.debug { "poolTable init" }
     }
 
     override fun setFontSize(size: Float) {
@@ -77,14 +75,14 @@ class PoolTable(
     }
 
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
-        logger.debug("PoolTable setAuditRecord " + auditRecordLocation)
+        logger.debug { "PoolTable setAuditRecord $auditRecordLocation" }
         poolTable.setBeans(null)
         contestTable.setBeans(null)
 
         this.auditRecordLocation = auditRecordLocation
         val auditRecord = read(auditRecordLocation)
         if (auditRecord == null) {
-            logger.info("PoolTable failed on read " + auditRecordLocation)
+            logger.info { "PoolTable failed on read $auditRecordLocation" }
             return false
         }
 
@@ -202,6 +200,6 @@ class PoolTable(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(PoolTable::class.java)
+        private val logger = KotlinLogging.logger("PoolTable")
     }
 }

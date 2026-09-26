@@ -2,7 +2,7 @@
 <preferences EXTERNAL_XML_VERSION='1.0'>
     <root type='user'>
         <map>
-            <bean key='FontSize' class='java.lang.Float' value='20.0'/>
+            <bean key='FontSize' class='java.lang.Float' value='28.0'/>
             <beanObject key='FrameSize'>
                 <object class="java.awt.Rectangle" id="Rectangle0">
                     <void class="java.awt.Rectangle" method="getField">
@@ -311,35 +311,6 @@
         </node>
         <node name='Debug'>
             <map/>
-        </node>
-        <node name='FileManager'>
-            <map>
-                <beanObject key='Bounds'>
-                    <object class="java.awt.Rectangle" id="Rectangle0">
-                        <void class="java.awt.Rectangle" method="getField">
-                            <string>y</string>
-                            <void method="set">
-                                <object idref="Rectangle0"/>
-                                <int>259</int>
-                            </void>
-                        </void>
-                        <void class="java.awt.Rectangle" method="getField">
-                            <string>width</string>
-                            <void method="set">
-                                <object idref="Rectangle0"/>
-                                <int>1236</int>
-                            </void>
-                        </void>
-                        <void class="java.awt.Rectangle" method="getField">
-                            <string>height</string>
-                            <void method="set">
-                                <object idref="Rectangle0"/>
-                                <int>750</int>
-                            </void>
-                        </void>
-                    </object>
-                </beanObject>
-            </map>
         </node>
         <node name='MvrTable'>
             <map/>

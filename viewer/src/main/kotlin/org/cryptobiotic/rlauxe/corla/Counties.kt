@@ -56,7 +56,7 @@ class Counties(
             countyTable.makeShowAction(infoTA, infoWindow) { bean: CountyTabBean -> showCounty(bean) }
         )
         countyTable.addPopupOption(
-            "Set CountyCvrs to this county",
+            "Use this county for CountyCvrs tabs",
             countyTable.makeActionOnCurrentBean { bean: CountyTabBean? ->
                 if (bean?.corlaCountyInput != null) {
                     setCountyInput(bean.corlaCountyInput)
