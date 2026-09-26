@@ -35,9 +35,8 @@ import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import java.util.*
 import javax.swing.*
-import javax.swing.event.ListSelectionEvent
 
-private val logger = KotlinLogging.logger("CvrStylesTable")
+private val logger = KotlinLogging.logger("BelgiumContestsTable")
 
 class BelgiumContestsTable(
     val prefs: PreferencesExt, 
@@ -46,6 +45,7 @@ class BelgiumContestsTable(
     fontSize: Float,
     statusButton: JButton, 
     val profile: ViewerProfile,
+    val showLogsAction: ViewerMain.ShowLogsAction // TODO port to kotlin
 ) : JPanel(), ViewerPanelIF {
 
     var auditData: AuditData
@@ -53,7 +53,6 @@ class BelgiumContestsTable(
     var coalitionTotal: PartyBean? = null
     var partyNames = emptyMap<Int, String>()
     val tables = mutableListOf<BeanTable<out Any>>()
-
 
     private val contestTable: BeanTable<ContestBean>
     private val assertionTable: BeanTable<RlauxeAssertionBean>
@@ -92,7 +91,7 @@ class BelgiumContestsTable(
                 "Contests",
                 null
             )
-        contestTable.addListSelectionListener { e: ListSelectionEvent? ->
+        contestTable.addListSelectionListener {
             val contest = contestTable.getSelectedBean()
             if (contest != null) {
                 setSelectedContest(contest)
@@ -101,6 +100,16 @@ class BelgiumContestsTable(
         contestTable.addPopupOption(
             "Show Contest",
             contestTable.makeShowAction(infoTA, infoWindow) { bean: ContestBean -> showContest(bean) }
+        )
+        contestTable.addPopupOption(
+            "Show Logs for Contest",
+            contestTable.makeActionOnCurrentBean { bean: ContestBean? ->
+                if (bean != null) {
+                    showLogsAction.contest = bean.name
+                    showLogsAction.actionPerformed(null)
+                }
+                return@makeActionOnCurrentBean (bean != null)
+            }
         )
         contestTable.addPopupOption(
             "Print Contests", 
@@ -178,21 +187,6 @@ class BelgiumContestsTable(
         }
     }
 
-    /*
-    public void saveConfig() {
-        try {
-            if (this.lastAuditRound == null) {
-                JOptionPane.showMessageDialog(null, "There is no audit round to save");
-                return;
-            }
-
-            saveAuditRound(auditRecord, lastAuditRound);
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-            logger.error("AuditRoundsTable.resample failed", e);
-        }
-    } */
     fun applySampleLimits() {
         val limits = auditRecord!!.readSampleLimits() // should this be global ?
         for (bean in contestTable.beans) {
@@ -391,6 +385,7 @@ class BelgiumContestsTable(
 
     fun showContest(bean: ContestBean) = buildString {
         append(showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
+        appendLine()
 
         if (bean.contestUA.contest is DHondtContest) {
             append((bean.contestUA.contest as DHondtContest).showRelaxedAssertions(bean.contestRound))

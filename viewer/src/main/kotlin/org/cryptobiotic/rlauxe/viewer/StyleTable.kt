@@ -4,15 +4,13 @@
  */
 package org.cryptobiotic.rlauxe.viewer
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.StyleIF
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
-import org.cryptobiotic.rlauxe.viewer.PoolTable.PoolBean
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -56,7 +54,6 @@ class StyleTable(
                 setSelectedPool(poolBean)
             }
         }
-        logger.debug("poolTable init")
 
         // poolTable.addPopupOption("Show Population", poolTable.makeShowAction(localInfo,
         //    bean -> ((PoolBean) bean).show()));
@@ -69,7 +66,7 @@ class StyleTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("StyleTable init")
+        logger.debug { "StyleTable init" }
     }
 
     override fun setFontSize(size: Float) {
@@ -78,12 +75,12 @@ class StyleTable(
     }
 
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
-        logger.debug("StyleTable setAuditRecord " + auditRecordLocation)
+        logger.debug { "StyleTable setAuditRecord $auditRecordLocation" }
         styleTable.setBeans(null)
 
         val auditRecord = read(auditRecordLocation)
         if (auditRecord == null) {
-            logger.info("StyleTable failed on readFrom " + auditRecordLocation)
+            logger.info{"StyleTable failed on readFrom $auditRecordLocation"}
             return false
         }
         if (auditRecord is CompositeAuditRecord) return false
@@ -99,12 +96,12 @@ class StyleTable(
                 }
             }
             styleTable.setBeans(beanList)
-            logger.debug("setAuditRecord bean count=${beanList.size}")
+            logger.debug{"setAuditRecord bean count=${beanList.size}" }
 
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
-            logger.debug("setAuditRecord failed", e)
+            logger.debug(e) {"setAuditRecord failed"}
         }
 
         return true
@@ -157,7 +154,7 @@ class StyleTable(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(StyleTable::class.java)
+        private val logger = KotlinLogging.logger("StyleTable")
     }
 
 }

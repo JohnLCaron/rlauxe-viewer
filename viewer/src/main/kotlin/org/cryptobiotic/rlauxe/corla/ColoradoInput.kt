@@ -103,13 +103,15 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, f
         BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-'.code, -1)
         BAMutil.addActionToContainer(leftPanel, refreshAction)
 
+        // this.leftPanel.add(inputLabel)
+
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
 
         ////////////////////////////////////////////////////////////////
         // top layout
         this.topPanel = JPanel(BorderLayout())
         this.topPanel.add(leftPanel, BorderLayout.WEST)
-        this.topPanel.add(inputLabel, BorderLayout.CENTER)
+        this.topPanel.add(statusLabel, BorderLayout.CENTER)
         this.topPanel.add(rightPanel, BorderLayout.EAST)
 
         // main layout
@@ -121,13 +123,15 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, f
     }
 
     override fun name() = "Colorado Input Data"
-    override fun saveMine() { }
+    override fun saveMine() {
+        logger.debug{"saveMine"}
+    }
 
     fun setInput(input: ColoradoInput) {
         currentInput = input
         countyTabPanel.setColoradoInput(input)
         mvrComparisonPanel.setColoradoInput(input)
-        inputLabel.setText(input.name)
+        statusLabel.setText(input.name)
         logger.info{"ViewerMain.setAuditRecord to $auditRecordDir"}
     }
 
@@ -141,7 +145,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, f
 
         topTabs.setSelectedComponent(countyCvrTabs)
         countyCvrTabs.setSelectedComponent(countyCvrsTable)
-        inputLabel.setText("${currentInput!!.name} county=${countyInput.countyName}")
+        statusLabel.setText("${currentInput!!.name} county ${countyInput.countyName}")
     }
 
     fun showInfo() = buildString {

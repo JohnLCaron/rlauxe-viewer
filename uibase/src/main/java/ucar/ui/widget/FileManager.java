@@ -45,7 +45,7 @@ import ucar.util.prefs.PreferencesExt;
  */
 
 public class FileManager {
-  private static final String BOUNDS = "Bounds";
+  private static final String BOUNDS = "FileManagerBounds";
   private static final String DEFAULT_DIR = "DefaultDir";
   private static final String DEFAULT_FILTER = "DefaultFilter";
   private static final boolean debug = false;

@@ -5,11 +5,11 @@
 
 package org.cryptobiotic.rlauxe.viewer
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.Publisher
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
@@ -18,8 +18,6 @@ import java.io.BufferedReader
 import java.io.File
 import javax.swing.JPanel
 import javax.swing.JSplitPane
-import javax.swing.event.ListSelectionEvent
-import kotlin.math.max
 
 class LogsTable(
     val prefs: PreferencesExt,
@@ -33,17 +31,16 @@ class LogsTable(
 
     private val split1: JSplitPane
     private var auditRecordLocation: String? = "none"
+    var auditRecord: AuditRecordIF? = null
 
     init {
         logsTable = BeanTable(
             LogBean::class.java, prefs.node("logsTable") as PreferencesExt, false,
             "Logs", "Logs", null
         )
-        logsTable.addListSelectionListener { e: ListSelectionEvent? ->
+        logsTable.addListSelectionListener {
             val cardBean = logsTable.getSelectedBean()
-            if (cardBean != null) {
-                setSelectedCard(cardBean)
-            }
+            if (cardBean != null) setSelectedCard(cardBean)
         }
 
         //cardTable.addPopupOption("Show Population", cardTable.makeShowAction(localInfo,
@@ -57,7 +54,7 @@ class LogsTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug("logsTable init")
+        logger.debug { "logsTable init" }
     }
 
     override fun setFontSize(size: Float) {
@@ -66,16 +63,31 @@ class LogsTable(
     }
 
     override fun setAuditRecord(auditRecordLocation: String): Boolean {
-        logger.debug("LogsTable setAuditRecord " + auditRecordLocation)
+        logger.debug { "LogsTable setAuditRecord $auditRecordLocation" }
         logsTable.setBeans(null)
 
         this.auditRecordLocation = auditRecordLocation
-        val auditRecord = read(auditRecordLocation)
-        if (auditRecord == null) {
-            logger.info("LogsTable failed on readFrom " + auditRecordLocation)
+        /* val auditRecordTry = read(auditRecordLocation)
+        if (auditRecordTry == null) {
+            logger.info { "LogsTable failed on readFrom $auditRecordLocation" }
             return false
         }
-        val logsFile = Publisher(auditRecord.topdir).logsFile()
+        this.auditRecord = auditRecordTry
+        return loadLogs(null) */
+        return true
+    }
+
+    fun setContest(contest: String) {
+        loadLogs(contest)
+    }
+
+    fun loadLogs(contest: String?): Boolean {
+        logsTable.setBeans(null)
+
+        val topdir = "${auditRecordLocation}/$contest"
+        logger.debug { "read logs from $topdir" }
+
+        val logsFile = Publisher(topdir).logsFile()
         println(logsFile)
 
         val logsBeans = mutableListOf<LogBean>()
@@ -97,7 +109,7 @@ class LogsTable(
             }
             reader.close()
         } catch (e: Exception) {
-            logger.error("LogsTable exception", e)
+            logger.error(e) {"LogsTable exception"}
         }
 
         logsTable.setBeans(logsBeans)
@@ -142,7 +154,7 @@ class LogsTable(
                 }
 
             } catch (ex: Exception) {
-                logger.error(logLine, ex)
+                logger.error(ex) { logLine }
             }
         }
 
@@ -161,7 +173,7 @@ class LogsTable(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(LogsTable::class.java)
+        private val logger = KotlinLogging.logger("BelgiumContestsTable")
         val levels = setOf("TRACE", "DEBUG", "INFO", "WARN", "ERROR")
     }
 

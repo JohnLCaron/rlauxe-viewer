@@ -36,7 +36,8 @@ import javax.swing.event.ListSelectionEvent
 private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class AuditRoundsTable(
-    private val prefs: PreferencesExt, infoTA: TextHistoryPane, infoWindow: IndependentWindow, fontSize: Float, mvrCall: MvrAction
+    private val prefs: PreferencesExt, infoTA: TextHistoryPane, infoWindow: IndependentWindow, fontSize: Float,
+    mvrCall: MvrAction
 ) : JPanel(), ViewerPanelIF {
 
     private val auditRoundTable: BeanTable<AuditRoundBean>

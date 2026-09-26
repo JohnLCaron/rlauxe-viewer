@@ -79,7 +79,7 @@ class CountyContests(
             }
         }
         countyTable.addPopupOption(
-            "Read Cvrs for auditing this county",
+            "Use this county for sampling",
             countyTable.makeActionOnCurrentBean { bean: CountyBean? ->
                 if (bean != null) setCountyCvrs(bean.name)
                 return@makeActionOnCurrentBean true
@@ -124,12 +124,18 @@ class CountyContests(
         countyTable.setBeans(emptyList<CountyBean>())
         countyContestTable.setBeans(emptyList<CountyContestBean>())
 
-        logger.debug{"CountyContests setAuditRecord $auditRecordLocation"}
+        logger.debug{"setAuditRecord $auditRecordLocation"}
 
         try {
             val record = read(auditRecordLocation)
-            if (record == null) return false
-            if (record !is CountyAuditRecord) return false
+            if (record == null) {
+                logger.debug{"cant open $auditRecordLocation"}
+                return false
+            }
+            if (record !is CountyAuditRecord) {
+                logger.debug{"$auditRecordLocation not a CountyAuditRecord"}
+                return false
+            }
 
             this.countyAudit = record
             this.config = countyAudit!!.config

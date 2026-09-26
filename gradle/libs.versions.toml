@@ -20,10 +20,11 @@ xmlutil-version = "1.0.2"
 # uibase versions
 # autoValue = "1.11.0"
 jdom2 = "2.0.6.1"
-jgoodies = "1.6.0"
+jgoodies = "1.6.0"  # used ??
 junit = "4.13.2"
 slf4j = "2.0.17"
 truth = "1.4.4" # used ??
+flatlaf = "3.7.2"
 
 # test only dependency versions
 junit-jupiter-params = "5.13.1"
@@ -50,6 +51,7 @@ jgoodies = { group = "com.jgoodies", name = "jgoodies-forms", version.ref = "jgo
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+flatlaf = { group = "com.formdev", name = "flatlaf", version.ref = "flatlaf" }
 
 # Other
 bull-result = { module = "com.michael-bull.kotlin-result:kotlin-result", version.ref = "bull-result" }

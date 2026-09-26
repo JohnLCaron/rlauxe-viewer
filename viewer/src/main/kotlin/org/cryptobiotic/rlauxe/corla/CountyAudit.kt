@@ -17,6 +17,7 @@ import ucar.ui.widget.FileManager
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Font
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JLabel
@@ -128,13 +129,14 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
         }
         BAMutil.setActionProperties(fileAction, "Open-File-Folder-icon.png", "Audit Record chooser...", false, 'L'.code, -1)
         BAMutil.addActionToContainer(leftPanel, fileAction)
-        this.leftPanel.add(JLabel("Audit Record: "), BorderLayout.WEST)
+        this.leftPanel.add(JLabel("Audit Record: "))
+        this.leftPanel.add(auditRecordDirCB)
 
         ////////////////////////////////////////////////////////////////
         // top layout
         this.topPanel = JPanel(BorderLayout())
         this.topPanel.add(leftPanel, BorderLayout.WEST)
-        this.topPanel.add(auditRecordDirCB, BorderLayout.CENTER)
+        // this.topPanel.add(auditRecordDirCB, BorderLayout.CENTER)
         this.topPanel.add(rightPanel, BorderLayout.EAST)
 
         // main layout
@@ -142,13 +144,14 @@ class CountyAudit(prefs: PreferencesExt, fontSize: Float) : CorlaMain(prefs, fon
         add(topPanel, BorderLayout.NORTH)
         add(topTabs, BorderLayout.CENTER)
 
-        logger.debug{"ColoradoInput started"}
+        logger.debug{"CountyAudit started"}
     }
 
     override fun name() = "Colorado County Auditor"
     override fun saveMine() {
         fileChooser.save()
         auditRecordDirCB.save()
+        logger.debug{"saveMine"}
     }
 
     fun setAuditRecord(): Boolean {
