@@ -1,5 +1,6 @@
 package org.cryptobiotic.rlauxe.viewer
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditRoundIF
 import org.cryptobiotic.rlauxe.audit.Config
 import org.cryptobiotic.rlauxe.audit.ContestRound
@@ -38,7 +39,6 @@ import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 
-// used for both Contests and Sampling tabs
 class CorlaContestsTable(
     private val prefs: PreferencesExt,
     infoTA: TextHistoryPane,
@@ -113,7 +113,7 @@ class CorlaContestsTable(
         setLayout(BorderLayout())
         add(split2, BorderLayout.CENTER)
 
-        logger.debug("CorlaContestsTable init")
+        logger.debug { "CorlaContestsTable init" }
     }
 
     override fun setFontSize(size: Float) {
@@ -127,18 +127,18 @@ class CorlaContestsTable(
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)
 
-        logger.debug("setAuditRecord " + auditRecordLocation)
+        logger.debug { "setAuditRecord $auditRecordLocation" }
 
         try {
             this.auditRecordLocation = auditRecordLocation
             val record = AuditRecord.read(auditRecordLocation)
             if (record == null) return false
             if (record.rounds.isEmpty()) {
-                logger.info("{} first round was not started", auditRecordLocation)
+                logger.info{"$auditRecordLocation first round was not started"}
                 return false
             }
             if (record !is CountyAuditRecord) {
-                logger.info("{} must be CountyAuditRecord", auditRecordLocation)
+                logger.info{"$auditRecordLocation  must be CountyAuditRecord"}
                 return false
             }
             this.countyAudit = record
@@ -162,7 +162,7 @@ class CorlaContestsTable(
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
-            logger.error("setAuditRecord failed", e)
+            logger.error(e) {"setAuditRecord failed"}
         }
 
         return true
@@ -619,7 +619,7 @@ acNu = 614, cvrNu = 597 diff = 17
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(CorlaContestsTable::class.java)
+        private val logger = KotlinLogging.logger("CorlaContestsTable")
     }
 
     // all the counties for this contest
