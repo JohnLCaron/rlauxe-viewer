@@ -5,6 +5,7 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
+import org.cryptobiotic.rlauxe.belgium.BelgiumContestsTable;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;

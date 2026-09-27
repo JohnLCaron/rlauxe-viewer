@@ -82,7 +82,7 @@ class BelgiumContestTable(
         val bounds = prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
         this.assertWindow.setBounds(bounds)
 
-        auditData = AuditData(statusButton) // so each panel gets its own AuditData, but for all audit records.
+        auditData = AuditData(statusButton) // so each panel gets its own AuditDataOld, but for all audit records.
         /* statusButton.addActionListener(ActionListener { e: ActionEvent? ->
             val f = Formatter()
             showCoalitionReport(f)
@@ -262,7 +262,7 @@ class BelgiumContestTable(
             val candBeans: MutableList<PartyBean> = ArrayList<PartyBean>()
             /* for (candidateSeat in allSeats!!.candidateSums) {
                 if (candidateSeat.maxSeats > 0) {
-                    val bean = PartyBean(candidateSeat) { updateCandidateTotal() }
+                    val bean = PartyBeanOld(candidateSeat) { updateCandidateTotal() }
                     candBeans.add(bean)
                 }
             }
@@ -350,7 +350,7 @@ class BelgiumContestTable(
         }
     }
 
-    /* fun makeCandidatesTotal(beans: MutableList<PartyBean>): PartyBean {
+    /* fun makeCandidatesTotal(beans: MutableList<PartyBeanOld>): PartyBeanOld {
         val candidates = mutableSetOf<Int>()
         for (bean in beans) {
             candidates.add(bean.partyId)
@@ -363,7 +363,7 @@ class BelgiumContestTable(
         cand.maxSeats = allcoal.maxSeats()
         cand.failures.addAll(allcoal.all())
 
-        val totalBean = PartyBean(cand) { }
+        val totalBean = PartyBeanOld(cand) { }
         totalBean.isTotal = true
         totalBean.includeBack = false
         totalBean.coal = allcoal
@@ -373,8 +373,8 @@ class BelgiumContestTable(
 
     @JvmOverloads
     fun updateCandidateTotal(
-        beans: MutableList<PartyBean> = partyTable.beans,
-        totalBean: PartyBean = coalitionTotal!!,
+        beans: MutableList<PartyBeanOld> = partyTable.beans,
+        totalBean: PartyBeanOld = coalitionTotal!!,
     ) {
         val candidates = mutableSetOf<Int>()
         for (bean in beans) {

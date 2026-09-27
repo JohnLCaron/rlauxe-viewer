@@ -1,0 +1,582 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<preferences EXTERNAL_XML_VERSION='1.0'>
+    <root type='user'>
+        <map>
+            <bean key='FontSize' class='java.lang.Float' value='24.0'/>
+            <beanObject key='FrameSize'>
+                <object class="java.awt.Rectangle" id="Rectangle0">
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>x</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>4115</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>y</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>589</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>width</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>2360</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>height</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>1571</int>
+                        </void>
+                    </void>
+                </object>
+            </beanObject>
+            <beanObject key='InfoBounds'>
+                <object class="java.awt.Rectangle" id="Rectangle0">
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>x</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>50</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>y</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>50</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>width</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>400</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>height</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>40</int>
+                        </void>
+                    </void>
+                </object>
+            </beanObject>
+        </map>
+        <node name='CountyAuditTable'>
+            <map>
+                <entry key='splitPos2' value='800'/>
+            </map>
+            <node name='contestCountyPoolBean'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='compareNvotes' visible='true' width='373'/>
+                        <bean name='contestId' visible='true' width='373'/>
+                        <bean name='countyName' visible='true' width='373'/>
+                        <bean name='ncards' visible='true' width='373'/>
+                        <bean name='nvotes' visible='true' width='372'/>
+                        <bean name='pctCompareNvotes' visible='true' width='373'/>
+                        <bean name='source' visible='true' width='372'/>
+                        <bean name='undervotes' visible='true' width='373'/>
+                        <bean name='votes' visible='true' width='372'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='contestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='name' visible='true' width='86'/>
+                        <bean name='NCand' visible='true' width='86'/>
+                        <bean name='NCounties' visible='true' width='152'/>
+                        <bean name='corlaEstMvrs' visible='true' width='79'/>
+                        <bean name='corlaHaveMvrs' visible='true' width='86'/>
+                        <bean name='corlaRisk' visible='true' width='86'/>
+                        <bean name='corlaStrata' visible='true' width='86'/>
+                        <bean name='corlaVoteMargin' visible='true' width='87'/>
+                        <bean name='cvrNcards' visible='true' width='85'/>
+                        <bean name='cvrNundervotes' visible='true' width='86'/>
+                        <bean name='cvrNvotes' visible='true' width='85'/>
+                        <bean name='diffNcards' visible='true' width='86'/>
+                        <bean name='diffNvotes' visible='true' width='85'/>
+                        <bean name='estMvrs' visible='true' width='86'/>
+                        <bean name='haveMvrs' visible='true' width='85'/>
+                        <bean name='id' visible='true' width='87'/>
+                        <bean name='include' visible='true' width='85'/>
+                        <bean name='margin' visible='true' width='87'/>
+                        <bean name='maxRisk' visible='true' width='85'/>
+                        <bean name='mvrLimit' visible='true' width='87'/>
+                        <bean name='mvrsExtra' visible='true' width='85'/>
+                        <bean name='nvotes' visible='true' width='83'/>
+                        <bean name='payoff' visible='true' width='86'/>
+                        <bean name='pctNcardsMissing' visible='true' width='82'/>
+                        <bean name='pctNvotesMissing' visible='true' width='89'/>
+                        <bean name='phantomPct' visible='true' width='80'/>
+                        <bean name='phantoms' visible='true' width='88'/>
+                        <bean name='poolPct' visible='true' width='79'/>
+                        <bean name='population' visible='true' width='87'/>
+                        <bean name='recountMargin' visible='true' width='80'/>
+                        <bean name='risk' visible='true' width='90'/>
+                        <bean name='samplePct' visible='true' width='78'/>
+                        <bean name='status' visible='true' width='87'/>
+                        <bean name='target' visible='true' width='78'/>
+                        <bean name='type' visible='true' width='86'/>
+                        <bean name='undervotes' visible='true' width='79'/>
+                        <bean name='uvPct' visible='true' width='84'/>
+                        <bean name='voteMargin' visible='true' width='78'/>
+                        <bean name='votes' visible='false' width='84'/>
+                        <bean name='winners' visible='true' width='78'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='CountyContests'>
+            <map>
+                <beanObject key='InfoBounds'>
+                    <object class="java.awt.Rectangle" id="Rectangle0">
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>x</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>1140</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>y</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>1437</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>width</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>2663</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>height</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>640</int>
+                            </void>
+                        </void>
+                    </object>
+                </beanObject>
+                <entry key='splitPos1' value='584'/>
+                <entry key='splitPos2' value='447'/>
+            </map>
+            <node name='assertionTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='desc' visible='true' width='240'/>
+                        <bean name='difficulty' visible='true' width='240'/>
+                        <bean name='estMvrs' visible='true' width='240'/>
+                        <bean name='estRisk' visible='true' width='239'/>
+                        <bean name='haveMvrs' visible='true' width='240'/>
+                        <bean name='loser' visible='true' width='239'/>
+                        <bean name='margin' visible='true' width='240'/>
+                        <bean name='mean' visible='true' width='239'/>
+                        <bean name='noerror' visible='true' width='240'/>
+                        <bean name='payoff' visible='true' width='239'/>
+                        <bean name='recountMargin' visible='true' width='240'/>
+                        <bean name='type' visible='true' width='239'/>
+                        <bean name='upper' visible='true' width='240'/>
+                        <bean name='winner' visible='true' width='239'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='contestCountyPoolBean'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='compareNvotes' visible='true' width='417'/>
+                        <bean name='contestId' visible='true' width='417'/>
+                        <bean name='countyName' visible='true' width='417'/>
+                        <bean name='ncards' visible='true' width='417'/>
+                        <bean name='nvotes' visible='true' width='416'/>
+                        <bean name='pctCompareNvotes' visible='true' width='417'/>
+                        <bean name='source' visible='true' width='416'/>
+                        <bean name='undervotes' visible='true' width='416'/>
+                        <bean name='votes' visible='true' width='416'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='contestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='NCounties' visible='true' width='112'/>
+                        <bean name='include' visible='true' width='70'/>
+                        <bean name='id' visible='true' width='106'/>
+                        <bean name='name' visible='true' width='491'/>
+                        <bean name='NCand' visible='true' width='111'/>
+                        <bean name='estMvrs' visible='true' width='112'/>
+                        <bean name='haveMvrs' visible='true' width='115'/>
+                        <bean name='margin' visible='true' width='115'/>
+                        <bean name='mvrsExtra' visible='true' width='106'/>
+                        <bean name='nvotes' visible='true' width='110'/>
+                        <bean name='payoff' visible='false' width='75'/>
+                        <bean name='phantoms' visible='true' width='110'/>
+                        <bean name='poolPct' visible='true' width='107'/>
+                        <bean name='recountMargin' visible='true' width='113'/>
+                        <bean name='status' visible='true' width='107'/>
+                        <bean name='type' visible='true' width='109'/>
+                        <bean name='undervotes' visible='true' width='107'/>
+                        <bean name='uvPct' visible='true' width='113'/>
+                        <bean name='voteMargin' visible='true' width='104'/>
+                        <bean name='votes' visible='false' width='75'/>
+                        <bean name='winners' visible='true' width='102'/>
+                        <bean name='corlaEstMvrs' visible='true' width='70'/>
+                        <bean name='corlaHaveMvrs' visible='true' width='70'/>
+                        <bean name='corlaRisk' visible='true' width='70'/>
+                        <bean name='corlaStrata' visible='true' width='70'/>
+                        <bean name='corlaVoteMargin' visible='true' width='70'/>
+                        <bean name='cvrNcards' visible='true' width='70'/>
+                        <bean name='cvrNundervotes' visible='true' width='70'/>
+                        <bean name='cvrNvotes' visible='true' width='70'/>
+                        <bean name='diffNcards' visible='true' width='70'/>
+                        <bean name='diffNvotes' visible='true' width='70'/>
+                        <bean name='maxRisk' visible='true' width='69'/>
+                        <bean name='mvrLimit' visible='true' width='70'/>
+                        <bean name='pctNcardsMissing' visible='true' width='70'/>
+                        <bean name='pctNvotesMissing' visible='true' width='70'/>
+                        <bean name='phantomPct' visible='true' width='70'/>
+                        <bean name='population' visible='true' width='70'/>
+                        <bean name='risk' visible='true' width='70'/>
+                        <bean name='samplePct' visible='true' width='70'/>
+                        <bean name='target' visible='true' width='70'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='countyContestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='target' visible='true' width='97'/>
+                        <bean name='NCounties' visible='true' width='128'/>
+                        <bean name='id' visible='true' width='104'/>
+                        <bean name='name' visible='true' width='362'/>
+                        <bean name='margin' visible='true' width='108'/>
+                        <bean name='population' visible='true' width='131'/>
+                        <bean name='nc' visible='true' width='117'/>
+                        <bean name='corlaStrata' visible='true' width='118'/>
+                        <bean name='corlaEstMvrs' visible='true' width='119'/>
+                        <bean name='corlaHaveMvrs' visible='true' width='123'/>
+                        <bean name='corlaNmvrs' visible='true' width='118'/>
+                        <bean name='corlaRisk' visible='true' width='122'/>
+                        <bean name='corlaVoteMargin' visible='true' width='146'/>
+                        <bean name='voteMargin' visible='true' width='116'/>
+                        <bean name='haveMvrs' visible='true' width='107'/>
+                        <bean name='countyPopulation' visible='false' width='75'/>
+                        <bean name='estMvrs' visible='true' width='107'/>
+                        <bean name='estNewMvrs' visible='true' width='109'/>
+                        <bean name='estRisk' visible='true' width='109'/>
+                        <bean name='noerror' visible='false' width='75'/>
+                        <bean name='rlauxeNmvrs' visible='false' width='75'/>
+                        <bean name='status' visible='false' width='75'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='countyTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='name' visible='true' width='335'/>
+                        <bean name='population' visible='true' width='335'/>
+                        <bean name='corlaSamplePct' visible='true' width='335'/>
+                        <bean name='corlaSampling' visible='true' width='334'/>
+                        <bean name='rlauxeSamplePct' visible='true' width='335'/>
+                        <bean name='rlauxeSampling' visible='true' width='334'/>
+                        <bean name='diff' visible='true' width='333'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='CountySampling'>
+            <map>
+                <beanObject key='InfoBounds'>
+                    <object class="java.awt.Rectangle" id="Rectangle0">
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>x</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>3906</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>y</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>225</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>width</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>1368</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>height</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>703</int>
+                            </void>
+                        </void>
+                    </object>
+                </beanObject>
+                <entry key='splitPos1' value='356'/>
+            </map>
+            <node name='countyContestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='status' visible='false' width='75'/>
+                        <bean name='target' visible='true' width='135'/>
+                        <bean name='include' visible='true' width='140'/>
+                        <bean name='NCounties' visible='true' width='167'/>
+                        <bean name='id' visible='true' width='152'/>
+                        <bean name='name' visible='true' width='404'/>
+                        <bean name='corlaStrata' visible='false' width='75'/>
+                        <bean name='nc' visible='true' width='223'/>
+                        <bean name='voteMargin' visible='true' width='161'/>
+                        <bean name='margin' visible='true' width='215'/>
+                        <bean name='NCvrs' visible='true' width='171'/>
+                        <bean name='estMvrs' visible='true' width='215'/>
+                        <bean name='NVotes' visible='false' width='75'/>
+                        <bean name='corlaVoteMargin' visible='false' width='75'/>
+                        <bean name='corlaEstMvrs' visible='false' width='75'/>
+                        <bean name='haveMvrs' visible='false' width='75'/>
+                        <bean name='countyMvrs' visible='true' width='212'/>
+                        <bean name='estRisk' visible='true' width='146'/>
+                        <bean name='corlaHaveMvrs' visible='false' width='75'/>
+                        <bean name='corlaRisk' visible='false' width='75'/>
+                        <bean name='maxRisk' visible='false' width='75'/>
+                        <bean name='mvrLimit' visible='false' width='75'/>
+                        <bean name='noerror' visible='false' width='75'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='countyTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='name' visible='true' width='488'/>
+                        <bean name='population' visible='true' width='487'/>
+                        <bean name='corlaSampling' visible='true' width='488'/>
+                        <bean name='corlaSamplePct' visible='true' width='488'/>
+                        <bean name='rlauxeSampling' visible='true' width='487'/>
+                        <bean name='rlauxeSamplePct' visible='true' width='488'/>
+                        <bean name='diff' visible='true' width='488'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='Debug'>
+            <map/>
+        </node>
+        <node name='FileManager'>
+            <map>
+                <beanObject key='Bounds'>
+                    <object class="java.util.ArrayList">
+                    </object>
+                </beanObject>
+                <beanObject key='ComboBoxList'>
+                    <object class="java.util.ArrayList">
+                    </object>
+                </beanObject>
+                <entry key='DefaultFilter' value='All Files'/>
+                <beanObject key='FileManagerBounds'>
+                    <object class="java.awt.Rectangle" id="Rectangle0">
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>x</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>3967</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>y</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>231</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>width</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>1690</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>height</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>696</int>
+                            </void>
+                        </void>
+                    </object>
+                </beanObject>
+            </map>
+        </node>
+        <node name='PoolTable'>
+            <map>
+                <entry key='splitPos1' value='200'/>
+            </map>
+            <node name='contestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='contestId' visible='true' width='178'/>
+                        <bean name='contestName' visible='true' width='571'/>
+                        <bean name='NCards' visible='true' width='194'/>
+                        <bean name='NVotes' visible='true' width='175'/>
+                        <bean name='missing' visible='true' width='202'/>
+                        <bean name='undervotes' visible='true' width='187'/>
+                        <bean name='voteForN' visible='true' width='217'/>
+                        <bean name='votes' visible='true' width='617'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='poolTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='county' visible='true' width='173'/>
+                        <bean name='name' visible='true' width='362'/>
+                        <bean name='id' visible='true' width='189'/>
+                        <bean name='ncards' visible='true' width='207'/>
+                        <bean name='ncontests' visible='true' width='206'/>
+                        <bean name='singleStyle' visible='true' width='208'/>
+                        <bean name='contests' visible='true' width='996'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='SamplingTable'>
+            <map>
+                <beanObject key='InfoBounds'>
+                    <object class="java.util.ArrayList">
+                    </object>
+                </beanObject>
+                <entry key='splitPos1' value='60'/>
+                <entry key='splitPos2' value='545'/>
+            </map>
+            <node name='corlaContestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='NCand' visible='true' width='94'/>
+                        <bean name='NCounties' visible='true' width='94'/>
+                        <bean name='corlaEstMvrs' visible='true' width='94'/>
+                        <bean name='corlaHaveMvrs' visible='true' width='94'/>
+                        <bean name='corlaRisk' visible='true' width='94'/>
+                        <bean name='corlaStrata' visible='true' width='94'/>
+                        <bean name='corlaVoteMargin' visible='true' width='94'/>
+                        <bean name='cvrNcards' visible='true' width='94'/>
+                        <bean name='cvrNundervotes' visible='true' width='94'/>
+                        <bean name='cvrNvotes' visible='true' width='94'/>
+                        <bean name='diffNcards' visible='true' width='94'/>
+                        <bean name='diffNvotes' visible='true' width='94'/>
+                        <bean name='estMvrs' visible='true' width='94'/>
+                        <bean name='haveMvrs' visible='true' width='94'/>
+                        <bean name='id' visible='true' width='94'/>
+                        <bean name='include' visible='true' width='94'/>
+                        <bean name='margin' visible='true' width='94'/>
+                        <bean name='maxRisk' visible='true' width='94'/>
+                        <bean name='mvrLimit' visible='true' width='94'/>
+                        <bean name='mvrsExtra' visible='true' width='94'/>
+                        <bean name='name' visible='true' width='94'/>
+                        <bean name='nvotes' visible='true' width='94'/>
+                        <bean name='payoff' visible='true' width='94'/>
+                        <bean name='pctNcardsMissing' visible='true' width='94'/>
+                        <bean name='pctNvotesMissing' visible='true' width='94'/>
+                        <bean name='phantomPct' visible='true' width='93'/>
+                        <bean name='phantoms' visible='true' width='94'/>
+                        <bean name='poolPct' visible='true' width='93'/>
+                        <bean name='population' visible='true' width='94'/>
+                        <bean name='recountMargin' visible='true' width='93'/>
+                        <bean name='risk' visible='true' width='93'/>
+                        <bean name='samplePct' visible='true' width='93'/>
+                        <bean name='status' visible='true' width='93'/>
+                        <bean name='target' visible='true' width='93'/>
+                        <bean name='type' visible='true' width='93'/>
+                        <bean name='undervotes' visible='true' width='93'/>
+                        <bean name='uvPct' visible='true' width='93'/>
+                        <bean name='voteMargin' visible='true' width='93'/>
+                        <bean name='votes' visible='true' width='93'/>
+                        <bean name='winners' visible='true' width='93'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='countyContestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='target' visible='true' width='106'/>
+                        <bean name='include' visible='true' width='129'/>
+                        <bean name='NCounties' visible='true' width='179'/>
+                        <bean name='contestId' visible='true' width='179'/>
+                        <bean name='contestName' visible='true' width='894'/>
+                        <bean name='contestPopulation' visible='true' width='257'/>
+                        <bean name='corlaEstMvrs' visible='true' width='140'/>
+                        <bean name='corlaHaveMvrs' visible='true' width='139'/>
+                        <bean name='corlaNmvrs' visible='true' width='142'/>
+                        <bean name='corlaRisk' visible='true' width='132'/>
+                        <bean name='corlaStrata' visible='true' width='143'/>
+                        <bean name='corlaVoteMargin' visible='true' width='131'/>
+                        <bean name='county' visible='false' width='126'/>
+                        <bean name='countyPopulation' visible='false' width='242'/>
+                        <bean name='estMvrs' visible='true' width='145'/>
+                        <bean name='estNewMvrs' visible='true' width='129'/>
+                        <bean name='estRisk' visible='true' width='132'/>
+                        <bean name='haveMvrs' visible='true' width='128'/>
+                        <bean name='margin' visible='true' width='123'/>
+                        <bean name='maxRisk' visible='true' width='130'/>
+                        <bean name='noerror' visible='true' width='119'/>
+                        <bean name='rlauxeNmvrs' visible='true' width='136'/>
+                        <bean name='voteMargin' visible='true' width='136'/>
+                        <bean name='votes' visible='false' width='127'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='countyTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='name' visible='true' width='296'/>
+                        <bean name='population' visible='true' width='575'/>
+                        <bean name='corlaSamplePct' visible='true' width='574'/>
+                        <bean name='corlaSampling' visible='true' width='575'/>
+                        <bean name='diff' visible='true' width='576'/>
+                        <bean name='rlauxeSamplePct' visible='true' width='576'/>
+                        <bean name='rlauxeSampling' visible='true' width='575'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='Styles'>
+            <map>
+                <entry key='splitPos1' value='802'/>
+            </map>
+            <node name='styleTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='county' visible='true' width='190'/>
+                        <bean name='styleName' visible='true' width='257'/>
+                        <bean name='id' visible='true' width='169'/>
+                        <bean name='ncards' visible='true' width='190'/>
+                        <bean name='exactContests' visible='true' width='200'/>
+                        <bean name='ncontests' visible='true' width='189'/>
+                        <bean name='contests' visible='true' width='1146'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='auditRecordDirCB'>
+            <map>
+                <beanObject key='ComboBoxList'>
+                    <object class="java.util.ArrayList">
+                    </object>
+                </beanObject>
+            </map>
+        </node>
+    </root>
+</preferences>

@@ -1,0 +1,283 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<preferences EXTERNAL_XML_VERSION='1.0'>
+    <root type='user'>
+        <map>
+            <bean key='FontSize' class='java.lang.Float' value='24.0'/>
+            <beanObject key='FrameSize'>
+                <object class="java.awt.Rectangle" id="Rectangle0">
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>x</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>50</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>y</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>87</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>width</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>3472</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>height</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>1424</int>
+                        </void>
+                    </void>
+                </object>
+            </beanObject>
+            <beanObject key='InfoBounds'>
+                <object class="java.awt.Rectangle" id="Rectangle0">
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>x</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>4674</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>y</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>575</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>width</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>2975</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>height</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>1583</int>
+                        </void>
+                    </void>
+                </object>
+            </beanObject>
+        </map>
+        <node name='ColoradoInputTable'>
+            <map>
+                <entry key='splitPos1' value='264'/>
+            </map>
+            <node name='CanonicalContests'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='target' visible='true' width='121'/>
+                        <bean name='NCounties' visible='true' width='274'/>
+                        <bean name='name' visible='true' width='1214'/>
+                        <bean name='npop' visible='true' width='196'/>
+                        <bean name='nc' visible='true' width='198'/>
+                        <bean name='marginInVotes' visible='true' width='198'/>
+                        <bean name='choices' visible='true' width='340'/>
+                        <bean name='NCand' visible='true' width='89'/>
+                        <bean name='auditReason' visible='true' width='313'/>
+                        <bean name='countyMvrs' visible='true' width='152'/>
+                        <bean name='nsamples' visible='true' width='160'/>
+                        <bean name='riskLimit' visible='true' width='160'/>
+                        <bean name='statewideMvrs' visible='false' width='162'/>
+                        <bean name='voteForN' visible='false' width='194'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='ColoradoInputData'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='name' visible='true' width='854'/>
+                        <bean name='ncontests' visible='true' width='854'/>
+                        <bean name='nolosers' visible='true' width='854'/>
+                        <bean name='auditableContests' visible='true' width='853'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='Counties'>
+            <map>
+                <entry key='splitPos1' value='325'/>
+            </map>
+            <node name='contestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='county' visible='true' width='315'/>
+                        <bean name='contest' visible='true' width='1043'/>
+                        <bean name='choices' visible='true' width='1486'/>
+                        <bean name='totalVotes' visible='true' width='609'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='countyTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='county' visible='true' width='230'/>
+                        <bean name='phantoms' visible='true' width='231'/>
+                        <bean name='population' visible='true' width='230'/>
+                        <bean name='manifestCount' visible='true' width='230'/>
+                        <bean name='cvrInManifest' visible='true' width='230'/>
+                        <bean name='cvrNoManifest' visible='true' width='230'/>
+                        <bean name='cvrRedacted' visible='true' width='230'/>
+                        <bean name='cvrUnredacted' visible='true' width='230'/>
+                        <bean name='manifestNoCvr' visible='true' width='230'/>
+                        <bean name='minCardsForVote' visible='true' width='287'/>
+                        <bean name='missing' visible='true' width='217'/>
+                        <bean name='ncontests' visible='true' width='224'/>
+                        <bean name='nmvrs' visible='true' width='212'/>
+                        <bean name='nredacted' visible='true' width='212'/>
+                        <bean name='hasCvrs' visible='true' width='230'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='Debug'>
+            <map/>
+        </node>
+        <node name='countyCvrsTable'>
+            <map>
+                <entry key='splitPos1' value='200'/>
+            </map>
+            <node name='cardTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='cvrNumber' visible='true' width='166'/>
+                        <bean name='tabulatorNum' visible='true' width='211'/>
+                        <bean name='batchId' visible='true' width='192'/>
+                        <bean name='recordId' visible='true' width='185'/>
+                        <bean name='imprintedId' visible='true' width='270'/>
+                        <bean name='precinctPortion' visible='true' width='531'/>
+                        <bean name='ballotType' visible='true' width='339'/>
+                        <bean name='votes' visible='true' width='1521'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='countyMvrTable'>
+            <map>
+                <entry key='splitPos1' value='200'/>
+            </map>
+            <node name='countyTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='county_name' visible='true' width='285'/>
+                        <bean name='contest_name' visible='true' width='284'/>
+                        <bean name='audit_board_comment' visible='true' width='285'/>
+                        <bean name='audit_board_selection' visible='true' width='284'/>
+                        <bean name='audit_reason' visible='true' width='285'/>
+                        <bean name='ballot_type' visible='true' width='284'/>
+                        <bean name='choice_per_voting_computer' visible='true' width='284'/>
+                        <bean name='consensus' visible='true' width='285'/>
+                        <bean name='cvr_id' visible='true' width='285'/>
+                        <bean name='imprinted_id' visible='true' width='285'/>
+                        <bean name='record_type' visible='true' width='285'/>
+                        <bean name='timestamp' visible='true' width='284'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='countyRedactionTable'>
+            <map>
+                <entry key='splitPos1' value='200'/>
+            </map>
+            <node name='cvrTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='cvrNumber' visible='true' width='166'/>
+                        <bean name='tabulatorNum' visible='true' width='211'/>
+                        <bean name='batchId' visible='true' width='192'/>
+                        <bean name='recordId' visible='true' width='185'/>
+                        <bean name='imprintedId' visible='true' width='270'/>
+                        <bean name='precinctPortion' visible='true' width='531'/>
+                        <bean name='ballotType' visible='true' width='339'/>
+                        <bean name='votes' visible='true' width='1521'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='redactionTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='totalVotes' visible='true' width='427'/>
+                        <bean name='groupName' visible='true' width='427'/>
+                        <bean name='contests' visible='true' width='427'/>
+                        <bean name='ncards' visible='true' width='427'/>
+                        <bean name='minVotes' visible='true' width='427'/>
+                        <bean name='nlines' visible='true' width='427'/>
+                        <bean name='fixedNcards' visible='true' width='427'/>
+                        <bean name='singleCards' visible='true' width='426'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='countySchemaTable'>
+            <map>
+                <entry key='splitPos1' value='600'/>
+            </map>
+            <node name='choiceTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='contestIdx' visible='true' width='683'/>
+                        <bean name='colno' visible='true' width='683'/>
+                        <bean name='choice' visible='true' width='683'/>
+                        <bean name='party' visible='true' width='683'/>
+                        <bean name='failMatch' visible='true' width='683'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='contestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='IRV' visible='true' width='432'/>
+                        <bean name='contestIdx' visible='true' width='432'/>
+                        <bean name='contestName' visible='true' width='432'/>
+                        <bean name='failMatch' visible='true' width='431'/>
+                        <bean name='nchoices' visible='true' width='432'/>
+                        <bean name='ncols' visible='true' width='431'/>
+                        <bean name='startCol' visible='true' width='432'/>
+                        <bean name='voteForN' visible='true' width='431'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='stylesTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='contestIdxs' visible='true' width='1151'/>
+                        <bean name='countCards' visible='true' width='1151'/>
+                        <bean name='name' visible='true' width='1151'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='mvrComparisonPanel'>
+            <map>
+                <entry key='splitPos1' value='200'/>
+            </map>
+            <node name='countyTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='county_name' visible='true' width='285'/>
+                        <bean name='contest_name' visible='true' width='284'/>
+                        <bean name='audit_board_comment' visible='true' width='285'/>
+                        <bean name='audit_board_selection' visible='true' width='284'/>
+                        <bean name='audit_reason' visible='true' width='285'/>
+                        <bean name='ballot_type' visible='true' width='284'/>
+                        <bean name='choice_per_voting_computer' visible='true' width='284'/>
+                        <bean name='consensus' visible='true' width='285'/>
+                        <bean name='cvr_id' visible='true' width='285'/>
+                        <bean name='imprinted_id' visible='true' width='285'/>
+                        <bean name='record_type' visible='true' width='285'/>
+                        <bean name='timestamp' visible='true' width='284'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+    </root>
+</preferences>

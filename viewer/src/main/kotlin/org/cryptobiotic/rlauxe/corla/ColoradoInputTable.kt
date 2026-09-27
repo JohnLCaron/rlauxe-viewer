@@ -49,7 +49,7 @@ class ColoradoInputTable(
 
     init {
         inputTable = BeanTable(
-            ColoradoInputBean::class.java, prefs.node("inputBeans") as PreferencesExt, false,
+            ColoradoInputBean::class.java, prefs.node("ColoradoInputData") as PreferencesExt, false,
             "Available Colorado Data", "ColoradoInput", null)
         inputTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
             val selected = inputTable.getSelectedBean()
@@ -57,7 +57,7 @@ class ColoradoInputTable(
         tables.add(inputTable)
 
         contestTable = BeanTable(
-            CanonicalContestBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
+            CanonicalContestBean::class.java, prefs.node("CanonicalContests") as PreferencesExt, false,
             "Canonical Contests", "Merged Canonical Contest Information", null)
         contestTable.addPopupOption(
             "Show Row",

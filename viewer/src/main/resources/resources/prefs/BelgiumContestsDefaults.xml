@@ -1,0 +1,245 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<preferences EXTERNAL_XML_VERSION='1.0'>
+    <root type='user'>
+        <map>
+            <bean key='FontSize' class='java.lang.Float' value='28.0'/>
+            <beanObject key='FrameSize'>
+                <object class="java.awt.Rectangle" id="Rectangle0">
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>x</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>4170</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>y</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>223</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>width</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>2997</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>height</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>1825</int>
+                        </void>
+                    </void>
+                </object>
+            </beanObject>
+            <beanObject key='InfoBounds'>
+                <object class="java.awt.Rectangle" id="Rectangle0">
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>x</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>4466</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>y</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>283</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>width</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>3156</int>
+                        </void>
+                    </void>
+                    <void class="java.awt.Rectangle" method="getField">
+                        <string>height</string>
+                        <void method="set">
+                            <object idref="Rectangle0"/>
+                            <int>1037</int>
+                        </void>
+                    </void>
+                </object>
+            </beanObject>
+        </map>
+        <node name='BelgiumContestTable'>
+            <map>
+                <beanObject key='InfoBounds'>
+                    <object class="java.awt.Rectangle" id="Rectangle0">
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>x</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>3840</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>y</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>77</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>width</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>2613</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>height</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>588</int>
+                            </void>
+                        </void>
+                    </object>
+                </beanObject>
+                <entry key='splitPos1' value='457'/>
+                <entry key='splitPos2' value='1290'/>
+            </map>
+            <node name='assertionTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='difficulty' visible='false' width='75'/>
+                        <bean name='type' visible='true' width='298'/>
+                        <bean name='winner' visible='true' width='298'/>
+                        <bean name='loser' visible='true' width='298'/>
+                        <bean name='desc' visible='true' width='298'/>
+                        <bean name='upper' visible='true' width='297'/>
+                        <bean name='noerror' visible='true' width='298'/>
+                        <bean name='margin' visible='true' width='297'/>
+                        <bean name='mean' visible='true' width='298'/>
+                        <bean name='estMvrs' visible='true' width='297'/>
+                        <bean name='estRisk' visible='true' width='296'/>
+                        <bean name='haveMvrs' visible='false' width='75'/>
+                        <bean name='payoff' visible='false' width='75'/>
+                        <bean name='recountMargin' visible='false' width='75'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='candidateTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='partyName' visible='true' width='302'/>
+                        <bean name='partyId' visible='true' width='201'/>
+                        <bean name='include' visible='true' width='214'/>
+                        <bean name='inCoalition' visible='true' width='443'/>
+                        <bean name='reportedSeats' visible='true' width='454'/>
+                        <bean name='minSeats' visible='true' width='445'/>
+                        <bean name='maxSeats' visible='true' width='458'/>
+                        <bean name='NFailures' visible='true' width='458'/>
+                    </beanCollection>
+                </map>
+            </node>
+            <node name='contestTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='id' visible='true' width='104'/>
+                        <bean name='name' visible='true' width='375'/>
+                        <bean name='npop' visible='true' width='188'/>
+                        <bean name='voteMargin' visible='true' width='189'/>
+                        <bean name='margin' visible='true' width='186'/>
+                        <bean name='payoff' visible='true' width='193'/>
+                        <bean name='estMvrs' visible='true' width='183'/>
+                        <bean name='haveMvrs' visible='true' width='194'/>
+                        <bean name='mvrsExtra' visible='true' width='182'/>
+                        <bean name='mvrLimit' visible='true' width='197'/>
+                        <bean name='estRisk' visible='true' width='186'/>
+                        <bean name='fail' visible='true' width='200'/>
+                        <bean name='failNodes' visible='true' width='193'/>
+                        <bean name='NCand' visible='true' width='203'/>
+                        <bean name='mvrsUsed' visible='false' width='75'/>
+                        <bean name='nc' visible='false' width='75'/>
+                        <bean name='noerror' visible='false' width='75'/>
+                        <bean name='nseats' visible='true' width='202'/>
+                        <bean name='phantoms' visible='false' width='75'/>
+                        <bean name='recountMargin' visible='false' width='75'/>
+                        <bean name='status' visible='false' width='75'/>
+                        <bean name='type' visible='false' width='75'/>
+                        <bean name='undervotes' visible='false' width='75'/>
+                        <bean name='uvPct' visible='false' width='75'/>
+                        <bean name='votes' visible='false' width='75'/>
+                        <bean name='winners' visible='false' width='75'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='Debug'>
+            <map/>
+        </node>
+        <node name='FileManager'>
+            <map>
+                <beanObject key='Bounds'>
+                    <object class="java.util.ArrayList"/>
+                </beanObject>
+                <beanObject key='ComboBoxList'>
+                    <object class="java.util.ArrayList"/>
+                </beanObject>
+                <entry key='DefaultFilter' value='All Files'/>
+                <beanObject key='FileManagerBounds'>
+                    <object class="java.awt.Rectangle" id="Rectangle0">
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>x</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>2795</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>y</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>231</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>width</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>661</int>
+                            </void>
+                        </void>
+                        <void class="java.awt.Rectangle" method="getField">
+                            <string>height</string>
+                            <void method="set">
+                                <object idref="Rectangle0"/>
+                                <int>468</int>
+                            </void>
+                        </void>
+                    </object>
+                </beanObject>
+            </map>
+        </node>
+        <node name='LogsTable'>
+            <map>
+                <entry key='splitPos1' value='916'/>
+            </map>
+            <node name='logsTable'>
+                <map>
+                    <beanCollection key='propertyCol' class='org.cryptobiotic.rlauxe.beans.PropertyCol'>
+                        <bean name='date' visible='true' width='409'/>
+                        <bean name='level' visible='true' width='297'/>
+                        <bean name='loggerName' visible='true' width='495'/>
+                        <bean name='msg' visible='true' width='1774'/>
+                    </beanCollection>
+                </map>
+            </node>
+        </node>
+        <node name='auditRecordDirCB'>
+            <map>
+                <beanObject key='ComboBoxList'>
+                    <object class="java.util.ArrayList">
+                    </object>
+                </beanObject>
+            </map>
+        </node>
+    </root>
+</preferences>

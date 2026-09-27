@@ -7,10 +7,9 @@ package org.cryptobiotic.rlauxe.viewer
 import com.formdev.flatlaf.FlatLightLaf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.belgium.BelgiumContests
+import org.cryptobiotic.rlauxe.belgium.TestPrefs
 import org.cryptobiotic.rlauxe.corla.ColoradoInput
 import org.cryptobiotic.rlauxe.corla.CountyAudit
-
-import ucar.ui.prefs.Debug
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FontUtil
 import ucar.ui.widget.FontUtil.StandardFont
@@ -224,7 +223,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             UIManager.put( "TabbedPane.showTabSeparators", true );
             UIManager.put( "TabbedPane.selectedBackground", Color.white );
 
-            var type = "CountyAudit"
+            var type = "TestPrefs"
             var datadir = ""
             for (idx in args.indices) {
                 val arg = args[idx]
@@ -234,7 +233,20 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 if (arg == "-BelgiumContests") type = "BelgiumContests"
             }
 
-            var preffs: PreferencesExt? = null
+            // prefs storage
+            val prefsStore = XMLStore.makeStandardFilename(".rlauxe", "${type}.xml")
+            val storedDefaults = "/resources/prefs/${type}Defaults.xml"
+
+            val prefsx: PreferencesExt = try {
+                val storedDefaultsStore = if (type == "TestPrefs") null else XMLStore.createFromResource(storedDefaults, null)
+                store = XMLStore.createFromFile(prefsStore, storedDefaultsStore)
+                store!!.getPreferences()
+            } catch (e: IOException) {
+                logger.error(e) {"RlauxeViewerMain MLStore.createFromFile($prefsStore, $storedDefaults) failed"}
+                throw e
+            }
+
+            /* var prefffs: PreferencesExt? = null
             try {
                 val storeName = "CorlaInputData.xml"
 
@@ -242,12 +254,13 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 val storedDefaults = XMLStore.createFromResource("/resources/prefs/CorlaInputDataDefaults.xml", null)
 
                 store = XMLStore.createFromFile(prefStore, storedDefaults)
-                preffs = store!!.getPreferences()
+                prefffs = store!!.getPreferences()
 
             } catch (e: IOException) {
                 logger.error(e) {"RlauxeViewerMain store.create() failed"}
                 return
             }
+
             val prefsx = when (type) {
                 "ColoradoInput" -> preffs!!.node("ColoradoInput") as PreferencesExt
                 "CountyAudit" -> preffs!!.node("CountyAudit") as PreferencesExt
@@ -255,10 +268,10 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 else -> throw RuntimeException()
             }
 
-            Debug.setStore(prefsx.node("Debug"))
-            val fontSize = prefsx.getBean(FONT_SIZE, 12.0f) as Float
+            Debug.setStore(prefsx.node("Debug")) */
+            val fontSize = prefsx.getBean(FONT_SIZE, 18.0f) as Float
             FontUtil.init()
-            resizeDefaultFonts(fontSize)
+            resizeDefaultFonts(fontSize) // done before the ui starts ??
 
             // put UI in a JFrame
             // JFrame.setDefaultLookAndFeelDecorated(true);
@@ -267,6 +280,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 "ColoradoInput" -> ColoradoInput(prefsx, fontSize)
                 "CountyAudit" -> CountyAudit(prefsx, fontSize)
                 "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
+                "TestPrefs" -> TestPrefs(prefsx, fontSize)
                 else -> throw RuntimeException()
             }
             frame!!.title = ui?.name() ?: type
