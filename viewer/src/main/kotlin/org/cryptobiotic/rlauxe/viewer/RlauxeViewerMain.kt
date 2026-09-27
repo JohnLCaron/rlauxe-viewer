@@ -231,6 +231,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 if (arg == "-CountyAudit") type = "CountyAudit"
                 if (arg == "-ColoradoInput") type = "ColoradoInput"
                 if (arg == "-BelgiumContests") type = "BelgiumContests"
+                if (arg == "-RlauxeViewer") type = "RlauxeViewer"
             }
 
             // prefs storage
@@ -280,6 +281,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 "ColoradoInput" -> ColoradoInput(prefsx, fontSize)
                 "CountyAudit" -> CountyAudit(prefsx, fontSize)
                 "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
+                "RlauxeViewer" -> RlauxeViewer(prefsx, fontSize)
                 "TestPrefs" -> TestPrefs(prefsx, fontSize)
                 else -> throw RuntimeException()
             }

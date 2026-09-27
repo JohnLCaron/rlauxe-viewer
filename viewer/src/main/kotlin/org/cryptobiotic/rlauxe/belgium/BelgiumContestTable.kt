@@ -23,8 +23,8 @@ import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.dhondt.AllSeats
 import org.cryptobiotic.rlauxe.dhondt.CandidateSeats
 import org.cryptobiotic.rlauxe.dhondt.Coalition
-import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
-import org.cryptobiotic.rlauxe.dhondt.DHondtContest
+import org.cryptobiotic.rlauxe.dhondt.DhondtAssorter
+import org.cryptobiotic.rlauxe.dhondt.DhondtContest
 // import org.cryptobiotic.rlauxe.dhondt.*
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
@@ -40,7 +40,6 @@ import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
-import java.util.*
 import javax.swing.*
 
 private val logger = KotlinLogging.logger("BelgiumContests")
@@ -62,7 +61,7 @@ class BelgiumContestTable(
     val tables = mutableListOf<BeanTable<out Any>>()
 
     private val contestTable: BeanTable<ContestBean>
-    private val assertionTable: BeanTable<RlauxeAssertionBean>
+    private val assertionTable: BeanTable<AssertionBean>
     private val partyTable: BeanTable<PartyBean>
 
     private val split1: JSplitPane
@@ -132,7 +131,7 @@ class BelgiumContestTable(
 
         assertionTable =
             BeanTable(
-                RlauxeAssertionBean::class.java,
+                AssertionBean::class.java,
                 prefs.node("assertionTable") as PreferencesExt,
                 false,
                 "Assertions",
@@ -144,7 +143,7 @@ class BelgiumContestTable(
             assertionTable.makeShowAction(
                 assertTA,
                 assertWindow
-            ) { bean: Any? -> showAssertion(bean as RlauxeAssertionBean) }
+            ) { bean: Any? -> showAssertion(bean as AssertionBean) }
         )
         tables.add(assertionTable)
 
@@ -242,7 +241,7 @@ class BelgiumContestTable(
             headerLabel.setText(electionName)
 
             ContestBean.alpha = config!!.riskLimit
-            val beanList: MutableList<ContestBean> = ArrayList<ContestBean>()
+            val beanList = mutableListOf<ContestBean>()
             for (contestRound in lastAuditRound!!.contestRounds) {
                 if (contestRound.contestUA.preAuditStatus == TestH0Status.InProgress) {
                     val bean = ContestBean(contestRound, auditData)
@@ -258,18 +257,18 @@ class BelgiumContestTable(
             // parties
             partyNames = auditRecord!!.readPartyNames()
             val sampleLimits = auditRecord!!.readSampleLimits()
-            allSeats = null // makeAllSeats(this.lastAuditRound!!, sampleLimits)
+            allSeats = org.cryptobiotic.rlauxe.dhondt.makeAllSeats(this.lastAuditRound!!, sampleLimits, .05)
             val candBeans: MutableList<PartyBean> = ArrayList<PartyBean>()
-            /* for (candidateSeat in allSeats!!.candidateSums) {
+            for (candidateSeat in allSeats!!.candidateSums) {
                 if (candidateSeat.maxSeats > 0) {
-                    val bean = PartyBeanOld(candidateSeat) { updateCandidateTotal() }
+                    val bean = PartyBean(candidateSeat) { updateCandidateTotal() }
                     candBeans.add(bean)
                 }
             }
             coalitionTotal = makeCandidatesTotal(candBeans)
             candBeans.add(coalitionTotal!!)
 
-            candBeans.sortByDescending { it.reportedSeats } */
+            candBeans.sortByDescending { it.reportedSeats }
             partyTable.setBeans(candBeans)
 
         } catch (e: Exception) {
@@ -285,17 +284,10 @@ class BelgiumContestTable(
         assertionTable.setBeans(null)
         logger.debug { "select contest ${contestBean.id} assertions" }
 
-        val beanList = mutableListOf<RlauxeAssertionBean>()
-        if (contestBean.contestRound != null) {
-            for (ar in contestBean.contestRound.assertionRounds) {
-                val bean = RlauxeAssertionBean(contestBean.contestUA, contestBean.contestRound, ar.assertion, ar)
-                beanList.add(bean)
-            }
-        } else {
-            for (ar in contestBean.contestUA.assertions) {
-                val bean = RlauxeAssertionBean(contestBean.contestUA, null, ar, null)
-                beanList.add(bean)
-            }
+        val beanList = mutableListOf<AssertionBean>()
+        for (ar in contestBean.contestRound.assertionRounds) {
+            val bean = AssertionBean(contestBean, ar)
+            beanList.add(bean)
         }
         logger.debug { "add ${beanList.size} assertions" }
 
@@ -350,7 +342,7 @@ class BelgiumContestTable(
         }
     }
 
-    /* fun makeCandidatesTotal(beans: MutableList<PartyBeanOld>): PartyBeanOld {
+    fun makeCandidatesTotal(beans: MutableList<PartyBean>): PartyBean {
         val candidates = mutableSetOf<Int>()
         for (bean in beans) {
             candidates.add(bean.partyId)
@@ -361,9 +353,9 @@ class BelgiumContestTable(
         cand.reportedSeats = allcoal.reportedSeats()
         cand.minSeats = allcoal.minSeats()
         cand.maxSeats = allcoal.maxSeats()
-        cand.failures.addAll(allcoal.all())
+        //cand.failures.addAll(allcoal.all())
 
-        val totalBean = PartyBeanOld(cand) { }
+        val totalBean = PartyBean(cand) { }
         totalBean.isTotal = true
         totalBean.includeBack = false
         totalBean.coal = allcoal
@@ -373,8 +365,8 @@ class BelgiumContestTable(
 
     @JvmOverloads
     fun updateCandidateTotal(
-        beans: MutableList<PartyBeanOld> = partyTable.beans,
-        totalBean: PartyBeanOld = coalitionTotal!!,
+        beans: MutableList<PartyBean> = partyTable.beans,
+        totalBean: PartyBean = coalitionTotal!!,
     ) {
         val candidates = mutableSetOf<Int>()
         for (bean in beans) {
@@ -387,41 +379,40 @@ class BelgiumContestTable(
         cand.reportedSeats = coal.reportedSeats()
         cand.minSeats = coal.minSeats()
         cand.maxSeats = coal.maxSeats()
-        cand.failures.addAll(coal.all())
+        //cand.failures.addAll(coal.all())
 
         totalBean.coal = coal
         totalBean.candidateSeats = cand
         partyTable.repaint()
-    } */
+    }
 
     fun showContest(bean: ContestBean) = buildString {
         appendLine(showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
         appendLine()
         //appendLine("Relaxed Assertion Report (experimental)-------------------------------------")
-        //append((bean.contestUA.contest as DHondtContest).showRelaxedAssertionReport(bean.contestRound))
+        //append((bean.contestUA.contest as DhondtContest).showRelaxedAssertionReport(bean.contestRound))
         appendLine("Relaxed Assertions (experimental)------------------------------------------")
-        append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound))
+        append((bean.contestUA.contest as DhondtContest).showRelaxedAssertion(bean.contestRound, config!!.riskLimit))
         appendLine()
     }
 
     fun showAssertionsJson(bean: ContestBean) = buildString {
         if (allSeats == null || lastAuditRound == null) return ""
-        return ""
-        /* val org = writeDHondtAssertionContestsJson(
+        val org = writeDHondtAssertionContestsJson(
             lastAuditRound!!.contestRounds,
             allSeats!!,
-            "/home/stormy/rla/temp/assertions.json"
+            "/home/stormy/rla/temp/assertions.json",
+            .05
         )
-        append(org) */
+        append(org)
     }
 
     //fun showAssertion(bean: AssertionRoundBean) = buildString { // TODO
     //    appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.contestUA, bean.assertion))
-    //    append((bean.contestUA.contest as DHondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
+    //    append((bean.contestUA.contest as DhondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
     //}
-    fun showAssertion(bean: RlauxeAssertionBean): String {
-        val assn = if (bean.cassertion != null) bean.cassertion else bean.assertion
-        return showAssertionWithDesc(bean, assertionTable.tableModel, bean.cua, assn)
+    fun showAssertion(bean: AssertionBean) = buildString {
+        append(assertionTable.tableModel.showBean(bean, BeanProperties.assertions))
     }
 
     inner class AuditData(val statusButton: JButton) {
@@ -478,7 +469,7 @@ class BelgiumContestTable(
             var total = 0
             for (bean in beans!!) {
                 val contest = bean.contestUA.contest
-                if (contest is DHondtContest) {
+                if (contest is DhondtContest) {
                     val count = contest.countContestedSeats(bean.contestRound)
                     bean.failNodes = count
                     total += count
@@ -495,11 +486,11 @@ class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestT
     var orgSampleSize: Int
     var failNodes: Int = 0
     var fail: Int = 0
-    val contest: DHondtContest
+    val contest: DhondtContest
 
     init {
         this.contestUA = contestRound.contestUA
-        this.contest = contestUA.contest as DHondtContest
+        this.contest = contestUA.contest as DhondtContest
         orgSampleSize = this.contestRound.haveSampleSize
     }
 
@@ -615,7 +606,6 @@ class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestT
     }
 }
 
-// try using RlauxeAssertionBean
 class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionRound) {
     val cua: ContestWithAssertions
     val cassertion: ClcaAssertion
@@ -639,7 +629,7 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
 
     val winner: String?
         get() {
-            if (assorter is DHondtAssorter) {
+            if (assorter is DhondtAssorter) {
                 return assorter.winnerNameRound()
             }
             return candidates.get(assorter.winner())
@@ -647,7 +637,7 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
 
     val loser: String?
         get() {
-            if (assorter is DHondtAssorter) {
+            if (assorter is DhondtAssorter) {
                 return assorter.loserNameRound()
             }
             return candidates.get( assorter.loser())
@@ -669,13 +659,14 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
 
     val upper = assorter.upperBound()
 
+    /*
     val scoreDiff = contestBean.contestUA.contest.marginInVotes(assorter)
 
     // TODO an attempt to define a range that might contain all the disputed assertions
     fun getScoreRange() : Int {
-        return if (assorter is DHondtAssorter) assorter.scoreRange(cua.Npop, contestBean.haveMvrs, alpha)
+        return if (assorter is DhondtAssorter) assorter.scoreRange(cua.Npop, contestBean.haveMvrs, alpha)
         else -1
-    }
+    } */
 
     companion object {
         val alpha = .05

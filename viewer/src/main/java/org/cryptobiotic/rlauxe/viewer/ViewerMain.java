@@ -5,7 +5,6 @@
 
 package org.cryptobiotic.rlauxe.viewer;
 
-import org.cryptobiotic.rlauxe.belgium.BelgiumContestsTable;
 import org.cryptobiotic.rlauxe.persist.AuditRecord;
 import org.slf4j.Logger;
 import ucar.ui.prefs.ComboBox;
@@ -59,8 +58,6 @@ public class ViewerMain extends JPanel {
 
   JTabbedPane tabbedPane;
 
-  private BelgiumContestsTable belgiumPanel;
-
   private CorlaContestsTable corlaPanel = null;
   private CountyTable countyPoolsPanel = null;
   private SamplingTable samplingPanel;
@@ -90,15 +87,6 @@ public class ViewerMain extends JPanel {
     ////////////////////////////////////////////
     // the tabbed panels
     tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-
-    if (profile.isBelgium()) {
-      var bprefs = (PreferencesExt) prefs.node("BelgiumAuditTable");
-      belgiumPanel = new BelgiumContestsTable(bprefs, infoTA, infoWindow, fontSize, statusButton, profile, new ShowLogsAction());
-      belgiumPanel.getActions(actionsPanel);
-      tabbedPane.addTab("Contests", belgiumPanel);
-      activePanels.add(belgiumPanel);
-
-    } else {
 
       if (profile.isCorla()) {
         corlaPanel = new CorlaContestsTable((PreferencesExt) prefs.node("CorlaAuditTable"), infoTA, infoWindow, fontSize);
@@ -140,7 +128,6 @@ public class ViewerMain extends JPanel {
       mvrsTable = new MvrsTable((PreferencesExt) prefs.node("MvrsTable"), infoTA, infoWindow, fontSize);
       tabbedPane.addTab("Mvrs", mvrsTable);
       activePanels.add(mvrsTable);
-    }
 
     logsPanel = new LogsTable((PreferencesExt) prefs.node("LogsTable"), infoTA, infoWindow, fontSize);
     tabbedPane.addTab("Logs", logsPanel);
@@ -161,7 +148,6 @@ public class ViewerMain extends JPanel {
 
       // actions on right side of Audit record chooser
         switch (c) {
-            case BelgiumContestsTable belgium -> belgium.getActions(actionsPanel);
             case CorlaContestsTable corla -> corla.getActions(actionsPanel);
             case RlauxeContestsTable contests -> contests.getActions(actionsPanel);
             case AuditRoundsTable auditRound ->
@@ -268,8 +254,7 @@ public class ViewerMain extends JPanel {
   }
 
   String showInfo() {
-    if (belgiumPanel != null) return belgiumPanel.showInfo();
-    else if (corlaPanel != null) return corlaPanel.showInfo();
+    if (corlaPanel != null) return corlaPanel.showInfo();
     else return rlauxeContests.showInfo();
   }
 

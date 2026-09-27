@@ -1,7 +1,7 @@
 package org.cryptobiotic.rlauxe.beans
 
 import org.cryptobiotic.rlauxe.viewer.AssertionRoundBean
-import org.cryptobiotic.rlauxe.belgium.DhondtContestBeanOld
+import org.cryptobiotic.rlauxe.belgium.ContestBean
 import org.cryptobiotic.rlauxe.viewer.ContestRoundBean
 import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable
 import org.cryptobiotic.rlauxe.viewer.CountyTable
@@ -29,7 +29,7 @@ class TestBeans {
         val beans = listOf(
             Bean("RlauxeContest", RlauxeContestBean::class.java),
             Bean("ContestRound", ContestRoundBean::class.java),
-            Bean("BelgiumContest", DhondtContestBeanOld::class.java),
+            Bean("BelgiumContest", ContestBean::class.java),
             Bean("CorlaContest", CorlaContestsTable.CorlaContestBean::class.java),
             Bean("CountyContest", CountyTable.CountyContestBean::class.java),
             Bean("ContestCounty", CorlaContestsTable.ContestCountyBean::class.java),

@@ -21,7 +21,6 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
-import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable.CorlaContestBean.Companion.auditRiskLimit
 import org.cryptobiotic.rlauxe.viewer.ViewerMain.MvrAction
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -37,7 +36,7 @@ private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class AuditRoundsTable(
     private val prefs: PreferencesExt, infoTA: TextHistoryPane, infoWindow: IndependentWindow, fontSize: Float,
-    mvrCall: MvrAction
+    mvrCall: MvrAction? = null
 ) : JPanel(), ViewerPanelIF {
 
     private val auditRoundTable: BeanTable<AuditRoundBean>
@@ -90,7 +89,7 @@ class AuditRoundsTable(
         val mvrAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
                 val roundBean = auditRoundTable.getSelectedBean()
-                if (roundBean != null) {
+                if (roundBean != null && mvrCall != null) {
                     mvrCall.roundIdx = roundBean.round
                     mvrCall.actionPerformed(null)
                 }
@@ -110,7 +109,7 @@ class AuditRoundsTable(
             ContestRoundBean::class.java, (prefs.node("contestTable") as PreferencesExt?)!!, false,
             "Contest Rounds", "ContestWithAssertions"
         )
-        contestRoundTable.addListSelectionListener { e: ListSelectionEvent? ->
+        contestRoundTable.addListSelectionListener {
             val contest = contestRoundTable.getSelectedBean()
             if (contest != null) {
                 setSelectedContest(contest)
@@ -121,16 +120,16 @@ class AuditRoundsTable(
             "Show ContestRound", contestRoundTable.makeShowAction(infoTA, infoWindow) { bean: ContestRoundBean -> showContestRound(bean) })
         contestRoundTable.addPopupOption(
             "Include All Contests",
-            contestRoundTable.makeActionOnCurrentBean { e: ContestRoundBean? -> setInclude(true) })
+            contestRoundTable.makeActionOnCurrentBean { setInclude(true) })
         contestRoundTable.addPopupOption(
             "Exclude All Contests",
-            contestRoundTable.makeActionOnCurrentBean { e: ContestRoundBean? -> setInclude(false) })
+            contestRoundTable.makeActionOnCurrentBean { setInclude(false) })
 
         assertionTable = BeanTable(
             AssertionRoundBean::class.java, (prefs.node("assertionTable") as PreferencesExt?)!!, false,
             "Assertion Rounds", "Assertion", null
         )
-        assertionTable.addListSelectionListener { e: ListSelectionEvent? ->
+        assertionTable.addListSelectionListener {
             val assertion = assertionTable.getSelectedBean()
             if (assertion != null) {
                 setSelectedAssertion(assertion)
@@ -648,7 +647,7 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
 
     fun getMaxRisk(): Double {
         val risk = contestRound.auditorWantRisk
-        return if (risk != null) risk else auditRiskLimit
+        return if (risk != null) risk else defaultRisk
     }
 
     fun statewide(): Boolean {
@@ -696,6 +695,7 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
 
 
     companion object {
+        val defaultRisk = .05
         // editable properties
         @JvmStatic
         fun editableProperties(): String {

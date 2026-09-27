@@ -14,9 +14,10 @@ import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.Assertion
+import org.cryptobiotic.rlauxe.core.AssorterIF
 import org.cryptobiotic.rlauxe.core.ClcaAssertion
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
-import org.cryptobiotic.rlauxe.dhondt.DHondtAssorter
+import org.cryptobiotic.rlauxe.dhondt.DhondtAssorter
 import org.cryptobiotic.rlauxe.oneaudit.OneAuditClcaAssorter
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
@@ -35,7 +36,6 @@ import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
-import javax.swing.event.ListSelectionListener
 
 private val logger: Logger = LoggerFactory.getLogger(RlauxeContestsTable::class.java)
 
@@ -450,8 +450,8 @@ class RlauxeAssertionBean(val cua: ContestWithAssertions, val contestRound: Cont
 
     val winner: String
         get() {
-            if (assertion.assorter is DHondtAssorter) {
-                return (assertion.assorter as DHondtAssorter).winnerNameRound()
+            if (assertion.assorter is DhondtAssorter) {
+                return (assertion.assorter as DhondtAssorter).winnerNameRound()
             }
             val winner = assertion.assorter.winner()
             return candidates[winner]!!
@@ -459,8 +459,8 @@ class RlauxeAssertionBean(val cua: ContestWithAssertions, val contestRound: Cont
 
     val loser: String
         get() {
-            if (assertion.assorter is DHondtAssorter) {
-                return (assertion.assorter as DHondtAssorter).loserNameRound()
+            if (assertion.assorter is DhondtAssorter) {
+                return (assertion.assorter as DhondtAssorter).loserNameRound()
             }
             val loser = assertion.assorter.loser()
             return candidates[loser] ?: "N/A"
