@@ -44,7 +44,7 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
         val bounds = prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
         this.assertWindow.setBounds(bounds)
 
-        contestTable = BelgiumContestTable((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize,
+        contestTable = BelgiumContestTable((prefs.node("BelgiumContestTable") as PreferencesExt), infoTA, infoWindow, fontSize,
             headerLabel, statusButton)  { setLogsForContest(it) }
         topTabs.addTab("Constituency", contestTable)
         activePanels.add(contestTable)
