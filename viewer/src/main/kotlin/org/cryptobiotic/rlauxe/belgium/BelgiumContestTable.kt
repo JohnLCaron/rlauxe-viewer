@@ -11,7 +11,6 @@ import org.cryptobiotic.rlauxe.audit.ContestRound
 import org.cryptobiotic.rlauxe.beans.BeanProperties
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.printTable
-import org.cryptobiotic.rlauxe.beans.showAssertionWithDesc
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
@@ -21,11 +20,10 @@ import org.cryptobiotic.rlauxe.core.AssorterIF
 import org.cryptobiotic.rlauxe.core.ClcaAssertion
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.dhondt.AllSeats
-import org.cryptobiotic.rlauxe.dhondt.CandidateSeats
 import org.cryptobiotic.rlauxe.dhondt.Coalition
 import org.cryptobiotic.rlauxe.dhondt.DhondtAssorter
 import org.cryptobiotic.rlauxe.dhondt.DhondtContest
-// import org.cryptobiotic.rlauxe.dhondt.*
+import org.cryptobiotic.rlauxe.dhondt.PartyRange
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.persist.json.writeDHondtAssertionContestsJson
@@ -258,10 +256,11 @@ class BelgiumContestTable(
             partyNames = auditRecord!!.readPartyNames()
             val sampleLimits = auditRecord!!.readSampleLimits()
             allSeats = org.cryptobiotic.rlauxe.dhondt.makeAllSeats(this.lastAuditRound!!, sampleLimits, .05)
-            val candBeans: MutableList<PartyBean> = ArrayList<PartyBean>()
+            val candBeans = mutableListOf<PartyBean>()
             for (candidateSeat in allSeats!!.candidateSums) {
                 if (candidateSeat.maxSeats > 0) {
-                    val bean = PartyBean(candidateSeat) { updateCandidateTotal() }
+                    val name = partyNames[candidateSeat.partyId] ?: "-- coalition --"
+                    val bean = PartyBean(candidateSeat, name) { updateCandidateTotal() }
                     candBeans.add(bean)
                 }
             }
@@ -349,13 +348,13 @@ class BelgiumContestTable(
         }
         val allcoal = allSeats!!.calcCoalition(candidates, partyNames)
 
-        val cand = CandidateSeats(0, "-- coalition --")
+        val cand = PartyRange(0)
         cand.reportedSeats = allcoal.reportedSeats()
         cand.minSeats = allcoal.minSeats()
         cand.maxSeats = allcoal.maxSeats()
         //cand.failures.addAll(allcoal.all())
 
-        val totalBean = PartyBean(cand) { }
+        val totalBean = PartyBean(cand, "-- coalition --") { }
         totalBean.isTotal = true
         totalBean.includeBack = false
         totalBean.coal = allcoal
@@ -375,14 +374,14 @@ class BelgiumContestTable(
             }
         }
         val coal = allSeats!!.calcCoalition(candidates, partyNames)
-        val cand = CandidateSeats(0, "-- coalition --")
+        val cand = PartyRange(0)
         cand.reportedSeats = coal.reportedSeats()
         cand.minSeats = coal.minSeats()
         cand.maxSeats = coal.maxSeats()
         //cand.failures.addAll(coal.all())
 
         totalBean.coal = coal
-        totalBean.candidateSeats = cand
+        totalBean.partyRange = cand
         partyTable.repaint()
     }
 
@@ -471,7 +470,7 @@ class BelgiumContestTable(
                 val contest = bean.contestUA.contest
                 if (contest is DhondtContest) {
                     val count = contest.countContestedSeats(bean.contestRound)
-                    bean.failNodes = count
+                    bean.failSeats = count
                     total += count
                 }
             }
@@ -484,7 +483,7 @@ class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestT
     var mvrLimitBack: Int = -1
     var contestUA: ContestWithAssertions
     var orgSampleSize: Int
-    var failNodes: Int = 0
+    var failSeats: Int = 0
     var fail: Int = 0
     val contest: DhondtContest
 
@@ -676,7 +675,7 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
     }
 }
 
-class PartyBean(var candidateSeats: CandidateSeats, val sampleChanged: (Boolean) -> Any) {
+class PartyBean(var partyRange: PartyRange, val partyName: String, val sampleChanged: (Boolean) -> Any) {
     var includeBack: Boolean = true
     var isTotal: Boolean = false
     var coal: Coalition? = null
@@ -688,18 +687,18 @@ class PartyBean(var candidateSeats: CandidateSeats, val sampleChanged: (Boolean)
         sampleChanged(true)
     }
 
-    val partyName: String
-        get() = candidateSeats.candName
+    //val partyName: String
+    //    get() = partyRange.candName
     val partyId: Int
-        get() = candidateSeats.candId
+        get() = partyRange.partyId
     val minSeats: Int
-        get() = candidateSeats.minSeats
+        get() = partyRange.minSeats
     val reportedSeats: Int
-        get() = candidateSeats.reportedSeats
+        get() = partyRange.reportedSeats
     val maxSeats: Int
-        get() = candidateSeats.maxSeats
-    val nFailures: Int
-        get() = candidateSeats.failures.size
+        get() = partyRange.maxSeats
+    //val nFailures: Int
+    //    get() = partyRange.failures.size
 
     val inCoalition: String
         get() = if (includeBack && !isTotal && this.maxSeats > 0) "YES" else ""
@@ -707,7 +706,7 @@ class PartyBean(var candidateSeats: CandidateSeats, val sampleChanged: (Boolean)
     fun show(): String {
         // only the coalition total bean has a coalition attached
         if (coal != null) return coal.toString()
-        else return candidateSeats.toString()
+        else return partyRange.toString()
     }
 
     companion object {
