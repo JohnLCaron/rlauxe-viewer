@@ -88,7 +88,6 @@ class LogsTable(
         logger.debug { "read logs from $topdir" }
 
         val logsFile = Publisher(topdir).logsFile()
-        println(logsFile)
 
         val logsBeans = mutableListOf<LogBean>()
         try {
@@ -112,6 +111,7 @@ class LogsTable(
             logger.error(e) {"LogsTable exception"}
         }
 
+        logger.debug { "read logs from $logsFile, setting ${logsBeans.size} log lines" }
         logsTable.setBeans(logsBeans)
         return true
     }

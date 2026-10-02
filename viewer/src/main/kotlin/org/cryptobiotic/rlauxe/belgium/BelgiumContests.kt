@@ -6,6 +6,8 @@ package org.cryptobiotic.rlauxe.belgium
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditRoundIF
 import org.cryptobiotic.rlauxe.audit.Config
+import org.cryptobiotic.rlauxe.dhondt.DhondtContest
+import org.cryptobiotic.rlauxe.dhondt.RelaxedAssertionsIF
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
@@ -30,7 +32,9 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
     val statusButton = JButton("status")
 
     val contestTable: BelgiumContestTable
+    val altContestTable: BelgiumAltContestTable
     val logsTable: LogsTable
+    var county: String?= null
 
     private var auditRecordLocation: String? = "none"
     private var auditRecord: CompositeAuditRecord? = null
@@ -45,9 +49,17 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
         this.assertWindow.setBounds(bounds)
 
         contestTable = BelgiumContestTable((prefs.node("BelgiumContestTable") as PreferencesExt), infoTA, infoWindow, fontSize,
-            headerLabel, statusButton)  { setLogsForContest(it) }
+            headerLabel, statusButton,
+            setCounty = { county: String -> setCountyComponent(county) },
+            setAltContest = { relax: RelaxedAssertionsIF, sampleLimit: Int -> setAltContest(relax, sampleLimit) },
+        )
         topTabs.addTab("Constituency", contestTable)
         activePanels.add(contestTable)
+
+        altContestTable = BelgiumAltContestTable((prefs.node("BelgiumAltContestTable") as PreferencesExt), infoTA, infoWindow, fontSize,
+            headerLabel)
+        topTabs.addTab("AltContest", altContestTable)
+        activePanels.add(altContestTable)
 
         logsTable = LogsTable((prefs.node("LogsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
         topTabs.addTab("Logs", logsTable)
@@ -91,7 +103,7 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
         val infoAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
                 infoTA.setFont(infoTA.getFont().deriveFont(fontSize))
-                infoTA.setText(contestTable.showInfo())
+                infoTA.setText(contestTable.showInfo(county))
                 infoWindow.show()
             }
         }
@@ -127,10 +139,18 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
 
     override fun name() = "Belgium d'Hondt Audit"
 
-    fun setLogsForContest(contest: String) {
-        logger.debug { "setLogsForContest $contest" }
-        logsTable.setContest(contest)
+
+    fun setAltContest(relax: RelaxedAssertionsIF, sampleLimit: Int) {
+        logger.debug { "setAltContest ${relax.altContest().name}" }
+        altContestTable.setAltContest(relax, sampleLimit)
         topTabs.setSelectedIndex(1)
+    }
+
+    fun setCountyComponent(county: String) {
+        logger.debug { "setLogsForContest $county" }
+        this.county = county
+        logsTable.setContest(county)
+        topTabs.setSelectedIndex(2)
     }
 
     fun setAuditRecord(): Boolean {
