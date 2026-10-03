@@ -103,7 +103,8 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
         val infoAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
                 infoTA.setFont(infoTA.getFont().deriveFont(fontSize))
-                infoTA.setText(contestTable.showInfo(county))
+                val info = contestTable.showInfo(county)
+                infoTA.setText(info)
                 infoWindow.show()
             }
         }
@@ -141,7 +142,7 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
 
 
     fun setAltContest(relax: RelaxedAssertionsIF, sampleLimit: Int) {
-        logger.debug { "setAltContest ${relax.altContest().name}" }
+        logger.debug { "setAltContest ${relax.orgContest.name}" }
         altContestTable.setAltContest(relax, sampleLimit)
         topTabs.setSelectedIndex(1)
     }
