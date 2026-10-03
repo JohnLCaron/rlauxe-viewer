@@ -113,19 +113,19 @@ class BelgiumContestTable(
             contestTable.makeShowAction(infoTA, infoWindow) { bean: ContestBean -> showAssertionsJson(bean) }
         )
         contestTable.addPopupOption(
-            "Use Alt Contest",
+            "Show Alt Contests",
             contestTable.makeActionOnCurrentBean { bean: ContestBean? ->
                 if (bean != null) setAltContest(bean)
                 return@makeActionOnCurrentBean (bean != null)
             }
         )
-        contestTable.addPopupOption(
+        /* contestTable.addPopupOption(
             "Use TooRelaxed Alt Contest",
             contestTable.makeActionOnCurrentBean { bean: ContestBean? ->
                 if (bean != null) setAltContest(bean, "tooRelaxed")
                 return@makeActionOnCurrentBean (bean != null)
             }
-        )
+        ) */
         tables.add(contestTable)
 
         assertionTable =
@@ -321,29 +321,31 @@ class BelgiumContestTable(
     //// Actions 
     fun showInfo(county: String?) = buildString {
         if (auditRecord == null) append("no audit record")
-        appendLine("Audit record at ${auditRecord!!.topdir}")
-        appendLine("ElectionName = ${electionName}")
-        if (county != null) config = auditRecord!!.configFor(county)
-        appendLine(config!!.show())
-        if (lastAuditRound != null) {
-            append("AuditRounds")
-            var totalExtra = 0
-            for (round in auditRecord!!.rounds) {
-                if (round.auditWasDone) {
-                    val roundIdx = round.roundIdx
-                    val nmvrs = round.samplePrns.size
-                    appendLine("number of Mvrs in round $roundIdx = $nmvrs")
-                    val extra = round.mvrsUnused
-                    appendLine("  extraBallotsUsed = $extra")
-                    totalExtra += extra
+        else {
+            appendLine("Audit record at ${auditRecord!!.topdir}")
+            appendLine("ElectionName = ${electionName}")
+            if (county != null) config = auditRecord!!.configFor(county)
+            appendLine(config!!.show())
+            if (lastAuditRound != null) {
+                append("AuditRounds")
+                var totalExtra = 0
+                for (round in auditRecord!!.rounds) {
+                    if (round.auditWasDone) {
+                        val roundIdx = round.roundIdx
+                        val nmvrs = round.samplePrns.size
+                        appendLine("number of Mvrs in round $roundIdx = $nmvrs")
+                        val extra = round.mvrsUnused
+                        appendLine("  extraBallotsUsed = $extra")
+                        totalExtra += extra
+                    }
                 }
-            }
-            appendLine("  total extraBallotsUsed = $totalExtra total Mvrs = ${lastAuditRound!!.nmvrs}")
+                appendLine("  total extraBallotsUsed = $totalExtra total Mvrs = ${lastAuditRound!!.nmvrs}")
 
-            if (allSeats != null) {
-                appendLine()
-                appendLine("Party seat ranges based on contested assertions")
-                append(allSeats!!.showAllPartySeats())
+                if (allSeats != null) {
+                    appendLine()
+                    appendLine("Party seat ranges based on contested assertions")
+                    append(allSeats!!.showAllPartySeats(partyNames))
+                }
             }
         }
     }
@@ -422,17 +424,17 @@ class BelgiumContestTable(
 
     inner class AuditData(val statusButton: JButton) {
         var useMvrs: Int = 0
-        var contestedSeats: Int = 0
+        // var contestedSeats: Int = 0
         var contestedAssertions: Int = 0
         var beans: MutableList<ContestBean>? = null
 
         fun updateStatus() {
             useMvrs = countMvrs()
-            contestedSeats = countContestedSeats()
+            // contestedSeats = countContestedSeats()
             contestedAssertions = countContestedAssertions()
 
             SwingUtilities.invokeLater {
-                statusButton.setText("mvrs=$useMvrs failures=$contestedSeats")
+                statusButton.setText("mvrs=$useMvrs failures=$contestedAssertions")
                 // statusButton.repaint()
             }
         }
@@ -440,9 +442,9 @@ class BelgiumContestTable(
         fun setNewBeans(beans: MutableList<ContestBean>) {
             this.beans = beans
             useMvrs = countMvrs()
-            contestedSeats = countContestedSeats()
+            // contestedSeats = countContestedSeats()
             SwingUtilities.invokeLater {
-                statusButton.setText("mvrs=$useMvrs failures=$contestedSeats")
+                statusButton.setText("mvrs=$useMvrs failures=$contestedAssertions")
             }
         }
 
@@ -463,14 +465,14 @@ class BelgiumContestTable(
                         RlauxeAssertionBean(contestBean.contestUA, contestBean.contestRound, ar.assertion, ar)
                     if (bean.estRisk > ContestBean.alpha) fail++
                 }
-                contestBean.fail = fail
+                contestBean.failAssertions = fail
                 total += fail
             }
 
             return total
         }
 
-        fun countContestedSeats(): Int {
+        /* fun countContestedSeats(): Int {
             var total = 0
             for (bean in beans!!) {
                 val contest = bean.contestUA.contest
@@ -481,7 +483,7 @@ class BelgiumContestTable(
                 }
             }
             return total
-        }
+        } */
     }
 }
 
@@ -489,8 +491,8 @@ class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestT
     var mvrLimitBack: Int = -1
     var contestUA: ContestWithAssertions
     var orgSampleSize: Int
-    var failSeats: Int = 0
-    var fail: Int = 0
+    // var failSeats: Int = 0
+    var failAssertions: Int = 0
     val contest: DhondtContest
 
     init {
@@ -536,7 +538,12 @@ class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestT
     val mvrsUsed = contestRound.maxSamplesUsed()
     val nc = contestUA.Nc
     val nseats = contest.nseats
-    val nCand = contestUA.ncandidates
+    val nParties = contest.parties.size
+    val winningParties = contest.parties.filter { it.lastSeatWon > 0 }.count()
+    val losingParties = contest.parties.filter { it.firstSeatLost > 0 }.count()
+
+    val atParties = contest.parties.filter{ !it.isBelowMin }.count() // above threshold
+    val estAssort = atParties * (atParties-1) + nParties
 
     val noerror: String
         get() {
@@ -590,6 +597,7 @@ class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestT
     }
 }
 
+// TODO why use rounds? serialization glitch ??
 class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionRound) {
     val cua: ContestWithAssertions
     val cassertion: ClcaAssertion
