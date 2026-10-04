@@ -179,7 +179,7 @@ class BelgiumAltContestTable(
         logger.debug { "select contest ${contestBean.id} assertions" }
 
         val beanList = mutableListOf<AltAssertionBean>()
-        for (ar in contestBean.dcontest.assorters) {
+        for (ar in contestBean.altContest.altAssorters) {
             val bean = AltAssertionBean(contestBean, ar)
             beanList.add(bean)
         }

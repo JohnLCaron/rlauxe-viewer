@@ -22,7 +22,7 @@ import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.dhondt.*
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
-import org.cryptobiotic.rlauxe.persist.json.writeAllContestsToJsonFile
+import org.cryptobiotic.rlauxe.persist.json.writeRelaxedAssertionProofs
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.viewer.RlauxeAssertionBean
 import org.cryptobiotic.rlauxe.viewer.ViewerMain
@@ -49,11 +49,9 @@ class BelgiumContestTable(
     val setAltContest: (relax: RelaxedAssertionsIF, sampleLimit: Int) -> Any,
 ) : JPanel(), ViewerPanelIF {
 
-    var auditData: AuditData
-    var allSeats: AllSeats? = null
-    var coalitionTotal: PartyBean? = null
-    var partyNames = emptyMap<Int, String>()
-    val tables = mutableListOf<BeanTable<out Any>>()
+    private val assertTA = TextHistoryPane()
+    private val assertWindow =
+        IndependentWindow("Assertion", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(assertTA))
 
     private val contestTable: BeanTable<ContestBean>
     private val assertionTable: BeanTable<AssertionBean>
@@ -66,11 +64,14 @@ class BelgiumContestTable(
     private var auditRecord: CompositeAuditRecord? = null
     private var config: Config? = null
     private var electionName: String = ""
-    private var lastAuditRound: AuditRoundIF? = null // may be null
+    private var lastAuditRound: AuditRoundIF? = null
 
-    private val assertTA = TextHistoryPane()
-    private val assertWindow =
-        IndependentWindow("Assertion", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(assertTA))
+    var sampleLimits: Map<Int, Int>? = null
+    var auditData: AuditData
+    var allSeats: AllSeats? = null
+    var coalitionTotal: PartyBean? = null
+    var partyNames = emptyMap<Int, String>()
+    val tables = mutableListOf<BeanTable<out Any>>()
 
     init {
         val bounds = prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
@@ -109,8 +110,8 @@ class BelgiumContestTable(
             contestTable.makeShowAction(infoTA, infoWindow) { printTable(contestTable, BeanProperties.contests, "BelgiumContests") }
         )
         contestTable.addPopupOption(
-            "Save assertions to Json file for lean analyzer",
-            contestTable.makeShowAction(infoTA, infoWindow) { bean: ContestBean -> showAssertionsJson(bean) }
+            "Save assertions to Json file for lean prover",
+            contestTable.makeShowAction(infoTA, infoWindow) { bean: ContestBean -> writeAssertionFile(bean) }
         )
         contestTable.addPopupOption(
             "Show Alt Contests",
@@ -255,8 +256,8 @@ class BelgiumContestTable(
 
             // parties
             partyNames = auditRecord!!.readPartyNames()
-            val sampleLimits = auditRecord!!.readSampleLimits()
-            allSeats = makeAllSeatsFromRound(this.lastAuditRound!!, sampleLimits, .05)
+            sampleLimits = auditRecord!!.readSampleLimits().associate { it.id to it.limit }
+            allSeats = makeAllSeatsFromRound(this.lastAuditRound!!, sampleLimits!!, .05)
             val beans = mutableListOf<PartyBean>()
             for (partySum in allSeats!!.partySums) {
                 if (partySum.maxSeats > 0) {
@@ -404,13 +405,16 @@ class BelgiumContestTable(
         appendLine()
     }
 
-    fun showAssertionsJson(bean: ContestBean) = buildString {
-        if (allSeats == null || lastAuditRound == null) return ""
-        val org = writeAllContestsToJsonFile(
+    fun writeAssertionFile(bean: ContestBean) = buildString {
+        if (allSeats == null || lastAuditRound == null || sampleLimits == null) return ""
+        val filename = "$auditRecordLocation/assertions.v5.json"
+
+        val org = writeRelaxedAssertionProofs(
+            filename,
             lastAuditRound!!.contestRounds,
-            "/home/stormy/rla/temp/assertions.json",
-            .05, false, emptyMap()
+            .05, sampleLimits!!
         )
+        appendLine("write to $filename")
         append(org)
     }
 
