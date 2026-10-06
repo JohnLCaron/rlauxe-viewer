@@ -7,6 +7,7 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
@@ -22,6 +23,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
     var countyTabPanel: Counties
     var mvrComparisonPanel: MvrComparisonTable
 
+    var countyCvrTabs  = JTabbedPane(JTabbedPane.TOP)
     var countyCvrsTable: CountyCvrsTable
     var countyRedactionTable: CountyRedactionTable
     var countySchemaTable: CountySchemaTable
@@ -57,6 +59,11 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("Cvrs", countyCvrsTable)
         activePanels.add(countyCvrsTable)
+
+        /* precinctStyle = PrecinctStyle((prefs.node("precinctStyle") as PreferencesExt),
+            infoTA, infoWindow, fontSize)
+        countyCvrTabs.addTab("Cvrs", countyCvrsTable)
+        activePanels.add(countyCvrsTable) */
 
         countyRedactionTable = CountyRedactionTable((prefs.node("countyRedactionTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
@@ -152,7 +159,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
             appendLine("# contests = ${corlaCvrs.schema.contests.size}")
             appendLine("# redactedGroups = ${corlaCvrs.redaction().groups().size}")
             appendLine("# cardStyles = ${corlaCvrs.cardStyles().size}")
-            val sumCardStyles = corlaCvrs.cardStyles().sumOf { it.countCards}
+            val sumCardStyles = corlaCvrs.cardStyles().sumOf { it.ncards }
             appendLine("sum cardStyles.count = ${sumCardStyles}")
 
             appendLine()

@@ -39,7 +39,7 @@ class CountySchemaTable(
     private val choiceTable: BeanTable<SchemaChoiceBean>
     private val stylesTable: BeanTable<SchemaStyleBean>
 
-    var currentCorlaCvrs : CorlaRawCvrsIF? = null
+    var currentCorlaCvrs: CorlaRawCvrsIF? = null
     var currentStateInput: ColoradoInput? = null
     var currentCountyName: String? = null
 
@@ -50,10 +50,12 @@ class CountySchemaTable(
     init {
         contestTable = BeanTable(
             SchemaContestBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
-            "Contest Schema", "SchemaContestInfo", null)
+            "Contest Schema", "SchemaContestInfo", null
+        )
         contestTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
             val selected = contestTable.getSelectedBean()
-            if (selected != null) setSelectedContest(selected) })
+            if (selected != null) setSelectedContest(selected)
+        })
         contestTable.addPopupOption(
             "Show Canonical Contest",
             contestTable.makeShowAction(infoTA, infoWindow) { bean: SchemaContestBean -> showSchemaContest(bean) }
@@ -68,7 +70,8 @@ class CountySchemaTable(
 
         stylesTable = BeanTable(
             SchemaStyleBean::class.java, prefs.node("stylesTable") as PreferencesExt, false,
-            "Styles", "CvrCardStyle", null)
+            "Styles", "CvrCardStyle", null
+        )
         tables.add(stylesTable)
 
         setFontSize(fontSize)
@@ -156,7 +159,7 @@ class CountySchemaTable(
         val beanList = mutableListOf<SchemaChoiceBean>()
         val start = bean.scontest.startCol
         repeat(bean.scontest.ncols) {
-            beanList.add(SchemaChoiceBean(this, bean, currentCorlaCvrs!!.schema.columns[start+it]))
+            beanList.add(SchemaChoiceBean(this, bean, currentCorlaCvrs!!.schema.columns[start + it]))
         }
         choiceTable.setBeans(beanList)
     }
@@ -167,9 +170,8 @@ class CountySchemaTable(
 
     override fun saveState() {
         tables.forEach { it.saveState(false) }
-
         prefs.putInt("splitPos1", split1.getDividerLocation())
-        //prefs.putInt("splitPos2", split2.getDividerLocation())
+        prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
     fun hasExact(scontest: SchemaContestBean): Boolean {
@@ -184,7 +186,7 @@ class CountySchemaTable(
     fun hasExact(scontest: SchemaContestBean, schoice: SchemaChoiceBean): Boolean {
         val cc = currentStateInput!!.matchCanonicalContest(currentCountyName!!, scontest.contestName)
         return if (cc == null) false else {
-            cc.choices.any{ it == schoice.choice}
+            cc.choices.any { it == schoice.choice }
         }
     }
 
@@ -216,7 +218,11 @@ class CountySchemaTable(
         }
     }
 
-    class SchemaChoiceBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestBean, colInfo: SchemaColumnInfo) {
+    class SchemaChoiceBean(
+        val schemaTable: CountySchemaTable,
+        val scontest: SchemaContestBean,
+        colInfo: SchemaColumnInfo
+    ) {
         val contestIdx = colInfo.contestIdx
         val choice = colInfo.choiceName
         val party = colInfo.headerName
@@ -229,18 +235,17 @@ class CountySchemaTable(
             fun hiddenProperties() = "schemaTable scontest colInfo"
         }
     }
+}
 
-    ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
-    class SchemaStyleBean(val cvrStyle: CvrCardStyle) {
-        val name = cvrStyle.name
-        val contestIdxs = cvrStyle.contestIds
-        val countCards = cvrStyle.countCards
+class SchemaStyleBean(val cvrStyle: CvrCardStyle) {
+    val name = cvrStyle.name
+    val contestIdxs = cvrStyle.contestIds
+    val ncards = cvrStyle.ncards
 
-        companion object {
-            @JvmStatic
-            fun hiddenProperties() = "cvrStyle"
-        }
+    companion object {
+        @JvmStatic
+        fun hiddenProperties() = "cvrStyle"
     }
-
 }

@@ -170,9 +170,9 @@ init {
                 return false
             }
 
-            contestTable.setAuditRecord(auditRecordDir)
+            contestTable.setAuditRecordLocation(auditRecordDir)
             for (vpanel in activePanels) {
-                if (vpanel is ViewerPanelIF) vpanel.setAuditRecord(auditRecordDir)
+                if (vpanel is ViewerPanelIF) vpanel.setAuditRecordLocation(auditRecordDir)
             }
             logger.info{"RlauxeViewer.setAuditRecord to $auditRecordDir"}
             return true

@@ -14,7 +14,6 @@ import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.Assertion
-import org.cryptobiotic.rlauxe.core.AssorterIF
 import org.cryptobiotic.rlauxe.core.ClcaAssertion
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.dhondt.DhondtAssorter
@@ -138,10 +137,10 @@ class RlauxeContestsTable(
     }
 
     fun resetAuditRecord() {
-        setAuditRecord(auditRecordLocation)
+        setAuditRecordLocation(auditRecordLocation)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         this.onlyShowInprogressContests = prefs.getBoolean("onlyInProgress", false)
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)

@@ -100,7 +100,7 @@ class AuditRoundsTable(
             auditRoundTable.makeShowAction(infoTA, infoWindow) { bean: AuditRoundBean -> showAuditRound(bean) })
         auditRoundTable.addPopupOption(
             "Reread Audit Record",
-            makeAction { setAuditRecord(auditRecordLocation) }
+            makeAction { setAuditRecordLocation(auditRecordLocation) }
         )
         auditRoundTable.addPopupOption("Show sampled Mvrs", mvrAction)
 
@@ -240,7 +240,7 @@ class AuditRoundsTable(
         rerunTA.setFontSize(size)
     }
 
-    override fun setAuditRecord(location: String): Boolean {
+    override fun setAuditRecordLocation(location: String): Boolean {
         val auditRecord = read(location)
         if (auditRecord != null) {
             auditRecordLocation = location
@@ -433,7 +433,7 @@ class AuditRoundsTable(
                 runRound(auditRecord!!.topdir, null, null)
                 logger.debug { "return from runRound" }
 
-                setAuditRecord(auditRecordLocation) // reread in
+                setAuditRecordLocation(auditRecordLocation) // reread in
                 refreshAll()
             }
         } catch (e: Exception) {

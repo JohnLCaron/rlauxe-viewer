@@ -9,7 +9,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.belgium.BelgiumContests
 import org.cryptobiotic.rlauxe.belgium.TestPrefs
 import org.cryptobiotic.rlauxe.corla.ColoradoInput
-import org.cryptobiotic.rlauxe.corla.CountyAudit
+import org.cryptobiotic.rlauxe.corla.ColoradoAuditViewer
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FontUtil
 import ucar.ui.widget.FontUtil.StandardFont
@@ -48,7 +48,6 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
     var auditRecordDir: String = "none"
 
     var topTabs = JTabbedPane(JTabbedPane.TOP)
-    var countyCvrTabs  = JTabbedPane(JTabbedPane.TOP)
     var activePanels = mutableListOf<SubPanelIF>()
 
     init {
@@ -228,7 +227,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             for (idx in args.indices) {
                 val arg = args[idx]
                 if (arg == "-datadir") datadir = args[idx + 1]
-                if (arg == "-CountyAudit") type = "CountyAudit"
+                if (arg == "-ColoradoAuditViewer") type = "ColoradoAuditViewer"
                 if (arg == "-ColoradoInput") type = "ColoradoInput"
                 if (arg == "-BelgiumContests") type = "BelgiumContests"
                 if (arg == "-RlauxeViewer") type = "RlauxeViewer"
@@ -264,7 +263,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
 
             val prefsx = when (type) {
                 "ColoradoInput" -> preffs!!.node("ColoradoInput") as PreferencesExt
-                "CountyAudit" -> preffs!!.node("CountyAudit") as PreferencesExt
+                "ColoradoAuditViewer" -> preffs!!.node("ColoradoAuditViewer") as PreferencesExt
                 "BelgiumContests" -> preffs!!.node("BelgiumContests") as PreferencesExt
                 else -> throw RuntimeException()
             }
@@ -279,7 +278,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             frame = JFrame(type)
             ui = when (type) {
                 "ColoradoInput" -> ColoradoInput(prefsx, fontSize)
-                "CountyAudit" -> CountyAudit(prefsx, fontSize)
+                "ColoradoAuditViewer" -> ColoradoAuditViewer(prefsx, fontSize)
                 "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
                 "RlauxeViewer" -> RlauxeViewer(prefsx, fontSize)
                 "TestPrefs" -> TestPrefs(prefsx, fontSize)
@@ -303,9 +302,4 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             frame!!.setVisible(true)
         }
     }
-}
-
-interface SubPanelIF {
-    fun setFontSize(size: Float)
-    fun saveState()
 }
