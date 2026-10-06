@@ -165,7 +165,7 @@ class BelgiumAltContestTable(
         partyTable.setBeans(null)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)
         assertionTable.setBeans(null)

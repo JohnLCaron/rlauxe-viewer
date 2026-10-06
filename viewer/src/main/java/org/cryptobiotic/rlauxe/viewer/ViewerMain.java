@@ -275,7 +275,7 @@ public class ViewerMain extends JPanel {
       if (auditRecord == null) return false;
 
       for (var vpanel : activePanels) {
-        vpanel.setAuditRecord(auditRecordDir);
+        vpanel.setAuditRecordLocation(auditRecordDir);
       }
       logger.info("ViewerMain.setAuditRecord to {}", auditRecordDir);
       return true;
@@ -416,7 +416,7 @@ public class ViewerMain extends JPanel {
   public class MvrAction extends AbstractAction {
     public int roundIdx;
     public void actionPerformed(ActionEvent e) {
-      mvrsTable.setAuditRecord(auditRecordDir);
+      mvrsTable.setAuditRecordLocation(auditRecordDir);
       mvrsTable.readCards(roundIdx);
 
       tabbedPane.setSelectedIndex(4);

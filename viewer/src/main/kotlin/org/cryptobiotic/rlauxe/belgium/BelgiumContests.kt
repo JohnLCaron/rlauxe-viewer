@@ -6,7 +6,6 @@ package org.cryptobiotic.rlauxe.belgium
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditRoundIF
 import org.cryptobiotic.rlauxe.audit.Config
-import org.cryptobiotic.rlauxe.dhondt.DhondtContest
 import org.cryptobiotic.rlauxe.dhondt.RelaxedAssertionsIF
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
@@ -162,8 +161,8 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
                 return false
             }
 
-            contestTable.setAuditRecord(auditRecordDir)
-            logsTable.setAuditRecord(auditRecordDir)
+            contestTable.setAuditRecordLocation(auditRecordDir)
+            logsTable.setAuditRecordLocation(auditRecordDir)
             logger.info{"setAuditRecord to $auditRecordDir"}
             return true
 

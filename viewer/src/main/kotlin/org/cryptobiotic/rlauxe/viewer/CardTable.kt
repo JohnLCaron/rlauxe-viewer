@@ -76,7 +76,7 @@ class CardTable(
         localInfo.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         logger.debug{"CardTable setAuditRecord $auditRecordLocation"}
         cardTable.setBeans(null)
 

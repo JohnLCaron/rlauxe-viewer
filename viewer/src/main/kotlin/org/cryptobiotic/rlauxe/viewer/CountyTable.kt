@@ -126,7 +126,7 @@ class CountyTable(
         styleTable.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         logger.debug("ContestPoolsTable setAuditRecord " + auditRecordLocation)
         countyTable.setBeans(emptyList())
         countyContestTable.setBeans(emptyList())

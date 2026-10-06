@@ -39,7 +39,7 @@ class CountyContests(
     infoWindow: IndependentWindow,
     fontSize: Float,
     val setCountyCvrs: (String) -> Unit,
-    ) : JPanel(), ViewerPanelIF {
+) : JPanel(), ViewerPanelIF {
 
     private val localTA = TextHistoryPane()
     private val localWindow  = IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(localTA))
@@ -117,7 +117,7 @@ class CountyContests(
         localTA.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         this.onlyShowInprogressContests = prefs.getBoolean( "onlyInProgress", false)
         this.auditRecordLocation = auditRecordLocation
         // contestTable.setBeans(emptyList<CorlaContestBean>())

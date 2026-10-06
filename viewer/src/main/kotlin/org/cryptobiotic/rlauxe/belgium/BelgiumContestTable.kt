@@ -215,7 +215,7 @@ class BelgiumContestTable(
         repaint()
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)
 

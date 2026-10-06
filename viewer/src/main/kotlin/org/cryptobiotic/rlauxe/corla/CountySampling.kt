@@ -13,12 +13,12 @@ import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.Assertion
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
 import org.cryptobiotic.rlauxe.corlaCounty.sampleCountyCvrs
-import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.util.*
+import org.cryptobiotic.rlauxe.viewer.AuditRecordViewerIF
 import org.cryptobiotic.rlauxe.viewer.ViewerMain
-import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -36,12 +36,12 @@ class CountySampling(
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
     fontSize: Float,
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), AuditRecordViewerIF {
 
     private val localTA = TextHistoryPane()
     private val localWindow = IndependentWindow("CountySampling Report", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(localTA))
 
-    private val countyContestTable: BeanTable<CountySamplingBean>
+    private val countySamplingTable: BeanTable<CountySamplingBean>
 
     // private val split1: JSplitPane
     //private val split2: JSplitPane
@@ -72,13 +72,13 @@ class CountySampling(
     init {
         localWindow.setBounds(prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
 
-        countyContestTable = BeanTable(
+        countySamplingTable = BeanTable(
             CountySamplingBean::class.java, prefs.node("countyContestTable") as PreferencesExt, false,
             "All Contests in selected County", "CountyContest", null
         )
-        countyContestTable.addPopupOption(
+        countySamplingTable.addPopupOption(
             "Show Row",
-            countyContestTable.makeShowAction(infoTA, infoWindow) { bean: CountySamplingBean -> showCountyContest((bean)) }
+            countySamplingTable.makeShowAction(infoTA, infoWindow) { bean: CountySamplingBean -> showCountyContest((bean)) }
         )
 
         setFontSize(fontSize)
@@ -90,49 +90,39 @@ class CountySampling(
         //split2.setDividerLocation(prefs.getInt("splitPos2", 1000))
 
         setLayout(BorderLayout())
-        add(countyContestTable, BorderLayout.CENTER)
+        add(countySamplingTable, BorderLayout.CENTER)
 
         logger.debug { "CountySampling init" }
     }
 
     override fun setFontSize(size: Float) {
         // contestTable.setFontSize(size)
-        countyContestTable.setFontSize(size)
+        countySamplingTable.setFontSize(size)
         localTA.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
         this.onlyShowInprogressContests = prefs.getBoolean("onlyInProgress", false)
         this.auditRecordLocation = auditRecordLocation
-        // contestTable.setBeans(emptyList<CorlaContestBean>())
-        countyContestTable.setBeans(emptyList<CountySamplingBean>())
+        countySamplingTable.setBeans(emptyList())
 
-        logger.debug { "CountySampling setAuditRecord $auditRecordLocation" }
+        logger.debug { "CountySampling setAuditRecord ${auditRecord.topdir}" }
 
-        try {
-            val record = read(auditRecordLocation)
-            if (record == null) return false
-            if (record !is CountyAuditRecord) return false
+        if (auditRecord !is CountyAuditRecord) return false
 
-            this.countyAudit = record
-            this.config = countyAudit!!.config
-            this.auditRiskLimit = config!!.riskLimit
-            if (countyAudit!!.rounds.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "No AuditRounds have been made")
-                return false
-            }
-
-            lastAuditRound = countyAudit!!.rounds.last()
-            this.contestMap = countyAudit!!.contests.associateBy { it.id }
-            this.contestRoundMap = lastAuditRound!!.contestRounds.associateBy { it.id } // ??
-
-            this.mvrManager = PersistedMvrManager(this.countyAudit!!, false)
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-            JOptionPane.showMessageDialog(null, e.message)
-            logger.error(e) { "setAuditRecord failed" }
+        this.countyAudit = auditRecord as CountyAuditRecord
+        this.config = countyAudit!!.config
+        this.auditRiskLimit = config!!.riskLimit
+        if (countyAudit!!.rounds.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No AuditRounds have been made")
+            return false
         }
+
+        lastAuditRound = countyAudit!!.rounds.last()
+        this.contestMap = countyAudit!!.contests.associateBy { it.id }
+        this.contestRoundMap = lastAuditRound!!.contestRounds.associateBy { it.id } // ??
+
+        this.mvrManager = PersistedMvrManager(this.countyAudit!!, false)
 
         return true
     }
@@ -145,13 +135,13 @@ class CountySampling(
         cvrTabs.forEach { (contestId, contestTab) ->
             val contestRound = contestRoundMap[contestId]
             if (contestRound != null && contestRound.status == TestH0Status.InProgress) {
-                val bean = CountySamplingBean(contestTab, contestRound, config?.riskLimit ?: .03) { }
+                val bean = CountySamplingBean(county, contestTab, contestRound, config?.riskLimit ?: .03) { }
                 beanList.add(bean)
             }
         }
-        countyContestTable.setBeans(beanList)
+        beanList.sortByDescending { it.getNCounties() }
+        countySamplingTable.setBeans(beanList)
     }
-
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
     // Actions
@@ -263,7 +253,7 @@ class CountySampling(
         var countBeans = 0
         val risks = mutableListOf<Double>()
         val riskus = mutableListOf<Double>()
-        countyContestTable.beans.forEach { bean ->
+        countySamplingTable.beans.forEach { bean ->
             countBeans++
             val maxRisk = bean.getMaxRisk()
 
@@ -337,7 +327,7 @@ class CountySampling(
 
             logger.debug { "call sampleCountyCvrs for=$county" }
 
-            wantNmvrs = countyContestTable.beans.filter { it.isInclude() }.map { Pair(it.getId(), it.getCountyMvrs())}.toMap()
+            wantNmvrs = countySamplingTable.beans.filter { it.isInclude() }.map { Pair(it.getId(), it.getCountyMvrs())}.toMap()
 
             // fun sampleCountyCvrs(wantNmvrs: Map<Int, Int>, cvrs: List<AuditableCard>, maxSamples: Int, ntrials: Int): List<Int> {
             dist = sampleCountyCvrs(countyAudit!!, county, wantNmvrs, config?.maxSamples?: 10_000, 10)
@@ -351,7 +341,7 @@ class CountySampling(
 
             localTA.setText(sampleReport)
             wantNmvrs
-            countyContestTable.refresh()
+            countySamplingTable.refresh()
             samplingChanged = false // perhaps not needed
 
         } catch (e: Exception) {
@@ -362,28 +352,28 @@ class CountySampling(
 
     // all include or exclude
     fun setInclude(include: Boolean) {
-        var selectedRows: List<CountySamplingBean> = countyContestTable.getSelectedBeans()
-        if (selectedRows.size < 2) selectedRows = countyContestTable.beans // all
+        var selectedRows: List<CountySamplingBean> = countySamplingTable.getSelectedBeans()
+        if (selectedRows.size < 2) selectedRows = countySamplingTable.beans // all
 
         selectedRows.forEach { bean ->
             if (bean.contestRound != null) bean.contestRound!!.included = include
         }
         samplingChanged = true
-        countyContestTable.refresh()
+        countySamplingTable.refresh()
     }
 
     // set targeted to be included
     fun includeTargetedOnly() {
-        for (bean in countyContestTable.beans) {
+        for (bean in countySamplingTable.beans) {
             bean.setInclude(bean.targeted())
             bean.setMaxRisk(auditRiskLimit)
         }
         samplingChanged = true
-        countyContestTable.refresh()
+        countySamplingTable.refresh()
     }
 
     fun setRisk() {
-        for (bean in countyContestTable.beans) {
+        for (bean in countySamplingTable.beans) {
             if (bean.getStatus() != TestH0Status.InProgress.name) continue
             if (bean.contestRound == null) continue
 
@@ -393,18 +383,18 @@ class CountySampling(
             else bean.setMaxRisk(auditRiskLimit)
         }
         samplingChanged = true
-        countyContestTable.refresh()
+        countySamplingTable.refresh()
     }
 
     fun includeImportant(): Boolean {
-        for (bean in countyContestTable.beans) {
+        for (bean in countySamplingTable.beans) {
             if ((bean.counties()?.size ?: 0) > 1) bean.setInclude(true)
             if (bean.getName().startsWith("Representative to the")) bean.setInclude(true)
             if (bean.getName().startsWith("State")) bean.setInclude(true)
         }
 
         samplingChanged = true
-        countyContestTable.refresh()
+        countySamplingTable.refresh()
         return true
     }
 
@@ -450,13 +440,13 @@ class CountySampling(
     } */
 
     fun showCountyContest(countyContestBean: CountySamplingBean) = buildString {
-        appendLine(countyContestTable.tableModel.showBean(countyContestBean, BeanProperties.contests))
+        appendLine(countySamplingTable.tableModel.showBean(countyContestBean, BeanProperties.contests))
         appendLine()
         append(countyContestBean.contestUA.show())
     }
 
     override fun saveState() {
-        countyContestTable.saveState(false)
+        countySamplingTable.saveState(false)
         // countyTable.saveState(false)
         // prefs.putInt("splitPos1", split1.getDividerLocation())
         // prefs.putInt("splitPos2", split2.getDividerLocation())
@@ -469,14 +459,14 @@ class CountySampling(
 }
 
 // data class CountyContestData(val countyName: String, val contestName: String, val id: Int, val voteDiff: Int, val votes: Map<Int, Int>)
-class CountySamplingBean(val tab: ContestTabulation, val contestRound: ContestRound, val auditRiskLimit: Double,
+class CountySamplingBean(val county: String, val tab: ContestTabulation, val contestRound: ContestRound, val auditRiskLimit: Double,
     val sampleChanged: (Boolean) -> Any
 ) {
     val contestUA: ContestWithAssertions = contestRound.contestUA
     var mvrLimit: Int = -1
 
     fun canedit(): Boolean {
-        return true
+        return getNCounties() == county
     }
 
     fun isInclude() = contestRound.included

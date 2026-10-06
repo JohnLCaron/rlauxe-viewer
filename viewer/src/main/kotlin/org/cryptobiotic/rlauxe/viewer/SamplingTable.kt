@@ -37,7 +37,6 @@ import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
-// TODO County specific sampling tool
 class SamplingTable(
     private val prefs: PreferencesExt,
     infoTA: TextHistoryPane,
@@ -135,7 +134,7 @@ class SamplingTable(
         localTA.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         this.onlyShowInprogressContests = prefs.getBoolean( "onlyInProgress", false)
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(emptyList<CorlaContestBean>())

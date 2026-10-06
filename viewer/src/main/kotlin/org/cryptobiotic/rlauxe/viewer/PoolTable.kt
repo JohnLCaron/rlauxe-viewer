@@ -74,7 +74,7 @@ class PoolTable(
         contestTable.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         logger.debug { "PoolTable setAuditRecord $auditRecordLocation" }
         poolTable.setBeans(null)
         contestTable.setBeans(null)

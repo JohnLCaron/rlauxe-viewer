@@ -9,7 +9,9 @@ import org.cryptobiotic.rlauxe.audit.StyleIF
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
+import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -25,7 +27,7 @@ class StyleTable(
     infoTA: TextHistoryPane?,
     infoWindow: IndependentWindow?,
     fontSize: Float,
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), ViewerPanelIF, AuditRecordViewerIF {
 
     private val styleTable: BeanTable<StyleBean>
     var localInfo: TextHistoryPane = TextHistoryPane()
@@ -74,44 +76,51 @@ class StyleTable(
         localInfo.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
-        logger.debug { "StyleTable setAuditRecord $auditRecordLocation" }
-        styleTable.setBeans(null)
-
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         val auditRecord = read(auditRecordLocation)
         if (auditRecord == null) {
             logger.info{"StyleTable failed on readFrom $auditRecordLocation"}
             return false
         }
         if (auditRecord is CompositeAuditRecord) return false
+        return setAuditRecord(auditRecord)
+    }
+
+    override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
+        logger.debug { "StyleTable setAuditRecord ${auditRecord.topdir}" }
+
+        if (auditRecord is CompositeAuditRecord) {
+            logger.debug { "audit record cant be CompositeAuditRecord ${auditRecord.topdir}" }
+            return false
+        }
         this.auditRecord = auditRecord as AuditRecord
         this.mvrManager = PersistedMvrManager(this.auditRecord!!, false)
 
-        try {
-            val beanList = mutableListOf<StyleBean>()
-            val styles = mvrManager!!.styles()
-            if (styles != null) {
-                for (pop in styles) {
-                    beanList.add(StyleBean(pop))
-                }
-            }
-            styleTable.setBeans(beanList)
-            logger.debug{"setAuditRecord bean count=${beanList.size}" }
+        styleTable.setBeans(null)
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-            JOptionPane.showMessageDialog(null, e.message)
-            logger.debug(e) {"setAuditRecord failed"}
+        val beanList = mutableListOf<StyleBean>()
+        val styles = mvrManager!!.styles()
+        if (styles != null) {
+            for (style in styles) {
+                beanList.add(StyleBean(style))
+            }
         }
+        styleTable.setBeans(beanList)
+        logger.debug{"setAuditRecord bean count=${beanList.size}" }
+
 
         return true
     }
 
     fun setCounty(wantCounty: String) {
+        // if (auditRecord !is CountyAuditRecord) return
+        // auditRecord.
         val beanList = mutableListOf<StyleBean>()
-        for (bean in styleTable.beans) {
-            if (bean.getCounty() == wantCounty)
-                beanList.add(bean)
+        val styles = mvrManager!!.styles()
+        if (styles != null) {
+            styles.filter{ CountyAuditRecord.getCountyNameFrom(it.name()) == wantCounty }.forEach {
+                beanList.add(StyleBean(it))
+            }
         }
         styleTable.setBeans(beanList)
     }
@@ -123,10 +132,8 @@ class StyleTable(
 
     override fun saveState() {
         styleTable.saveState(false)
-
         prefs.putInt("splitPos1", split1.getDividerLocation())
     }
-
 
     class StyleBean(val style: StyleIF) {
         val styleName = style.name()

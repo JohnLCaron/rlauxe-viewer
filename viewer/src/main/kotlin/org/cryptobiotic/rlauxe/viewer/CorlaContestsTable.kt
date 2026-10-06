@@ -121,7 +121,7 @@ class CorlaContestsTable(
         contestCountyTable.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         this.onlyShowInprogressContests = prefs.getBoolean( "onlyInProgress", false)
 
         this.auditRecordLocation = auditRecordLocation

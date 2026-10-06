@@ -169,8 +169,12 @@ class Counties(
         fun getCvrInManifest() =  data?.cvrInManifest ?: 0
         fun getCvrNoManifest() =  data?.cvrNoManifest ?: 0
         fun getManifestNoCvr() =  data?.manifestNoCvr ?: 0
-        fun getNredacted() =  data?.countNredacted ?: 0
+        fun getRedactByStyle() =  data?.countNredacted ?: 0
         fun getMinCardsForVote() =  data?.minCards ?: 0
+        fun getCountBlankPrecincts() =  data?.countBlankPrecincts
+        fun getBallotStylesUnique() =  data?.ballotStylesUnique?.toString() ?: "unknown"
+        fun getBallotStyleMin() =  data?.ballotStyleMin
+        fun getPrecinctStyleMin() =  data?.precinctStyleMin
 
         // fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
         fun getMissing() =  if (data != null) (population - getCvrUnredacted() - getCvrRedacted()) else 0

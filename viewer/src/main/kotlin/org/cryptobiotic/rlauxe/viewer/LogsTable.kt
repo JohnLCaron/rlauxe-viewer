@@ -62,7 +62,7 @@ class LogsTable(
         localInfo.setFontSize(size)
     }
 
-    override fun setAuditRecord(auditRecordLocation: String): Boolean {
+    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         logger.debug { "LogsTable setAuditRecord $auditRecordLocation" }
         logsTable.setBeans(null)
 
