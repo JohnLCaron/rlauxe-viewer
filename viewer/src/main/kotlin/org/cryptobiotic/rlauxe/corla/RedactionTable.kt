@@ -7,7 +7,7 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CorlaCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.RedactedGroup
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
@@ -17,7 +17,7 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
-private val logger = KotlinLogging.logger("CountyCvrsTable")
+private val logger = KotlinLogging.logger("CountyRedactionTable")
 
 class CountyRedactionTable(
     val prefs: PreferencesExt,
@@ -85,8 +85,10 @@ class CountyRedactionTable(
         appendLine("B${bean.row.batchId}_T${bean.row.tabulatorNum}_R${bean.row.recordId}") // example B28_T30_R68
     }
 
-    fun setCorlaCvrs(corlaCvrs: CorlaRawCvrsIF?) {
+    fun setCorlaCvrs(corlaCvrs: CorlaCvrsIF?) {
         if (corlaCvrs == null) return
+        logger.debug { "CountyRedactionTable setCorlaCvrs" }
+
         val redaction = corlaCvrs.redaction()
         val beanList = mutableListOf<RedactionBean>()
         redaction.groups().forEach {
@@ -101,6 +103,8 @@ class CountyRedactionTable(
             beanList2.add(CvrRowBean(redactedRow))
         }
         cvrTable.setBeans(beanList2)
+
+        logger.debug { "CountyRedactionTable setCorlaCvrs groups=${redaction.groups().size} rows=${redaction.redactedRows().size}" }
     }
 
     /*

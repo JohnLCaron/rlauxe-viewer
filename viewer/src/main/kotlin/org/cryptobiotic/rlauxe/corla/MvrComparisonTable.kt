@@ -45,6 +45,10 @@ class MvrComparisonTable(
             MvrComparisonBean::class.java, prefs.node("countyTable") as PreferencesExt, false,
             "All Mvrs", "Mvr", null
         )
+        mvrComparisonTable.addPopupOption(
+            "Show Row",
+            mvrComparisonTable.makeShowAction(infoTA, infoWindow) { bean: MvrComparisonBean -> showMvr(bean) }
+        )
         tables.add(mvrComparisonTable)
 
         setFontSize(fontSize)
@@ -61,15 +65,21 @@ class MvrComparisonTable(
         logger.debug { "CountyPoolTable init" }
     }
 
-    fun setColoradoInput(input: ColoradoInput) {
+    fun showMvr(bean: MvrComparisonBean) = buildString {
+        appendLine(mvrComparisonTable.tableModel.showBean(bean, MvrComparisonBean.beanProperties))
+    }
+
+    fun setColoradoInput(input: ColoradoInput, county: String? = null) {
         mvrComparisonTable.setBeans(emptyList())
+        // we want the low level details
         val (header, lines) = readContestComparisonCsv(input.mvrComparisonFile, county=null)
         MvrComparisonBean.checkHeaders(input, header)
 
         val mvrComparisions = mutableListOf<MvrComparisonBean>()
-
         lines.forEach {
-            mvrComparisions.add(MvrComparisonBean(header, it))
+            val bean = MvrComparisonBean(header, it)
+            if (county == null || bean.countyName == county)
+                mvrComparisions.add(bean)
         }
         mvrComparisonTable.setBeans(mvrComparisions)
     }
@@ -104,18 +114,18 @@ class MvrComparisonTable(
             // are there any headers not in headerNames?
         }
 
-        val county_name = valueMap["county_name"]
-        val contest_name = valueMap["contest_name"]
-        val imprinted_id = valueMap["imprinted_id"]
-        val ballot_type = valueMap["ballot_type"]
-        val choice_per_voting_computer = valueMap["choice_per_voting_computer"]
-        val audit_board_selection = valueMap["audit_board_selection"]
+        val countyName = valueMap["county_name"]
+        val contestName = valueMap["contest_name"]
+        val imprintedId = valueMap["imprinted_id"]
+        val ballotType = valueMap["ballot_type"]
+        val cvrSelection = valueMap["choice_per_voting_computer"]
+        val auditSelection = valueMap["audit_board_selection"]
         val consensus = valueMap["consensus"]
-        val record_type = valueMap["record_type"]
-        val audit_board_comment = valueMap["audit_board_comment"]
+        val recordType = valueMap["record_type"]
+        val auditBoardComment = valueMap["audit_board_comment"]
         val timestamp = valueMap["timestamp"]
-        val cvr_id = valueMap["cvr_id"]
-        val audit_reason = valueMap["audit_reason"]
+        val cvrId = valueMap["cvr_id"]
+        val auditReason = valueMap["audit_reason"]
 
         companion object {
             @JvmStatic
@@ -134,15 +144,17 @@ class MvrComparisonTable(
             @JvmStatic
             val beanProperties = listOf(
                 TableBeanProperty("countyName", "county name"),
-                TableBeanProperty("countyPoolId", "county name"),
-                TableBeanProperty("population", "county population from round.ballotCardCount"),
-                TableBeanProperty("totalCards", "number of cvrs in the pool"),
-                TableBeanProperty("diffCards", "population - totalCards"),
-                TableBeanProperty("diffCardsPct", "(population - totalCards)/population"),
-                TableBeanProperty("acNvotes", "auditcenter.votes"),
-                TableBeanProperty("cvrNvotes", "cvr.votes"),
-                TableBeanProperty("diffNvotes", "auditcenter.votes - cvr.votes"),
-                TableBeanProperty("pctDiffNvotes", "(auditcenter.votes - cvr.votes)/auditcenter.votes"),
+                TableBeanProperty("contestName", "contest name"),
+                TableBeanProperty("imprintedId", "imprinted id"),
+                TableBeanProperty("ballotType", "ballot type"),
+                TableBeanProperty("cvrSelection", "choice on the CVR (choice_per_voting_computer)"),
+                TableBeanProperty("auditSelection", "choice from MVR (audit_board_selection)"),
+                TableBeanProperty("consensus", "consensus"),
+                TableBeanProperty("recordType", "record_type"),
+                TableBeanProperty("auditBoardComment", "audit board comment"),
+                TableBeanProperty("timestamp", "timestamp"),
+                TableBeanProperty("cvrId", "internal database id (cvr_id)"),
+                TableBeanProperty("auditReason", "audit reason"),
             )
         }
     }

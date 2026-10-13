@@ -5,6 +5,7 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.cryptobiotic.rlauxe.auditcenter.AuditReason
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2020General
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2022Primary
 import org.cryptobiotic.rlauxe.corlaInput.Colorado2024General
@@ -204,10 +205,12 @@ class ColoradoInputTable(
             return contest.counties.toList()
         }
 
-        fun getTarget() = if (targeted()) "YES" else ""
-
-        fun targeted(): Boolean {
-            return false
+        fun getTarget(): String? {
+            return when (mcontest.auditReason) {
+                AuditReason.county_wide_contest -> "county"
+                AuditReason.state_wide_contest -> "state"
+                else -> null
+            }
         }
 
         fun statewide(): Boolean {
@@ -228,7 +231,7 @@ class ColoradoInputTable(
                 TableBeanProperty("countyPoolId", "county name"),
                 TableBeanProperty("marginInVotes", "from round.min_margin"),
                 TableBeanProperty("nsamples", "from round.optimistic_samples_to_audit"),
-                TableBeanProperty("nc", "contest population from round.contestBallotBardBount"),
+                TableBeanProperty("nc", "contest population from round.contestBallotCardCount"),
                 TableBeanProperty("npop", "county population from round.ballotCardCount"),
                 TableBeanProperty("riskLimit", "from round.risk_limit"),
                 TableBeanProperty("voteForN", "from round.winners_allowed"),
