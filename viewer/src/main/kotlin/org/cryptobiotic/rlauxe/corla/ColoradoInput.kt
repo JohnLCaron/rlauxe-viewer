@@ -7,7 +7,6 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
-import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
@@ -18,16 +17,16 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 
 class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
-
     var corlaInputPanel: ColoradoInputTable
     var countyTabPanel: Counties
+    var mvrSamplePanel: MvrSampleTable
     var mvrComparisonPanel: MvrComparisonTable
 
     var countyCvrTabs  = JTabbedPane(JTabbedPane.TOP)
     var countyCvrsTable: CountyCvrsTable
     var countyRedactionTable: CountyRedactionTable
     var countySchemaTable: CountySchemaTable
-    var countyMvrTable: CountyMvrTable
+    var countyMvrTable: MvrSampleTable
 
     var currentInput: ColoradoInput? = null
     var currentCountyInput: CorlaCountyInput? = null
@@ -42,9 +41,14 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         activePanels.add(corlaInputPanel)
 
         countyTabPanel = Counties((prefs.node("Counties") as PreferencesExt),
-            infoTA, infoWindow, fontSize) { setCountyInput(it) }
+            infoTA, infoWindow, fontSize, { setCountyInput(it)}, { setCounty(it)})
         topTabs.addTab("Counties", countyTabPanel)
         activePanels.add(countyTabPanel)
+
+        mvrSamplePanel = MvrSampleTable((prefs.node("mvrSamplePanel") as PreferencesExt),
+            infoTA, infoWindow, fontSize)
+        topTabs.addTab("Mvr Samples", mvrSamplePanel)
+        activePanels.add(mvrSamplePanel)
 
         mvrComparisonPanel = MvrComparisonTable((prefs.node("mvrComparisonPanel") as PreferencesExt),
             infoTA, infoWindow, fontSize)
@@ -75,7 +79,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         countyCvrTabs.addTab("CountySchema", countySchemaTable)
         activePanels.add(countySchemaTable)
 
-        countyMvrTable = CountyMvrTable((prefs.node("countyMvrTable") as PreferencesExt),
+        countyMvrTable = MvrSampleTable((prefs.node("countyMvrTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("CountyMvrs", countyMvrTable)
         activePanels.add(countyMvrTable)
@@ -124,9 +128,10 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
     fun setInput(input: ColoradoInput) {
         currentInput = input
         countyTabPanel.setColoradoInput(input)
+        mvrSamplePanel.setColoradoInput(input, null)
         mvrComparisonPanel.setColoradoInput(input)
         headerLabel.setText(input.name)
-        logger.info{"ViewerMain.setAuditRecord to $auditRecordDir"}
+        logger.info{"ColoradoInput.setAuditRecord to $auditRecordDir"}
     }
 
     fun setCountyInput(countyInput: CorlaCountyInput) {
@@ -142,6 +147,12 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         headerLabel.setText("${currentInput!!.name} : ${countyInput.countyName} County")
     }
 
+    fun setCounty(countyName: String) {
+        mvrSamplePanel.setColoradoInput(currentInput!!, countyName)
+        mvrComparisonPanel.setColoradoInput(currentInput!!, countyName)
+        headerLabel.setText("${currentInput!!.name} : ${countyName} County")
+    }
+
     fun showInfo() = buildString {
         if (currentCountyInput != null) {
             val cc = currentCountyInput!!
@@ -151,10 +162,10 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
             appendLine("cvrsSource = ${cc.cvrsSource}")
             appendLine()
             val corlaCvrs = countyCvrsTable.corlaCvrs!!
-            appendLine("         cvrs = ${nfn(corlaCvrs.cvrs().size, 6)}")
+            appendLine("         cvrs = ${nfn(corlaCvrs.nrows(), 6)}")
             val nredactedCvrs = corlaCvrs.redaction().nredactedCvrs()
             appendLine("redacted cvrs = ${nfn(nredactedCvrs, 6)}")
-            appendLine("   total cvrs = ${nfn(corlaCvrs.cvrs().size + nredactedCvrs, 6)}")
+            appendLine("   total cvrs = ${nfn(corlaCvrs.nrows() + nredactedCvrs, 6)}")
             appendLine()
             appendLine("# contests = ${corlaCvrs.schema.contests.size}")
             appendLine("# redactedGroups = ${corlaCvrs.redaction().groups().size}")

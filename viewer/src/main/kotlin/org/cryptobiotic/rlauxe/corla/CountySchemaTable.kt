@@ -9,7 +9,7 @@ import org.cryptobiotic.rlauxe.auditcenter.CanonicalContest
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
-import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CorlaCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.corlacvr.SchemaColumnInfo
 import org.cryptobiotic.rlauxe.corlacvr.SchemaContestInfo
@@ -39,7 +39,7 @@ class CountySchemaTable(
     private val choiceTable: BeanTable<SchemaChoiceBean>
     private val stylesTable: BeanTable<SchemaStyleBean>
 
-    var currentCorlaCvrs: CorlaRawCvrsIF? = null
+    var currentCorlaCvrs: CorlaCvrsIF? = null
     var currentStateInput: ColoradoInput? = null
     var currentCountyName: String? = null
 
@@ -70,7 +70,7 @@ class CountySchemaTable(
 
         stylesTable = BeanTable(
             SchemaStyleBean::class.java, prefs.node("stylesTable") as PreferencesExt, false,
-            "Styles", "CvrCardStyle", null
+            "CvrCardStyle", "CvrCardStyle", null
         )
         tables.add(stylesTable)
 
@@ -136,7 +136,7 @@ class CountySchemaTable(
         }
     }
 
-    fun setCorlaInput(countyName: String, stateInput: ColoradoInput, corlaCvrs: CorlaRawCvrsIF?) {
+    fun setCorlaInput(countyName: String, stateInput: ColoradoInput, corlaCvrs: CorlaCvrsIF?) {
         if (corlaCvrs == null) return
         currentStateInput = stateInput
         currentCorlaCvrs = corlaCvrs
@@ -240,8 +240,8 @@ class CountySchemaTable(
 ////////////////////////////////////////////////////////////////
 
 class SchemaStyleBean(val cvrStyle: CvrCardStyle) {
-    val name = cvrStyle.name
-    val contestIdxs = cvrStyle.contestIds
+    val ballotType = cvrStyle.ballotType
+    val contestIds = cvrStyle.contestIds
     val ncards = cvrStyle.ncards
 
     companion object {

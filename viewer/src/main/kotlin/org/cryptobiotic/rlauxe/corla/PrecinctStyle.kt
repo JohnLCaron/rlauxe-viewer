@@ -7,7 +7,7 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.corlacvr.CorlaRawCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CorlaCvrsIF
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -32,7 +32,7 @@ class PrecinctStyle(
 
     private val split1: JSplitPane
 
-    var corlaCvrs: CorlaRawCvrsIF? = null
+    var corlaCvrs: CorlaCvrsIF? = null
 
     init {
         precinctStyleTable = BeanTable(
@@ -62,7 +62,7 @@ class PrecinctStyle(
         localInfo.setFontSize(size)
     }
 
-    fun setCvrs(cvrs: CorlaRawCvrsIF) {
+    fun setCvrs(cvrs: CorlaCvrsIF) {
         corlaCvrs = cvrs
 
         val styleCounters = mutableMapOf<Pair<String, String>, Int>()

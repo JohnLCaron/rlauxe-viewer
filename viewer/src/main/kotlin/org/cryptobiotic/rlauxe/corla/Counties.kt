@@ -32,6 +32,7 @@ class Counties(
     val infoWindow: IndependentWindow,
     fontSize: Float,
     val setCountyInput: (CorlaCountyInput) -> Unit,
+    val setCounty: (String) -> Unit,
 ) : JPanel(), SubPanelIF {
 
     val tables = mutableListOf<BeanTable<out Any>>()
@@ -61,6 +62,8 @@ class Counties(
             countyTable.makeActionOnCurrentBean { bean: CountyTabBean? ->
                 if (bean?.corlaCountyInput != null) {
                     setCountyInput(bean.corlaCountyInput)
+                } else if (bean != null) {
+                    setCounty(bean.county)
                 }
                 return@makeActionOnCurrentBean ((bean?.corlaCountyInput != null))
             }
@@ -103,13 +106,15 @@ class Counties(
         val requireCountyInput = (input is ColoradoInputWithCvrs)
         val inputWithCvrs: ColoradoInputWithCvrs? = if (input is ColoradoInputWithCvrs) input else null
 
-        val filename = when(input.name) {
+        val filename = when (input.name) { // TODO
             "Colorado2020General" -> "/home/stormy/datadrive/rla/cases/corlaState/2020/countyInputData.csv"
             "Colorado2026PwithCvrs" -> "/home/stormy/datadrive/rla/cases/corlaState/2026p/countyInputData.csv"
             else -> null
         }
-        val inputDataMap = if (filename == null) emptyMap() else
-            readCountyInputData(filename).associateBy{ it.county }
+        val inputDataMap = if (filename == null) emptyMap() else {
+            println("reading CountyInputData from $filename")
+            readCountyInputData(filename).associateBy { it.county }
+        }
 
         logger.info { (inputDataMap.toString()) }
 
@@ -169,10 +174,11 @@ class Counties(
         fun getCvrInManifest() =  data?.cvrInManifest ?: 0
         fun getCvrNoManifest() =  data?.cvrNoManifest ?: 0
         fun getManifestNoCvr() =  data?.manifestNoCvr ?: 0
-        fun getRedactByStyle() =  data?.countNredacted ?: 0
+        fun getPythonNredact() =  data?.pythonNredact ?: 0
+        fun getRlauxeNredact() =  data?.rlauxeNredact ?: 0
         fun getMinCardsForVote() =  data?.minCards ?: 0
-        fun getCountBlankPrecincts() =  data?.countBlankPrecincts
-        fun getBallotStylesUnique() =  data?.ballotStylesUnique?.toString() ?: "unknown"
+        fun getBlankPrecinct() =  data?.countBlankPrecincts
+        fun getBallotTypesUnique() =  data?.ballotStylesUnique?.toString() ?: "unknown"
         fun getBallotStyleMin() =  data?.ballotStyleMin
         fun getPrecinctStyleMin() =  data?.precinctStyleMin
 
@@ -200,7 +206,7 @@ class Counties(
 
                 TableBeanProperty("manifestCount", "number of entries in the manifest"),
                 TableBeanProperty("cvrUnredacted", "count of unredacted Cvrs"),
-                TableBeanProperty("cvrRedacted", "count of redacted Cvrs"),
+                TableBeanProperty("cvrRedacted", "count of redacted Cvrs in existing file"),
                 TableBeanProperty("cvrInManifest", "count of Cvrs that match entries in the Manifest"),
                 TableBeanProperty("cvrNoManifest", "count of Cvrs that dont match entries in the Manifest"),
                 TableBeanProperty("manifestNoCvr", "count of Manifest entries that dont match cvrs"),
@@ -208,6 +214,10 @@ class Counties(
                 // TableBeanProperty("totalCvrs", "ncvrs + redactedCvrs"),
                 TableBeanProperty("missing", "manifestCount - (cvrUnredacted + cvrRedacted)"),
                 TableBeanProperty("minCardsForVote", "minimum cards needed for missing votes"),
+                TableBeanProperty("ballotTypesUnique", "ballotTypes have unique styles (contest pattern)"),
+                TableBeanProperty("blankPrecinct", "number of rows with blank precinct column"),
+                TableBeanProperty("pythonNredact", "number of additional redaction made by python anonimizer"),
+                TableBeanProperty("rlauxeNredact", "number of additional redaction made by rlauxe anonimizer"),
             )
         }
     }
