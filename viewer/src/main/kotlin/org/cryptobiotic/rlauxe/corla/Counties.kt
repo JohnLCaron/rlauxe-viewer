@@ -109,37 +109,30 @@ class Counties(
         // val requireCountyInput = (input is StatewideInputWithCvrs)
         val inputWithCvrs: StatewideInputWithCvrs? = if (input is StatewideInputWithCvrs) input else null
 
-        val countySummaryData = when (input.name()) { // TODO
-            "Statewide2020General" -> "/resources/data/cases/corla/countySummaryData/Statewide2020General.csv"
-            "Statewide2026PwithCvrs" -> "/resources/data/cases/corla/countySummaryData/Statewide2026PwithCvrs.csv"
-            else -> null
-        }
-        val inputDataMap = if (countySummaryData == null) emptyMap() else {
+        val countySummaryData ="/resources/data/cases/corla/countySummaryData/${input.name()}.csv"
+        val inputDataMap = try {
             println("reading CountyInputData from $countySummaryData")
             CountyInputData.readFromResource(countySummaryData).associateBy { it.county }
+        } catch (e: Exception) {
+            emptyMap()
         }
         logger.debug { inputDataMap.toString() }
 
-        val redactedCountFilename = when (input.name()) { // TODO
-            "Statewide2020General" -> "/resources/data/cases/corla/redactedCount/Statewide2020General.csv"
-            "Statewide2026PwithCvrs" -> "/resources/data/cases/corla/redactedCount/Statewide2026PwithCvrs.csv"
-            else -> null
-        }
-        val redactedCountMap = if (redactedCountFilename == null) emptyMap() else {
-            println("reading RedactedCount from $redactedCountFilename")
+        val redactedCountFilename = "/resources/data/cases/corla/redactedCount/${input.name()}.csv"
+        val redactedCountMap = try {
+            println("reading RedactionCount from $redactedCountFilename")
             RedactionCount.readFromResource(redactedCountFilename)
+        } catch (e: Exception) {
+            emptyMap()
         }
         logger.debug { redactedCountMap.toString() }
 
         val countyContests = mutableListOf<CountyTabBean>()
         input.countyTabsAllContests().forEach { (county, countyTab) ->
             val corlaCountyInput = inputWithCvrs?.corlaCountyInput(county)
-            //if (!requireCountyInput || (corlaCountyInput != null)) {
-            //    logger.info { "$county = ${inputDataMap[county]}" }
 
-            countyContests.add(CountyTabBean(county, countyTab, strataMap[county], corlaCountyInput, inputDataMap[county],
-                redactedCountMap[county]))
-            //}
+            countyContests.add(CountyTabBean(county, countyTab, strataMap[county], corlaCountyInput,
+                inputDataMap[county], redactedCountMap[county]))
         }
         countyTable.setBeans(countyContests)
     }
@@ -197,7 +190,7 @@ class Counties(
         fun getPrecinctStyleMin() =  data?.precinctStyleMin
 
         // fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
-        fun getMissing() =  if (data != null) (total - getCvrUnredacted() - getCvrRedacted()) else 0
+        fun getMissing() =  if (data != null) (getManifest() - getCvrUnredacted() - getCvrRedacted()) else 0
         fun getPhantoms() =  if (data != null) (total - getManifest()) else 0
 
         fun show() = buildString {
@@ -207,7 +200,7 @@ class Counties(
 
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "countyTab strata countyInput data"
+            fun hiddenProperties() = "countyTab strata countyInput data rc"
 
             @JvmStatic
             val beanProperties = listOf(

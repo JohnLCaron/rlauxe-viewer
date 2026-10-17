@@ -13,6 +13,7 @@ import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.corlacvr.CvrRow
 import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
+import org.cryptobiotic.rlauxe.corlacvr.cleanCsvString
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.util.sfn
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
@@ -127,38 +128,31 @@ class CountyCvrsTable(
         }
     }
 
-    class UniqueContests() {
-        val contests = mutableMapOf<Set<Int>, Int>() // count unique contests within the precinct
+    data class PrecinctCardStyle(val cardStyle: CvrCardStyle, val precinct: String) {
         var ncards = 0
-        var styleMap = emptyMap<CvrCardStyle, Int>()
-
-        fun convert(ballotType: String, cardStyleMap: Map<CardStyleId, CvrCardStyle>) {
-            styleMap = contests.mapKeys { cardStyleMap[CardStyleId(ballotType, it.key)]!!}
-        }
     }
 
-    fun setStyles(cvrs: CorlaCountyCvrsIF) {
-        corlaCvrs = cvrs
-        this.cardStyleMap = cvrs.cardStyleMap()
+    fun setStyles(corlaCvrs: CorlaCountyCvrsIF) {
+        this.cardStyleMap = corlaCvrs.cardStyleMap()
 
-        val styleCounters = mutableMapOf<Pair<String, String>, UniqueContests>()
-        corlaCvrs!!.cvrs().forEach { cvr ->
-            val id = Pair(cvr.ballotType, cvr.precinctPortion ?: "none")
-            val unique = styleCounters.getOrPut(id) { UniqueContests() }
-            val count = unique.contests.getOrDefault(cvr.contests(), 0)
-            unique.contests[cvr.contests()] = count + 1
-            unique.ncards++
+        val precinctStyles = mutableMapOf<PrecinctCardStyle, PrecinctCardStyle>()
+        corlaCvrs.cvrs().forEach { cvr ->
+            val cleanBallotType = cleanCsvString(cvr.ballotType) // no commas
+            val cvrStyleId = CardStyleId(cleanBallotType, cvr.contests())
+            val cardStyle = cardStyleMap[cvrStyleId]!!
+            val key = PrecinctCardStyle(cardStyle, cvr.precinctPortion ?: "")
+            val precinctStyle = precinctStyles.getOrPut(key) { key }
+            precinctStyle.ncards++
         }
-        styleCounters.forEach { it.value.convert(it.key.first, this.cardStyleMap) }
 
         val beanList = mutableListOf<PrecinctStyleBean>()
-        styleCounters.forEach {
-            beanList.add(PrecinctStyleBean(it.key.first, it.key.second, it.value))
+        precinctStyles.values.forEach {
+            beanList.add(PrecinctStyleBean(it))
         }
         precinctStyleTable.setBeans(beanList)
 
         val styleList = mutableListOf<SchemaStyleBean>()
-        cvrs.cardStyles().forEach {
+        corlaCvrs.cardStyles().forEach {
             styleList.add(SchemaStyleBean(it))
         }
         stylesTable.setBeans(styleList)
@@ -166,8 +160,6 @@ class CountyCvrsTable(
 
     fun showPrecinctStyleInfo() = buildString {
         val cardCount = precinctStyleTable.beans.sumOf { it.ncards }
-
-        val pcuCount = precinctStyleTable.beans.sumOf { it.uniqueContestSets }
 
         data class PrecinctStyle(val precinct: String, val style: Set<Int>)
 
@@ -211,7 +203,7 @@ class CountyCvrsTable(
         }
 
         appendLine("cardCount = $cardCount")
-        appendLine("unique precinct/styles = $pcuCount")
+        appendLine("unique precinct/styles = ${precinctStyleTable.beans.size}")
         appendLine("count rare precinct/styles = ${countRarePrecinctStyles} out of ${uniquePrecinctStyles.size} = ${countRarePrecinctStyleCards} cards")
         appendLine()
         appendLine("unique ballotType/styles = ${stylesTable.beans.size}")
@@ -252,10 +244,11 @@ class CvrRowBean(val row: CvrRow) {
     }
 }
 
-class PrecinctStyleBean(val ballotType: String, val precinctPortion: String, val unique: CountyCvrsTable.UniqueContests) {
-    val uniqueContestSets = unique.contests.size
-    val styleCounts = unique.styleMap
-    val ncards = unique.ncards
+class PrecinctStyleBean(precinctStyle: CountyCvrsTable.PrecinctCardStyle) {
+    val cardType = precinctStyle.cardStyle.cardType
+    val contestIds = precinctStyle.cardStyle.contestIds
+    val ncards = precinctStyle.ncards
+    val precinctPortion = precinctStyle.precinct
 
     companion object {
         @JvmStatic

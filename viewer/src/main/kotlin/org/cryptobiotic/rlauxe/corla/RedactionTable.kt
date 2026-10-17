@@ -96,13 +96,13 @@ class CountyRedactionTable(
         if (redaction.groups().isNotEmpty()) {
             val first = redaction.groups().first()
             val totalGroup = RedactedGroup("---Totals---", first.firstCsv, first.schema)
+            totalGroup.fixedNcards = null
 
             val beanList = mutableListOf<RedactionBean>()
             redaction.groups().forEach {
                 beanList.add(RedactionBean(it))
-                totalGroup.nlines += it.nlines
                 totalGroup.setNcards += it.ncards()
-                totalGroup.merge(it)
+                totalGroup.merge(it) // this adds nlines
             }
             beanList.add(RedactionBean(totalGroup))
 

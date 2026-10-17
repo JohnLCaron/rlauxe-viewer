@@ -5,13 +5,13 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.auditcenter.CanonicalContest
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.printTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.corlaInput.CountyInput
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
+import org.cryptobiotic.rlauxe.corlaInput.isWriteIn
 import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.corlacvr.SchemaColumnInfo
@@ -98,7 +98,7 @@ class CountySchemaTable(
 
     fun showSchemaContest(bean: SchemaContestBean) = buildString {
         append(showContestWithDesc(bean, contestTable.tableModel, null))
-        appendLine(bean.scontest.toString())
+        appendLine(bean.scontest.show())
         appendLine("choices")
         val start = bean.scontest.startCol
         repeat(bean.scontest.ncols) {
@@ -107,13 +107,16 @@ class CountySchemaTable(
         appendLine()
 
         val input = currentStateInput
-        if ((input != null) && bean.getFailMatch() == "FAIL") {
+        if ((input != null) && bean.getMatch() == "FAIL") {
             val wantContestName = bean.scontest.contestName
+            val canon = input.matchCanonicalContest(currentCountyName!!, wantContestName)
+
             val cleanedName = currentCountyInput!!.contestNameCleanup(wantContestName)
             bean.scontest.contestName
             appendLine()
-            appendLine("Cvr contest '$wantContestName' cleaned='$cleanedName' does not match a canonical contest. Possible match(es) are:")
+            appendLine("Cvr contest '$wantContestName' cleaned='$cleanedName' canonical contest = $canon")
             appendLine()
+            /*
             val expectMunge = input.contestNameMunged(currentCountyName!!, wantContestName)
             var nmatch = 0
             var singleton: CanonicalContest? = null
@@ -149,7 +152,7 @@ class CountySchemaTable(
             }
             if (nmatch == 1) {
                 appendLine("\n*** Single candidate = '${singleton!!.contestName}'")
-            }
+            } */
         }
     }
 
@@ -159,11 +162,11 @@ class CountySchemaTable(
         currentCorlaCvrs = corlaCvrs
         currentCountyInput = countyInput
         currentCountyName = countyInput.name()
+        logger.debug { "set county $currentCountyName stateInput=${stateInput.name()} corlaCvrs=${corlaCvrs.electionName}" }
 
         val beanList = mutableListOf<SchemaContestBean>()
         corlaCvrs.schema.contests.forEach {
-            beanList.add(SchemaContestBean(this, it, false))
-            beanList.add(SchemaContestBean(this, it, true))
+            beanList.add(SchemaContestBean(this, it))
         }
         contestTable.setBeans(beanList)
 
@@ -178,7 +181,10 @@ class CountySchemaTable(
         val beanList = mutableListOf<SchemaChoiceBean>()
         val start = bean.scontest.startCol
         repeat(bean.scontest.ncols) {
-            beanList.add(SchemaChoiceBean(this, bean, currentCorlaCvrs!!.schema.columns[start + it]))
+            val choice = currentCorlaCvrs!!.schema.columns[start + it].choiceName
+            if (!isWriteIn(choice)) {
+                beanList.add(SchemaChoiceBean(this, bean, currentCorlaCvrs!!.schema.columns[start + it]))
+            }
         }
         choiceTable.setBeans(beanList)
     }
@@ -216,12 +222,12 @@ class CountySchemaTable(
         }
     }
 
-    fun canonicalName(scontest: SchemaContestInfo): String {
-        val cc = currentStateInput!!.matchCanonicalContest(currentCountyName!!, scontest.contestName)
+    fun canonicalContest(scontest: SchemaContestInfo): String {
+        val cc = currentStateInput!!.matchCanonicalContest(currentCountyName!!, scontest.contestName.trim())
         return cc?.contestName ?: ""
     }
 
-    fun canononicalChoice(scontest: SchemaContestInfo, choice: String): String {
+    fun canonicalChoice(scontest: SchemaContestInfo, choice: String): String {
         val cc = currentStateInput!!.matchCanonicalContest(currentCountyName!!, scontest.contestName)
         if (cc == null) return ""
         return currentStateInput!!.matchCanonicalCandidate(currentCountyName!!, cc, choice) ?: ""
@@ -242,11 +248,12 @@ class CountySchemaTable(
     //    val isIRV: Boolean
     //    val nchoices: Int
     //    val voteForN: Int
-    class SchemaContestBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestInfo, val canon: Boolean) {
+    class SchemaContestBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestInfo) {
         val contestIdx = scontest.contestIdx
-        val contestName = if (canon) schemaTable.canonicalName(scontest) else scontest.contestName
+        val contestName = scontest.contestName
+        val canonName = schemaTable.canonicalContest(scontest)
 
-        fun getFailMatch() = if (!schemaTable.hasMatch(scontest)) "FAIL" else ""
+        fun getMatch() = if (canonName == "") "FAIL" else if (canonName != contestName) "*" else ""
 
         companion object {
             @JvmStatic
@@ -270,9 +277,9 @@ class CountySchemaTable(
         val choice = colInfo.choiceName
         val party = colInfo.headerName
         val colno = colInfo.colno
-        val canon = schemaTable.canononicalChoice(sbean.scontest, choice)
+        val canon = schemaTable.canonicalChoice(sbean.scontest, choice)
 
-        fun getFailMatch() = if (choice != canon) "FAIL" else ""
+        fun getMatch() = if (canon == "") "FAIL" else if (canon != choice) "*" else ""
 
         companion object {
             @JvmStatic
@@ -284,7 +291,7 @@ class CountySchemaTable(
 ////////////////////////////////////////////////////////////////
 
 class SchemaStyleBean(val cvrStyle: CvrCardStyle) {
-    val ballotType = cvrStyle.ballotType
+    val cardType = cvrStyle.cardType
     val contestIds = cvrStyle.contestIds
     val ncards = cvrStyle.ncards
 
