@@ -5,20 +5,16 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.apache.commons.csv.CSVFormat
-import org.apache.commons.csv.CSVParser
 import org.cryptobiotic.rlauxe.auditcenter.ComparisonMvr
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.cryptobiotic.rlauxe.corlaInput.ColoradoInputWithManifests
+import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
-import java.io.File
-import java.nio.charset.Charset
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
@@ -63,7 +59,7 @@ class MvrSampleTable(
         logger.debug { "CountyPoolTable init" }
     }
 
-    fun setColoradoInput(stateInput: ColoradoInput, county: String?) {
+    fun setColoradoInput(stateInput: StatewideInput, county: String?) {
         mvrSampleTable.setBeans(emptyList())
         val ccmvrs = stateInput.cardComparison().mvrs
         val mvrComparisions = mutableListOf<MvrSampleBean>()

@@ -8,6 +8,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -58,7 +59,7 @@ class CountyMvrTable(
         logger.debug { "CountyPoolTable init" }
     }
 
-    fun setColoradoInput(input: ColoradoInput, county: String) {
+    fun setColoradoInput(input: StatewideInput, county: String) {
         mvrComparisonTable.setBeans(emptyList())
         val (header, lines) = readContestComparisonCsv(input.mvrComparisonFile, county)
         MvrComparisonBean.checkHeaders(input, header)
@@ -124,7 +125,7 @@ class CountyMvrTable(
             fun checkHeaders(input: ColoradoInput, headers: List<String>) {
                 headers.forEach {
                     if (!headerSet.contains(it))
-                        logger.warn { "Header $it is not present in ${input.name}" }
+                        logger.warn { "Header $it is not present in ${input.name()}" }
                 }
             }
 

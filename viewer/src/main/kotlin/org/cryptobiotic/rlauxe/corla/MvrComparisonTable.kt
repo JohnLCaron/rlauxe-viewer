@@ -10,6 +10,7 @@ import org.apache.commons.csv.CSVParser
 import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -69,7 +70,7 @@ class MvrComparisonTable(
         appendLine(mvrComparisonTable.tableModel.showBean(bean, MvrComparisonBean.beanProperties))
     }
 
-    fun setColoradoInput(input: ColoradoInput, county: String? = null) {
+    fun setColoradoInput(input: StatewideInput, county: String? = null) {
         mvrComparisonTable.setBeans(emptyList())
         // we want the low level details
         val (header, lines) = readContestComparisonCsv(input.mvrComparisonFile, county=null)
@@ -137,7 +138,7 @@ class MvrComparisonTable(
             fun checkHeaders(input: ColoradoInput, headers: List<String>) {
                 headers.forEach {
                     if (!headerSet.contains(it))
-                        logger.warn { "Header $it is not present in ${input.name}" }
+                        logger.warn { "Header $it is not present in ${input.name()}" }
                 }
             }
 

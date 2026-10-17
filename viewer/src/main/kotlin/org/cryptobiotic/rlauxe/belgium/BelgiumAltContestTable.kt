@@ -211,7 +211,7 @@ class BelgiumAltContestTable(
     }
 
     fun makeSeatTotals(beans: MutableList<PartyBean>): PartyBean {
-        val total = PartyRange(0, "--Total--")
+        val total = PartyRange(0, "--Total--", 0)
         beans.forEach {
             val pr = it.partyRange
             total.minSeats += pr.minSeats
@@ -278,7 +278,7 @@ class BelgiumAltContestTable(
             }
         }
         val coal = allSeats!!.calcCoalition(candidates, partyNames)
-        val cand = PartyRange(0, "Total")
+        val cand = PartyRange(0, "Total", 0)
         cand.reportedSeats = coal.reportedSeats()
         cand.minSeats = coal.minSeats()
         cand.maxSeats = coal.maxSeats()

@@ -66,7 +66,6 @@ class CountySampling(
 
     var wantNmvrs = emptyMap<Int, Int>()
 
-    // fun sampleCountyCvrs(wantNmvrs: Map<Int, Int>, cvrs: List<AuditableCard>, maxSamples: Int, ntrials: Int): List<Int> {
     var dist = emptyList<Int>()
 
     init {

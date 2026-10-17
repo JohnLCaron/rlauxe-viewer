@@ -7,9 +7,9 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlaInput.CountyInput
 import org.cryptobiotic.rlauxe.corlacvr.CardStyleId
-import org.cryptobiotic.rlauxe.corlacvr.CorlaCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.corlacvr.CvrRow
 import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
@@ -42,7 +42,7 @@ class CountyCvrsTable(
     private val split1: JSplitPane
     private val split2: JSplitPane
 
-    var corlaCvrs: CorlaCvrsIF? = null
+    var corlaCvrs: CorlaCountyCvrsIF? = null
     var cardStyleMap = emptyMap<CardStyleId, CvrCardStyle>()
 
     init {
@@ -54,15 +54,15 @@ class CountyCvrsTable(
             "Show Cvr",
             cvrTable.makeShowAction(infoTA, infoWindow) { bean: CvrRowBean -> showSelectedRow(bean) }
         )
+        cvrTable.addPopupOption(
+            "Show Precinct Style info",
+            cvrTable.makeShowAction(infoTA, infoWindow) { showPrecinctStyleInfo() }
+        )
         tables.add(cvrTable)
 
         precinctStyleTable = BeanTable(
             PrecinctStyleBean::class.java, prefs.node("precinctStyleTable") as PreferencesExt, false,
             "Precinct Styles", "CvrRow", null
-        )
-        cvrTable.addPopupOption(
-            "Show Precinct Style info",
-            cvrTable.makeShowAction(infoTA, infoWindow) { showPrecinctStyleInfo() }
         )
         tables.add(precinctStyleTable)
 
@@ -102,7 +102,7 @@ class CountyCvrsTable(
         append(bean.show(corlaCvrs!!.schema))
     }
 
-    fun setCountyInput(countyInput: CorlaCountyInput) {
+    fun setCountyInput(countyInput: CountyInput) {
         val maxRead = 11111
 
         try {
@@ -137,7 +137,7 @@ class CountyCvrsTable(
         }
     }
 
-    fun setStyles(cvrs: CorlaCvrsIF) {
+    fun setStyles(cvrs: CorlaCountyCvrsIF) {
         corlaCvrs = cvrs
         this.cardStyleMap = cvrs.cardStyleMap()
 
@@ -206,6 +206,7 @@ class CountyCvrsTable(
             if (ncards < 10) {
                 countRareStyles++
                 countRareStyleCards += ncards
+                appendLine("rare style = ${style} ncards=$ncards")
             }
         }
 

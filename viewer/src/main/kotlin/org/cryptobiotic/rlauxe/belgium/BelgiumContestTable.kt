@@ -358,7 +358,7 @@ class BelgiumContestTable(
         }
         val allcoal = allSeats!!.calcCoalition(candidates, partyNames)
 
-        val cand = PartyRange(0, "-- coalition --")
+        val cand = PartyRange(0, "-- coalition --", 0)
         cand.reportedSeats = allcoal.reportedSeats()
         cand.minSeats = allcoal.minSeats()
         cand.maxSeats = allcoal.maxSeats()
@@ -384,7 +384,7 @@ class BelgiumContestTable(
             }
         }
         val coal = allSeats!!.calcCoalition(candidates, partyNames)
-        val cand = PartyRange(0, "Total")
+        val cand = PartyRange(0, "Total", 0)
         cand.reportedSeats = coal.reportedSeats()
         cand.minSeats = coal.minSeats()
         cand.maxSeats = coal.maxSeats()
