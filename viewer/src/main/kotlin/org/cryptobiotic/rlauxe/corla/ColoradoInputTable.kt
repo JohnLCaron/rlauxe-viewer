@@ -17,8 +17,7 @@ import org.cryptobiotic.rlauxe.corlaInput.Statewide2026PwithCvrs
 import org.cryptobiotic.rlauxe.corlaInput.MergedContestInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2023Coordinated
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2025Coordinated
+import org.cryptobiotic.rlauxe.corlaInput.StatewideInputWithCvrs
 import org.cryptobiotic.rlauxe.corlaInput.statewideInputs
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.BAMutil
@@ -139,6 +138,7 @@ class ColoradoInputTable(
         val ncontests = input.ncontests()
         val uncontested = input.nuncontested()
         val contested = ncontests - uncontested
+        val hasCvrs = input is StatewideInputWithCvrs
 
         companion object {
             @JvmStatic
