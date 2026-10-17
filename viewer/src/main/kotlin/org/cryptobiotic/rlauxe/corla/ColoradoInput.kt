@@ -5,8 +5,8 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
-import org.cryptobiotic.rlauxe.corlaInput.CorlaCountyInput
+import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
+import org.cryptobiotic.rlauxe.corlaInput.CountyInput
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
@@ -18,7 +18,7 @@ import javax.swing.*
 
 class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     var corlaInputPanel: ColoradoInputTable
-    var countyTabPanel: Counties
+    var countiesTab: Counties
     var mvrSamplePanel: MvrSampleTable
     var mvrComparisonPanel: MvrComparisonTable
 
@@ -28,8 +28,8 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
     var countySchemaTable: CountySchemaTable
     var countyMvrTable: MvrSampleTable
 
-    var currentInput: ColoradoInput? = null
-    var currentCountyInput: CorlaCountyInput? = null
+    var currentStateInput: StatewideInput? = null
+    var currentCountyInput: CountyInput? = null
 
     init {
         ////////////////////////////////////////////
@@ -40,10 +40,10 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         topTabs.addTab("Colorado Input", corlaInputPanel)
         activePanels.add(corlaInputPanel)
 
-        countyTabPanel = Counties((prefs.node("Counties") as PreferencesExt),
+        countiesTab = Counties((prefs.node("Counties") as PreferencesExt),
             infoTA, infoWindow, fontSize, { setCountyInput(it)}, { setCounty(it)})
-        topTabs.addTab("Counties", countyTabPanel)
-        activePanels.add(countyTabPanel)
+        topTabs.addTab("Counties", countiesTab)
+        activePanels.add(countiesTab)
 
         mvrSamplePanel = MvrSampleTable((prefs.node("mvrSamplePanel") as PreferencesExt),
             infoTA, infoWindow, fontSize)
@@ -125,32 +125,32 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         logger.debug{"saveMine"}
     }
 
-    fun setInput(input: ColoradoInput) {
-        currentInput = input
-        countyTabPanel.setColoradoInput(input)
+    fun setInput(input: StatewideInput) {
+        currentStateInput = input
+        countiesTab.setColoradoInput(input)
         mvrSamplePanel.setColoradoInput(input, null)
         mvrComparisonPanel.setColoradoInput(input)
-        headerLabel.setText(input.name)
+        headerLabel.setText(input.name())
         logger.info{"ColoradoInput.setAuditRecord to $auditRecordDir"}
     }
 
-    fun setCountyInput(countyInput: CorlaCountyInput) {
+    fun setCountyInput(countyInput: CountyInput) {
         currentCountyInput = countyInput
 
         countyCvrsTable.setCountyInput(countyInput)
-        countySchemaTable.setCorlaInput(countyInput.countyName, currentInput!!, countyCvrsTable.corlaCvrs)
+        countySchemaTable.setCorlaInput(countyInput, currentStateInput!!, countyCvrsTable.corlaCvrs)
         countyRedactionTable.setCorlaCvrs(countyCvrsTable.corlaCvrs)
-        countyMvrTable.setColoradoInput(currentInput!!, countyInput.countyName)
+        countyMvrTable.setColoradoInput(currentStateInput!!, countyInput.countyName)
 
         topTabs.setSelectedComponent(countyCvrTabs)
         countyCvrTabs.setSelectedComponent(countyCvrsTable)
-        headerLabel.setText("${currentInput!!.name} : ${countyInput.countyName} County")
+        headerLabel.setText("${currentStateInput!!.name()} : ${countyInput.countyName} County")
     }
 
     fun setCounty(countyName: String) {
-        mvrSamplePanel.setColoradoInput(currentInput!!, countyName)
-        mvrComparisonPanel.setColoradoInput(currentInput!!, countyName)
-        headerLabel.setText("${currentInput!!.name} : ${countyName} County")
+        mvrSamplePanel.setColoradoInput(currentStateInput!!, countyName)
+        mvrComparisonPanel.setColoradoInput(currentStateInput!!, countyName)
+        headerLabel.setText("${currentStateInput!!.name()} : ${countyName} County")
     }
 
     fun showInfo() = buildString {

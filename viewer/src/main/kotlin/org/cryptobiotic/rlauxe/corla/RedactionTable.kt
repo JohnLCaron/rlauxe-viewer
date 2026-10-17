@@ -6,8 +6,10 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
+import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.corlacvr.CorlaCvrsIF
+import org.cryptobiotic.rlauxe.corla.MvrComparisonTable.MvrComparisonBean
+import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.RedactedGroup
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
@@ -29,7 +31,7 @@ class CountyRedactionTable(
     val tables = mutableListOf<BeanTable<out Any>>()
 
     private val redactionTable: BeanTable<RedactionBean>
-    private val cvrTable: BeanTable<CvrRowBean>
+    private val rowTable: BeanTable<CvrRowBean>
 
     val localInfo = TextHistoryPane()
     private val split1: JSplitPane
@@ -48,20 +50,20 @@ class CountyRedactionTable(
         )
         tables.add(redactionTable)
 
-        cvrTable = BeanTable(
+        rowTable = BeanTable(
             CvrRowBean::class.java, prefs.node("cvrTable") as PreferencesExt, false,
             "Redacted Cvr Row", "CvrRow", null
         )
-        cvrTable.addPopupOption (
+        rowTable.addPopupOption (
             "Show Redacted Cvr",
-            cvrTable.makeShowAction(infoTA, infoWindow) { bean: CvrRowBean -> showCvr(bean) }
+            rowTable.makeShowAction(infoTA, infoWindow) { bean: CvrRowBean -> showCvr(bean) }
         )
-        tables.add(cvrTable)
+        tables.add(rowTable)
 
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, redactionTable, cvrTable)
+        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, redactionTable, rowTable)
         split1.setDividerLocation(prefs.getInt("splitPos1", 200))
         // split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, styleTable)
         // split2.setDividerLocation(prefs.getInt("splitPos2", 600))
@@ -73,10 +75,10 @@ class CountyRedactionTable(
     }
 
     fun showRedaction(bean: RedactionBean) = buildString {
-        append(showContestWithDesc(bean, redactionTable.tableModel, null))
+        appendLine(redactionTable.tableModel.showBean(bean, RedactionBean.beanProperties))
         appendLine("Accumulation")
-        bean.redactedGroup.candVotes.forEach {
-            appendLine(it)
+        bean.redactedGroup.candVotes.toSortedMap().forEach {
+            appendLine("  $it")
         }
     }
 
@@ -85,24 +87,33 @@ class CountyRedactionTable(
         appendLine("B${bean.row.batchId}_T${bean.row.tabulatorNum}_R${bean.row.recordId}") // example B28_T30_R68
     }
 
-    fun setCorlaCvrs(corlaCvrs: CorlaCvrsIF?) {
+    fun setCorlaCvrs(corlaCvrs: CorlaCountyCvrsIF?) {
         if (corlaCvrs == null) return
         logger.debug { "CountyRedactionTable setCorlaCvrs" }
+        redactionTable.setBeans(null)
 
         val redaction = corlaCvrs.redaction()
-        val beanList = mutableListOf<RedactionBean>()
-        redaction.groups().forEach {
-            beanList.add(RedactionBean(it))
+        if (redaction.groups().isNotEmpty()) {
+            val first = redaction.groups().first()
+            val totalGroup = RedactedGroup("---Totals---", first.firstCsv, first.schema)
+
+            val beanList = mutableListOf<RedactionBean>()
+            redaction.groups().forEach {
+                beanList.add(RedactionBean(it))
+                totalGroup.nlines += it.nlines
+                totalGroup.setNcards += it.ncards()
+                totalGroup.merge(it)
+            }
+            beanList.add(RedactionBean(totalGroup))
+
+            redactionTable.setBeans(beanList)
         }
-        //if (corlaCvrs.redaction().redactedRows() != null)
-        //    beanList.add(RedactionBean(corlaCvrs.redaction().redactedRows()!!))
-        redactionTable.setBeans(beanList)
 
         val beanList2 = mutableListOf<CvrRowBean>()
         redaction.redactedRows().forEach { redactedRow ->
             beanList2.add(CvrRowBean(redactedRow))
         }
-        cvrTable.setBeans(beanList2)
+        rowTable.setBeans(beanList2)
 
         logger.debug { "CountyRedactionTable setCorlaCvrs groups=${redaction.groups().size} rows=${redaction.redactedRows().size}" }
     }
@@ -139,12 +150,25 @@ class CountyRedactionTable(
         val minVotes = redactedGroup.minCards()
         val singleCards = redactedGroup.singleCards
         val totalVotes = redactedGroup.totalVotes()
-        // val contestVotes = redactedGroup.contestVotes // TOSO show I think
-        val contests = redactedGroup.contests()
+        val contests = redactedGroup.contests().sorted()
+        val ncontests = redactedGroup.contests().size
 
         companion object {
             @JvmStatic
             fun hiddenProperties() = "redaction redactedGroup"
+
+            @JvmStatic
+            val beanProperties = listOf(
+                TableBeanProperty("groupName", "name, may be the ballot type or style"),
+                TableBeanProperty("nlines", "number of CVR rows"),
+                TableBeanProperty("fixedNcards", "if ncards was given in the CVR file"),
+                TableBeanProperty("ncards", "estimated number of cards"),
+                TableBeanProperty("minVotes", "min number of cards needed for the vote subtotal"),
+                TableBeanProperty("singleCards", "from a single row"),
+                TableBeanProperty("totalVotes", "total number of votes"),
+                TableBeanProperty("contests", "contest ids in the subtotal"),
+            )
+
         }
     }
 }

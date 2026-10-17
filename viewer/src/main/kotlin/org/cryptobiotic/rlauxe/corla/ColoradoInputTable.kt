@@ -6,16 +6,20 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.AuditReason
-import org.cryptobiotic.rlauxe.corlaInput.Colorado2020General
-import org.cryptobiotic.rlauxe.corlaInput.Colorado2022Primary
-import org.cryptobiotic.rlauxe.corlaInput.Colorado2024General
-import org.cryptobiotic.rlauxe.corlaInput.Colorado2026PMerged
-import org.cryptobiotic.rlauxe.corlaInput.Colorado2026Primary
-import org.cryptobiotic.rlauxe.corlaInput.Colorado2026PwithCvrs
-import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
+import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2020General
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2022Primary
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2024General
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2026PMerged
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2026Primary
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2026PwithCvrs
+// import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlaInput.MergedContestInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2023Coordinated
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2025Coordinated
+import org.cryptobiotic.rlauxe.corlaInput.statewideInputs
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -26,8 +30,6 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JPanel
 import javax.swing.JSplitPane
-import javax.swing.event.ListSelectionEvent
-import javax.swing.event.ListSelectionListener
 
 private val logger = KotlinLogging.logger("ColoradoInputTable")
 
@@ -36,7 +38,7 @@ class ColoradoInputTable(
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
     fontSize: Float,
-    val setInput: (ColoradoInput) -> Unit,
+    val setInput: (StatewideInput) -> Unit,
 ) : JPanel(), SubPanelIF {
 
     val tables = mutableListOf<BeanTable<out Any>>()
@@ -52,9 +54,10 @@ class ColoradoInputTable(
         inputTable = BeanTable(
             ColoradoInputBean::class.java, prefs.node("ColoradoInputData") as PreferencesExt, false,
             "Available Colorado Data", "ColoradoInput", null)
-        inputTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
+        inputTable.addListSelectionListener {
             val selected = inputTable.getSelectedBean()
-            if (selected != null) setSelectedInput(selected) })
+            if (selected != null) setSelectedInput(selected)
+        }
         tables.add(inputTable)
 
         contestTable = BeanTable(
@@ -65,35 +68,6 @@ class ColoradoInputTable(
             contestTable.makeShowAction(infoTA, infoWindow) { bean: CanonicalContestBean -> showCanonicalContest(bean) }
         )
         tables.add(contestTable)
-
-        /*
-        countyTable = BeanTable(
-            CountyPoolsBean::class.java, prefs.node("countyCardPool") as PreferencesExt, false,
-            "CountyPools", "CountyPools", null
-        )
-        countyTable.addPopupOption(
-            "Show CountyPool",
-            countyTable.makeShowAction(infoTA, infoWindow,) { bean: CountyPoolsBean -> showCountyPool(bean) }
-        )
-        countyTable.addPopupOption(
-            "Print Table", countyTable.makeShowAction(infoTA, infoWindow)
-                { printTable(countyTable, CountyPoolsBean.beanProperties,"countyPool") }
-            )
-        countyTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
-            val selected = countyTable.getSelectedBean()
-            if (selected != null) {
-                setSelectedCounty(selected)
-            }
-        })
-
-        styleTable = BeanTable(
-            StyleTable.StyleBean::class.java, prefs.node("styleTable") as PreferencesExt, false,
-            "Style", "Style", null
-        )
-        styleTable.addPopupOption(
-            "Show use in Contests",
-            styleTable.makeShowAction(infoTA, infoWindow) { bean: StyleTable.StyleBean -> showCountyStyle(bean) }
-        ) */
 
         setFontSize(fontSize)
 
@@ -129,12 +103,12 @@ class ColoradoInputTable(
         contestTable.setBeans(emptyList())
 
         val contestBeans = mutableListOf<CanonicalContestBean>()
-        inputBean.coloradoInput.mergedContestMap.forEach {
+        inputBean.input.mergedContestMap.forEach {
             contestBeans.add(CanonicalContestBean(it.key, it.value))
         }
         contestTable.setBeans(contestBeans)
 
-        setInput(inputBean.coloradoInput)
+        setInput(inputBean.input)
     }
 
     override fun setFontSize(size: Float) {
@@ -156,20 +130,15 @@ class ColoradoInputTable(
     ////////////////////////////////////////////////////////////////
     fun setInputBeans() {
         val inputBeans = mutableListOf<ColoradoInputBean>()
-        inputBeans.add(ColoradoInputBean(Colorado2020General()))
-        inputBeans.add(ColoradoInputBean(Colorado2022Primary()))
-        inputBeans.add(ColoradoInputBean(Colorado2024General()))
-        inputBeans.add(ColoradoInputBean(Colorado2026Primary()))
-        inputBeans.add(ColoradoInputBean(Colorado2026PMerged()))
-        inputBeans.add(ColoradoInputBean(Colorado2026PwithCvrs()))
+        statewideInputs.forEach { inputBeans.add(ColoradoInputBean(it)) }
         inputTable.setBeans(inputBeans)
     }
 
-    class ColoradoInputBean(val coloradoInput: ColoradoInput) {
-        val name = coloradoInput.name
-        val ncontests = coloradoInput.canonicalContests().size
-        val nolosers = coloradoInput.canonicalContests().count() { it.value.choices.size < 2 }
-        val auditableContests = ncontests - nolosers
+    class ColoradoInputBean(val input: StatewideInput) {
+        val name = input.name()
+        val ncontests = input.ncontests()
+        val uncontested = input.nuncontested()
+        val contested = ncontests - uncontested
 
         companion object {
             @JvmStatic

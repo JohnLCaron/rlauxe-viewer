@@ -7,9 +7,12 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.CanonicalContest
 import org.cryptobiotic.rlauxe.beans.BeanTable
+import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.beans.printTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
-import org.cryptobiotic.rlauxe.corlacvr.CorlaCvrsIF
+import org.cryptobiotic.rlauxe.corlaInput.CountyInput
+import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
+import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.corlacvr.SchemaColumnInfo
 import org.cryptobiotic.rlauxe.corlacvr.SchemaContestInfo
@@ -20,8 +23,7 @@ import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JSplitPane
-import javax.swing.event.ListSelectionEvent
-import javax.swing.event.ListSelectionListener
+import kotlin.text.appendLine
 
 private val logger = KotlinLogging.logger("CountyCvrsTable")
 
@@ -39,8 +41,9 @@ class CountySchemaTable(
     private val choiceTable: BeanTable<SchemaChoiceBean>
     private val stylesTable: BeanTable<SchemaStyleBean>
 
-    var currentCorlaCvrs: CorlaCvrsIF? = null
-    var currentStateInput: ColoradoInput? = null
+    var currentCorlaCvrs: CorlaCountyCvrsIF? = null
+    var currentStateInput: StatewideInput? = null
+    var currentCountyInput: CountyInput? = null
     var currentCountyName: String? = null
 
     // TextHistoryPane localInfo = new TextHistoryPane();
@@ -52,13 +55,18 @@ class CountySchemaTable(
             SchemaContestBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
             "Contest Schema", "SchemaContestInfo", null
         )
-        contestTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent ->
+        contestTable.addListSelectionListener {
             val selected = contestTable.getSelectedBean()
             if (selected != null) setSelectedContest(selected)
-        })
+        }
         contestTable.addPopupOption(
             "Show Canonical Contest",
             contestTable.makeShowAction(infoTA, infoWindow) { bean: SchemaContestBean -> showSchemaContest(bean) }
+        )
+        contestTable.addPopupOption(
+            "Print Table",
+            contestTable.makeShowAction(infoTA, infoWindow)
+            { printTable(contestTable, SchemaContestBean.beanProperties,"CountyContests") }
         )
         tables.add(contestTable)
 
@@ -91,12 +99,21 @@ class CountySchemaTable(
     fun showSchemaContest(bean: SchemaContestBean) = buildString {
         append(showContestWithDesc(bean, contestTable.tableModel, null))
         appendLine(bean.scontest.toString())
-        if ((currentStateInput != null) && bean.getFailMatch() == "FAIL") {
+        appendLine("choices")
+        val start = bean.scontest.startCol
+        repeat(bean.scontest.ncols) {
+            appendLine("  ${currentCorlaCvrs!!.schema.columns[start + it]}")
+        }
+        appendLine()
+
+        val input = currentStateInput
+        if ((input != null) && bean.getFailMatch() == "FAIL") {
             val wantContestName = bean.scontest.contestName
+            val cleanedName = currentCountyInput!!.contestNameCleanup(wantContestName)
+            bean.scontest.contestName
             appendLine()
-            appendLine("Cvr contest '$wantContestName' does not match a canonical contest. Possible match(es) are:")
+            appendLine("Cvr contest '$wantContestName' cleaned='$cleanedName' does not match a canonical contest. Possible match(es) are:")
             appendLine()
-            val input = currentStateInput!!
             val expectMunge = input.contestNameMunged(currentCountyName!!, wantContestName)
             var nmatch = 0
             var singleton: CanonicalContest? = null
@@ -136,15 +153,17 @@ class CountySchemaTable(
         }
     }
 
-    fun setCorlaInput(countyName: String, stateInput: ColoradoInput, corlaCvrs: CorlaCvrsIF?) {
+    fun setCorlaInput(countyInput: CountyInput, stateInput: StatewideInput, corlaCvrs: CorlaCountyCvrsIF?) {
         if (corlaCvrs == null) return
         currentStateInput = stateInput
         currentCorlaCvrs = corlaCvrs
-        currentCountyName = countyName
+        currentCountyInput = countyInput
+        currentCountyName = countyInput.name()
 
         val beanList = mutableListOf<SchemaContestBean>()
         corlaCvrs.schema.contests.forEach {
-            beanList.add(SchemaContestBean(this, it))
+            beanList.add(SchemaContestBean(this, it, false))
+            beanList.add(SchemaContestBean(this, it, true))
         }
         contestTable.setBeans(beanList)
 
@@ -197,42 +216,67 @@ class CountySchemaTable(
         }
     }
 
+    fun canonicalName(scontest: SchemaContestInfo): String {
+        val cc = currentStateInput!!.matchCanonicalContest(currentCountyName!!, scontest.contestName)
+        return cc?.contestName ?: ""
+    }
+
+    fun canononicalChoice(scontest: SchemaContestInfo, choice: String): String {
+        val cc = currentStateInput!!.matchCanonicalContest(currentCountyName!!, scontest.contestName)
+        if (cc == null) return ""
+        return currentStateInput!!.matchCanonicalCandidate(currentCountyName!!, cc, choice) ?: ""
+    }
+
+    fun hasMatch(scontest: SchemaContestInfo): Boolean {
+        val cleanedName = currentCountyInput!!.contestNameCleanup(scontest.contestName)
+        val cc = currentStateInput!!.canonicalContests()[cleanedName]
+        if (cc == null) return false
+        for (col in scontest.startCol until scontest.startCol+scontest.nchoices) {
+            val choice = currentCorlaCvrs!!.schema.columns[col].choiceName
+            if (currentStateInput!!.matchCanonicalCandidate(currentCountyName!!, cc, choice) == null) return false
+        }
+        return true
+    }
+
     // data class SchemaContestInfo(val contestIdx: Int, val contestName: String, val startCol: Int, val ncols: Int) {
     //    val isIRV: Boolean
     //    val nchoices: Int
     //    val voteForN: Int
-    class SchemaContestBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestInfo) {
+    class SchemaContestBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestInfo, val canon: Boolean) {
         val contestIdx = scontest.contestIdx
-        val contestName = scontest.contestName
-        val startCol = scontest.startCol
-        val ncols = scontest.ncols
-        val isIRV = scontest.isIRV
-        val nchoices = scontest.nchoices
-        val voteForN = scontest.voteForN
+        val contestName = if (canon) schemaTable.canonicalName(scontest) else scontest.contestName
 
-        fun getFailMatch() = if (schemaTable.hasMunge(this)) "" else "FAIL"
+        fun getFailMatch() = if (!schemaTable.hasMatch(scontest)) "FAIL" else ""
 
         companion object {
             @JvmStatic
             fun hiddenProperties() = "schemaTable scontest"
+
+            @JvmStatic
+            val beanProperties = listOf(
+                TableBeanProperty("contestIdx", "index of contest in county schema"),
+                TableBeanProperty("contestName", "contest name"),
+            )
+
         }
     }
 
     class SchemaChoiceBean(
         val schemaTable: CountySchemaTable,
-        val scontest: SchemaContestBean,
-        colInfo: SchemaColumnInfo
+        val sbean: SchemaContestBean,
+        val colInfo: SchemaColumnInfo
     ) {
         val contestIdx = colInfo.contestIdx
         val choice = colInfo.choiceName
         val party = colInfo.headerName
         val colno = colInfo.colno
+        val canon = schemaTable.canononicalChoice(sbean.scontest, choice)
 
-        fun getFailMatch() = if (schemaTable.hasMunge(scontest, this)) "" else "FAIL"
+        fun getFailMatch() = if (choice != canon) "FAIL" else ""
 
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "schemaTable scontest colInfo"
+            fun hiddenProperties() = "schemaTable sbean colInfo"
         }
     }
 }
