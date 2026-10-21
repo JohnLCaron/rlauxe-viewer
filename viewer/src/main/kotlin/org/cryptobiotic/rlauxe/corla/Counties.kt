@@ -125,6 +125,9 @@ class Counties(
         } catch (e: Exception) {
             emptyMap()
         }
+        redactedCountMap.forEach { (key, it) ->
+            println("'$key' == $it")
+        }
         logger.debug { redactedCountMap.toString() }
 
         val countyContests = mutableListOf<CountyTabBean>()
@@ -185,7 +188,7 @@ class Counties(
         fun getRlauxeNredact() =  rc?.rlauxeNredact ?: 0
         fun getMinCardsForVote() =  data?.minCards ?: 0
         fun getBlankPrecinct() =  data?.countBlankPrecincts
-        fun getBallotTypesUnique() =  data?.ballotStylesUnique?.toString() ?: "unknown"
+        fun getUniqueTypes() =  data?.ballotStylesUnique?.toString() ?: "unknown"
         fun getBallotStyleMin() =  data?.ballotStyleMin
         fun getPrecinctStyleMin() =  data?.precinctStyleMin
 

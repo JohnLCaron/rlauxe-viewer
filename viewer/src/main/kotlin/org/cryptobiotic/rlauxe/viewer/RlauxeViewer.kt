@@ -5,8 +5,6 @@
 package org.cryptobiotic.rlauxe.viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.corla.CountyContests
-import org.cryptobiotic.rlauxe.corla.CountySampling
 
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
@@ -33,54 +31,55 @@ class RlauxeViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(pr
     val mvrsTable: MvrsTable
     val logsPanel: LogsTable
 
-init {
-    contestTable = RlauxeContestsTable((prefs.node("AuditTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-    contestTable.getActions(actionsPanel)
-    topTabs.addTab("Contests", contestTable)
-    activePanels.add(contestTable)
+    init {
+        contestTable = RlauxeContestsTable((prefs.node("AuditTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        contestTable.getActions(actionsPanel)
+        topTabs.addTab("Contests", contestTable)
+        activePanels.add(contestTable)
 
-    poolPanel = PoolTable((prefs.node("PoolTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-    topTabs.addTab("Pools", poolPanel)
-    activePanels.add(poolPanel)
+        poolPanel = PoolTable((prefs.node("PoolTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("Pools", poolPanel)
+        activePanels.add(poolPanel)
 
-    stylePanel = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-    topTabs.addTab("Styles", stylePanel)
-    activePanels.add(stylePanel)
+        stylePanel = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("Styles", stylePanel)
+        activePanels.add(stylePanel)
 
-    cardPanel = CardTable((prefs.node("CardTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-    topTabs.addTab("Cards", cardPanel)
-    activePanels.add(cardPanel)
+        cardPanel = CardTable((prefs.node("CardTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("Cards", cardPanel)
+        activePanels.add(cardPanel)
 
-    auditRoundsPanel = AuditRoundsTable((prefs.node("AuditStateTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize,
-        null)
-    topTabs.addTab("AuditRounds", auditRoundsPanel)
-    activePanels.add(auditRoundsPanel)
+        auditRoundsPanel = AuditRoundsTable((prefs.node("AuditStateTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize,
+            null)
+        topTabs.addTab("AuditRounds", auditRoundsPanel)
+        activePanels.add(auditRoundsPanel)
 
-    mvrsTable = MvrsTable((prefs.node("MvrsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-    topTabs.addTab("Mvrs", mvrsTable)
-    activePanels.add(mvrsTable)
-    
-    logsPanel = LogsTable((prefs.node("LogsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-    topTabs.addTab("Logs", logsPanel)
-    activePanels.add(logsPanel)
+        mvrsTable = MvrsTable((prefs.node("MvrsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("Mvrs", mvrsTable)
+        activePanels.add(mvrsTable)
 
-    topTabs.setSelectedIndex(0)
+        logsPanel = LogsTable((prefs.node("LogsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("Logs", logsPanel)
+        activePanels.add(logsPanel)
 
-    topTabs.addChangeListener {
-        val c: Component = topTabs.getSelectedComponent()
-        actionsPanel.removeAll()
+        topTabs.setSelectedIndex(0)
 
-        // actions on right side of Audit record chooser
-        when (c) {
-            contestTable -> this@RlauxeViewer.contestTable.getActions(actionsPanel)
-            auditRoundsPanel -> auditRoundsPanel.getActions(actionsPanel)
-            else -> {}
+        topTabs.addChangeListener {
+            val c: Component = topTabs.getSelectedComponent()
+            actionsPanel.removeAll()
+
+            // actions on right side of Audit record chooser
+            when (c) {
+                cardPanel -> this@RlauxeViewer.cardPanel.setSelectedTab()
+                contestTable -> this@RlauxeViewer.contestTable.getActions(actionsPanel)
+                auditRoundsPanel -> auditRoundsPanel.getActions(actionsPanel)
+                else -> {}
+            }
+            validate()
         }
-        validate()
-    }
+        this.rightPanel.add(actionsPanel, BorderLayout.EAST)
 
-
-    // TODO put into seperate thread
+    // TODO put into sepArate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
                 val verifier = VerifyContests(auditRecordDir, false)
@@ -109,20 +108,6 @@ init {
         }
         BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-'.code, -1)
         BAMutil.addActionToContainer(leftPanel, refreshAction)
-
-        this.rightPanel.add(actionsPanel, BorderLayout.EAST)
-        topTabs.addChangeListener {
-            val c: Component = topTabs.getSelectedComponent()
-            actionsPanel.removeAll()
-
-            // actions on right side of Audit record chooser
-            when {
-                c is CountyContests -> c.getActions(actionsPanel)
-                c is CountySampling -> c.getActions(actionsPanel)
-                else -> {}
-            }
-            validate()
-        }
 
         ////////////////////////////////////////////
         this.fileChooser = FileManager(frame, "", null, prefs.node("FileManager") as PreferencesExt?)
@@ -157,10 +142,9 @@ init {
         this.leftPanel.add(auditRecordDirCB)
 
         logger.debug{"RlauxeViewer started"}
-    }
+    } // init
 
     override fun name() = "Rlauxe Viewer"
-
 
     fun setAuditRecord(): Boolean {
         try {

@@ -10,7 +10,11 @@ import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.corla.MvrComparisonTable.MvrComparisonBean
 import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
+import org.cryptobiotic.rlauxe.corlacvr.CvrRow
+import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
 import org.cryptobiotic.rlauxe.corlacvr.RedactedGroup
+import org.cryptobiotic.rlauxe.util.nfn
+import org.cryptobiotic.rlauxe.util.sfn
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -31,7 +35,7 @@ class CountyRedactionTable(
     val tables = mutableListOf<BeanTable<out Any>>()
 
     private val redactionTable: BeanTable<RedactionBean>
-    private val rowTable: BeanTable<CvrRowBean>
+    private val rowTable: BeanTable<RedactedRowBean>
 
     val localInfo = TextHistoryPane()
     private val split1: JSplitPane
@@ -51,12 +55,12 @@ class CountyRedactionTable(
         tables.add(redactionTable)
 
         rowTable = BeanTable(
-            CvrRowBean::class.java, prefs.node("cvrTable") as PreferencesExt, false,
+            RedactedRowBean::class.java, prefs.node("cvrTable") as PreferencesExt, false,
             "Redacted Cvr Row", "CvrRow", null
         )
         rowTable.addPopupOption (
-            "Show Redacted Cvr",
-            rowTable.makeShowAction(infoTA, infoWindow) { bean: CvrRowBean -> showCvr(bean) }
+            "Show Redacted  Row",
+            rowTable.makeShowAction(infoTA, infoWindow) { bean: RedactedRowBean -> showCvr(bean) }
         )
         tables.add(rowTable)
 
@@ -82,36 +86,44 @@ class CountyRedactionTable(
         }
     }
 
-    fun showCvr(bean: CvrRowBean) = buildString {
+    fun showCvr(bean: RedactedRowBean) = buildString {
         appendLine(bean.row)
-        appendLine("B${bean.row.batchId}_T${bean.row.tabulatorNum}_R${bean.row.recordId}") // example B28_T30_R68
+        appendLine()
+        appendLine(bean.styles)
+        // ?? appendLine("B${bean.row.batchId}_T${bean.row.tabulatorNum}_R${bean.row.recordId}") // example B28_T30_R68
     }
 
     fun setCorlaCvrs(corlaCvrs: CorlaCountyCvrsIF?) {
         if (corlaCvrs == null) return
         logger.debug { "CountyRedactionTable setCorlaCvrs" }
+        val ncontests = corlaCvrs.schema.contests.size
+
         redactionTable.setBeans(null)
 
         val redaction = corlaCvrs.redaction()
         if (redaction.groups().isNotEmpty()) {
             val first = redaction.groups().first()
-            val totalGroup = RedactedGroup("---Totals---", first.firstCsv, first.schema)
+            val totalGroup = RedactedGroup("---Totals---", first.firstCsv, first.schema) // adds the first group
             totalGroup.fixedNcards = null
 
             val beanList = mutableListOf<RedactionBean>()
+            var firstGroup = true
             redaction.groups().forEach {
                 beanList.add(RedactionBean(it))
-                totalGroup.setNcards += it.ncards()
-                totalGroup.merge(it) // this adds nlines
+                if (!firstGroup) {
+                    totalGroup.merge(it) // this adds nlines
+                    totalGroup.setNcards += it.ncards()
+                }
+                firstGroup = false
             }
             beanList.add(RedactionBean(totalGroup))
 
             redactionTable.setBeans(beanList)
         }
 
-        val beanList2 = mutableListOf<CvrRowBean>()
+        val beanList2 = mutableListOf<RedactedRowBean>()
         redaction.redactedRows().forEach { redactedRow ->
-            beanList2.add(CvrRowBean(redactedRow))
+            beanList2.add(RedactedRowBean(redactedRow, ncontests))
         }
         rowTable.setBeans(beanList2)
 
@@ -169,6 +181,37 @@ class CountyRedactionTable(
                 TableBeanProperty("contests", "contest ids in the subtotal"),
             )
 
+        }
+    }
+
+    class RedactedRowBean(val row: CvrRow, val ncontests: Int) {
+        val cvrNumber = row.cvrNumber
+        val tabulatorNum = row.tabulatorNum
+        val batchId = row.batchId
+        val recordId = row.recordId
+        val imprintedId = row.imprintedId
+        val ballotType = row.ballotType
+        val precinctPortion = row.precinctPortion
+
+        val styles = buildString {
+            val style = row.contestVotes.map { it.contestId }
+            if (style.size == ncontests) append("all")
+            else append(style)
+            // could also try to lookup the style
+        }
+
+        fun show(schema: CvrSchema) = buildString {
+            appendLine(row.toString())
+            row.contestVotes.forEach {
+                val contest = schema.contests.get(it.contestId)
+                append("  contest: ${sfn(contest.contestName, 60)} (${nfn(it.contestId, 3)}), ")
+                appendLine(" candidate votes: ${it.candVotes()}")
+            }
+        }
+
+        companion object {
+            @JvmStatic
+            fun hiddenProperties() = "row"
         }
     }
 }

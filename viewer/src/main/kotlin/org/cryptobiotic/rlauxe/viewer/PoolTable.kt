@@ -91,7 +91,10 @@ class PoolTable(
         this.mvrManager = PersistedMvrManager(this.auditRecord!!, false)
         this.infos = auditRecord.contests.associate { it.id to it.contest.info() }
         val pools = mvrManager!!.pools()
-        if (pools == null) return false
+        if (pools == null) {
+            logger.debug { "PoolTable no pools" }
+            return false
+        }
 
         // data class CardPool(
         //    override val poolName: String,
@@ -108,8 +111,9 @@ class PoolTable(
             totalPoolTab.sumContestTabulations(pool.contestTabs)
             totalPoolCards += pool.totalCards
         }
-        beanList.add(PoolBean(CardPool("Total", -1, false, this.infos.toMap(), totalPoolTab, totalPoolCards)))
+        beanList.add(PoolBean(CardPool("Total", -1, false, totalPoolTab, totalPoolCards)))
         poolTable.setBeans(beanList)
+        logger.debug { "PoolTable beans ${beanList.size}" }
 
         return true
     }

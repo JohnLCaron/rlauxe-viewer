@@ -105,7 +105,7 @@ class CardTable(
         if (auditRecord == null) return false
         val config = auditRecord!!.config
         val cutoff = config.round.sampling.contestSampleCutoff
-        val ncardsToRead = if (cutoff == null || cutoff < 11111) 11111 else cutoff
+        val ncardsToRead = if (cutoff == null || cutoff < 10001) 10001 else cutoff
 
         try {
             this.cardManifest = this.mvrManager!!.sortedManifest()

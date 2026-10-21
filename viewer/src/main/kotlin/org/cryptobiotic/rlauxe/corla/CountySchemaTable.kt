@@ -10,6 +10,7 @@ import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.printTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.corlaInput.CountyInput
+import org.cryptobiotic.rlauxe.corlaInput.Statewide2026PwithCvrs
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.corlaInput.isWriteIn
 import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
@@ -161,7 +162,7 @@ class CountySchemaTable(
         currentStateInput = stateInput
         currentCorlaCvrs = corlaCvrs
         currentCountyInput = countyInput
-        currentCountyName = countyInput.name()
+        currentCountyName = countyInput.countyName
         logger.debug { "set county $currentCountyName stateInput=${stateInput.name()} corlaCvrs=${corlaCvrs.electionName}" }
 
         val beanList = mutableListOf<SchemaContestBean>()
@@ -175,6 +176,12 @@ class CountySchemaTable(
             styleList.add(SchemaStyleBean(it))
         }
         stylesTable.setBeans(styleList)
+
+        if (stateInput == Statewide2026PwithCvrs() && currentCountyName == "La Plata") {
+            val failing = "Secretary of State"
+            val canon = stateInput.matchCanonicalContest(currentCountyName!!, failing)
+            logger.debug{"$failing -> $canon"}
+        }
     }
 
     fun setSelectedContest(bean: SchemaContestBean) {
