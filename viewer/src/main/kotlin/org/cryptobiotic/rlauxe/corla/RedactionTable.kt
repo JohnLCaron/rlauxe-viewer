@@ -103,7 +103,7 @@ class CountyRedactionTable(
         val redaction = corlaCvrs.redaction()
         if (redaction.groups().isNotEmpty()) {
             val first = redaction.groups().first()
-            val totalGroup = RedactedGroup("---Totals---", first.firstCsv, first.schema) // adds the first group
+            val totalGroup = RedactedGroup("---Totals---", first.firstCsv, first.corlaCvrs) // adds the first group
             totalGroup.fixedNcards = null
 
             val beanList = mutableListOf<RedactionBean>()

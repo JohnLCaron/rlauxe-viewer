@@ -10,6 +10,7 @@ import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.core.ContestInfo
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.ContestTabulationIF
@@ -28,7 +29,7 @@ class PoolTable(
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
     fontSize: Float
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), ViewerPanelIF, AuditRecordViewerIF {
     private val poolTable: BeanTable<PoolBean>
     private val contestTable: BeanTable<ContestTabBean>
 
@@ -74,8 +75,13 @@ class PoolTable(
         contestTable.setFontSize(size)
     }
 
+    override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
+        logger.debug { "PoolTable setAuditRecord ${auditRecord.topdir}" }
+        return loadRecord(auditRecord)
+    }
+
     override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
-        logger.debug { "PoolTable setAuditRecord $auditRecordLocation" }
+        logger.debug { "PoolTable setAuditRecordLocation $auditRecordLocation" }
         poolTable.setBeans(null)
         contestTable.setBeans(null)
 
@@ -87,6 +93,13 @@ class PoolTable(
         }
 
         if (auditRecord is CompositeAuditRecord) return false
+        return loadRecord(auditRecord)
+    }
+
+    fun loadRecord(auditRecord: AuditRecordIF): Boolean {
+        poolTable.setBeans(null)
+        contestTable.setBeans(null)
+
         this.auditRecord = auditRecord as AuditRecord
         this.mvrManager = PersistedMvrManager(this.auditRecord!!, false)
         this.infos = auditRecord.contests.associate { it.id to it.contest.info() }

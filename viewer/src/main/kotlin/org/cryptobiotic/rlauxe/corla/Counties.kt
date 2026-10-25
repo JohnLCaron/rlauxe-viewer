@@ -185,7 +185,8 @@ class Counties(
         fun getCvrNoManifest() =  data?.cvrNoManifest ?: 0
         fun getManifestNoCvr() =  data?.manifestNoCvr ?: 0
         fun getPythonNredact() =  rc?.pythonNredact ?: 0
-        fun getRlauxeNredact() =  rc?.rlauxeNredact ?: 0
+        fun getExtraRedact() =  if (rc != null && data != null) (rc.rlauxeNredact - data.redactedCvrs) else 0
+        fun getTotalRedact() =  rc?.rlauxeNredact ?: 0
         fun getMinCardsForVote() =  data?.minCards ?: 0
         fun getBlankPrecinct() =  data?.countBlankPrecincts
         fun getUniqueTypes() =  data?.ballotStylesUnique?.toString() ?: "unknown"
@@ -227,7 +228,9 @@ class Counties(
                 TableBeanProperty("ballotTypesUnique", "ballotTypes have unique styles (contest pattern)"),
                 TableBeanProperty("blankPrecinct", "number of rows with blank precinct column"),
                 TableBeanProperty("pythonNredact", "number of additional redaction made by python anonimizer"),
-                TableBeanProperty("rlauxeNredact", "number of additional redaction made by rlauxe anonimizer"),
+                TableBeanProperty("extraRedact", "number of additional redaction made by anonimizer"),
+                TableBeanProperty("totalRedact", "total number of redactions expected"),
+                TableBeanProperty("uniqueTypes", "if the ballot style has a single contest set (style)"),
             )
         }
     }
