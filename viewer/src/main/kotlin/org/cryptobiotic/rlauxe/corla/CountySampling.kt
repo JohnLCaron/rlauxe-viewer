@@ -105,9 +105,8 @@ class CountySampling(
         this.auditRecordLocation = auditRecordLocation
         countySamplingTable.setBeans(emptyList())
 
-        logger.debug { "CountySampling setAuditRecord ${auditRecord.topdir}" }
-
         if (auditRecord !is CountyAuditRecord) return false
+        logger.debug { "CountySampling set CountyAuditRecord from ${auditRecord.topdir}" }
 
         this.countyAudit = auditRecord as CountyAuditRecord
         this.config = countyAudit!!.config
@@ -129,6 +128,7 @@ class CountySampling(
     fun setCounty(county: String) {
         this.county = county
         val cvrTabs: Map<Int, ContestTabulation> = this.countyAudit?.readCountyCvrsAndTabulate(county) ?: emptyMap()
+        logger.debug { "CountySampling called readCountyCvrsAndTabulate got ${cvrTabs.size} contest tabs" }
 
         val beanList = mutableListOf<CountySamplingBean>()
         cvrTabs.forEach { (contestId, contestTab) ->
@@ -140,6 +140,8 @@ class CountySampling(
         }
         beanList.sortByDescending { it.getNCounties() }
         countySamplingTable.setBeans(beanList)
+        logger.debug { "CountySampling set ${beanList.size} cvr tabs" }
+
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////

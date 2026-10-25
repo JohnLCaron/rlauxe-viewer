@@ -178,6 +178,7 @@ class StateContests(
         for (contestRound in lastAuditRound!!.contestRounds) {
             contestRoundMap.put(contestRound.id, contestRound)
         }
+        logger.debug { "loadAuditRecord ${contestRoundMap.size} rounds" }
 
         val contestList = mutableListOf<CorlaContestBean>()
         auditRecord.contests.filter { !onlyShowInprogressContests || it.preAuditStatus == TestH0Status.InProgress }.forEach { cwa ->
@@ -188,6 +189,8 @@ class StateContests(
         // sort contests by payoff
         // contestList.sortBy { it.getPayoff() }
         contestTable.setBeans(contestList)
+        logger.debug { "loadAuditRecord ${contestList.size} contests" }
+
     }
 
     fun setSelectedContest(contestBean: CorlaContestBean) {
@@ -609,7 +612,7 @@ acNu = 614, cvrNu = 597 diff = 17
     }
 
     companion object {
-        private val logger = KotlinLogging.logger("CorlaContestsTable")
+        private val logger = KotlinLogging.logger("StateContests")
     }
 
     // all the counties for this contest

@@ -245,7 +245,7 @@ class CvrRowBean(val row: CvrRow) {
 }
 
 class PrecinctStyleBean(precinctStyle: CountyCvrsTable.PrecinctCardStyle) {
-    val cardType = precinctStyle.cardStyle.cardType
+    val cardType = precinctStyle.cardStyle.cardStyle
     val contestIds = precinctStyle.cardStyle.contestIds
     val ncards = precinctStyle.ncards
     val precinctPortion = precinctStyle.precinct

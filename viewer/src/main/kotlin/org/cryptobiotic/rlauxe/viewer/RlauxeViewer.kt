@@ -4,10 +4,11 @@
  */
 package org.cryptobiotic.rlauxe.viewer
 
+import com.github.michaelbull.result.unwrap
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.cryptobiotic.rlauxe.persist.AuditRecord
 
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
-import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 
 import ucar.ui.prefs.ComboBox
@@ -148,15 +149,16 @@ class RlauxeViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(pr
 
     fun setAuditRecord(): Boolean {
         try {
-            val auditRecord = read(auditRecordDir)
-            if (auditRecord == null) {
-                logger.debug{ "read record failed "}
+            val result = AuditRecord.readPartialResult(auditRecordDir)
+            if (result.isErr) {
+                logger.debug{ "read record failed: $result "}
                 return false
             }
+            val auditPartialRecord = result.unwrap()
 
-            contestTable.setAuditRecordLocation(auditRecordDir)
+            // contestTable.setAuditRecordLocation(auditRecordDir)
             for (vpanel in activePanels) {
-                if (vpanel is ViewerPanelIF) vpanel.setAuditRecordLocation(auditRecordDir)
+                if (vpanel is AuditRecordViewerIF) vpanel.setAuditRecord(auditPartialRecord)
             }
             logger.info{"RlauxeViewer.setAuditRecord to $auditRecordDir"}
             return true

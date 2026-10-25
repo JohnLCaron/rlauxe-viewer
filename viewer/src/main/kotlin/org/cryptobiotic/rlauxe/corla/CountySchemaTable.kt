@@ -101,9 +101,8 @@ class CountySchemaTable(
         append(showContestWithDesc(bean, contestTable.tableModel, null))
         appendLine(bean.scontest.show())
         appendLine("choices")
-        val start = bean.scontest.startCol
-        repeat(bean.scontest.ncols) {
-            appendLine("  ${currentCorlaCvrs!!.schema.columns[start + it]}")
+        currentCorlaCvrs!!.schema.columnsFor(bean.scontest).forEach { colInfo ->
+            appendLine("  ${colInfo}")
         }
         appendLine()
 
@@ -186,11 +185,9 @@ class CountySchemaTable(
 
     fun setSelectedContest(bean: SchemaContestBean) {
         val beanList = mutableListOf<SchemaChoiceBean>()
-        val start = bean.scontest.startCol
-        repeat(bean.scontest.ncols) {
-            val choice = currentCorlaCvrs!!.schema.columns[start + it].choiceName
-            if (!isWriteIn(choice)) {
-                beanList.add(SchemaChoiceBean(this, bean, currentCorlaCvrs!!.schema.columns[start + it]))
+        currentCorlaCvrs!!.schema.columnsFor(bean.scontest).forEach { colInfo ->
+            if (!isWriteIn(colInfo.choiceName)) {
+                beanList.add(SchemaChoiceBean(this, bean,colInfo))
             }
         }
         choiceTable.setBeans(beanList)
@@ -244,9 +241,8 @@ class CountySchemaTable(
         val cleanedName = currentCountyInput!!.contestNameCleanup(scontest.contestName)
         val cc = currentStateInput!!.canonicalContests()[cleanedName]
         if (cc == null) return false
-        for (col in scontest.startCol until scontest.startCol+scontest.nchoices) {
-            val choice = currentCorlaCvrs!!.schema.columns[col].choiceName
-            if (currentStateInput!!.matchCanonicalCandidate(currentCountyName!!, cc, choice) == null) return false
+        currentCorlaCvrs!!.schema.columnsFor(scontest).forEach { colInfo ->
+            if (currentStateInput!!.matchCanonicalCandidate(currentCountyName!!, cc, colInfo.choiceName) == null) return false
         }
         return true
     }
@@ -282,8 +278,8 @@ class CountySchemaTable(
     ) {
         val contestIdx = colInfo.contestIdx
         val choice = colInfo.choiceName
-        val party = colInfo.headerName
-        val colno = colInfo.colno
+        val party = colInfo.partyName
+        val colno = colInfo.colIdx
         val canon = schemaTable.canonicalChoice(sbean.scontest, choice)
 
         fun getMatch() = if (canon == "") "FAIL" else if (canon != choice) "*" else ""
@@ -298,7 +294,7 @@ class CountySchemaTable(
 ////////////////////////////////////////////////////////////////
 
 class SchemaStyleBean(val cvrStyle: CvrCardStyle) {
-    val cardType = cvrStyle.cardType
+    val cardType = cvrStyle.cardStyle
     val contestIds = cvrStyle.contestIds
     val ncards = cvrStyle.ncards
 

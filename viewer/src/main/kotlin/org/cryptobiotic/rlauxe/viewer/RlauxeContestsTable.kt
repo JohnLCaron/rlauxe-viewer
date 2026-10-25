@@ -43,7 +43,7 @@ class RlauxeContestsTable(
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
     fontSize: Float,
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), ViewerPanelIF, AuditRecordViewerIF {
     private val contestTable: BeanTable<RlauxeContestBean>
     private val assertionTable: BeanTable<RlauxeAssertionBean>
 
@@ -140,14 +140,27 @@ class RlauxeContestsTable(
         setAuditRecordLocation(auditRecordLocation)
     }
 
+    override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
+        this.onlyShowInprogressContests = prefs.getBoolean("onlyInProgress", false)
+        this.auditRecordLocation = auditRecord.topdir
+        contestTable.setBeans(null)
+
+        logger.debug("RlauxeContestsTable setAuditRecord " + auditRecordLocation)
+
+        this.auditRecord = auditRecord
+        this.config = auditRecord!!.config
+        this.alpha = config!!.riskLimit
+
+        return loadAuditRecord()
+    }
+
     override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
         this.onlyShowInprogressContests = prefs.getBoolean("onlyInProgress", false)
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(null)
 
-        logger.debug("RlauxeContestsTable setAuditRecord " + auditRecordLocation)
+        logger.debug("RlauxeContestsTable setAuditRecordLocation " + auditRecordLocation)
 
-        this.auditRecordLocation = auditRecordLocation
         this.auditRecord = read(auditRecordLocation)
         if (this.auditRecord == null) return false
         this.config = auditRecord!!.config
@@ -290,6 +303,7 @@ class RlauxeContestsTable(
         val assn = if (bean.cassertion != null) bean.cassertion else bean.assertion
         return showAssertionWithDesc(bean, assertionTable.tableModel, bean.cua, assn)
     }
+
 }
 
 class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: ContestRound?) {

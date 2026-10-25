@@ -400,6 +400,9 @@ class BelgiumContestTable(
         appendLine()
         //appendLine("Relaxed Assertion Report (experimental)-------------------------------------")
         //append((bean.contestUA.contest as DhondtContest).showRelaxedAssertionReport(bean.contestRound))
+        val dcontest = (bean.contestUA.contest as DhondtContest)
+        append(showCandidateSeatOrder(dcontest, bean.contestRound.haveSampleSize, config!!.riskLimit))
+
         appendLine("Relaxed Assertions (experimental)------------------------------------------")
         append((bean.contestUA.contest as DhondtContest).showRelaxedAssertion(bean.contestRound, config!!.riskLimit))
         appendLine()

@@ -179,8 +179,8 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
 
             countyTable.setAuditRecordLocation(auditRecordDir)
             for (vpanel in activePanels) {
-                if (vpanel is ViewerPanelIF) vpanel.setAuditRecordLocation(auditRecordDir)
                 if (vpanel is AuditRecordViewerIF) vpanel.setAuditRecord(auditRecord)
+                else if (vpanel is ViewerPanelIF) vpanel.setAuditRecordLocation(auditRecordDir)
             }
             logger.info{"ColoradoAuditViewer.setAuditRecord to $auditRecordDir"}
             return true
