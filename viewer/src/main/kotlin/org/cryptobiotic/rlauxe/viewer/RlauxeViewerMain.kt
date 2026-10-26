@@ -7,7 +7,6 @@ package org.cryptobiotic.rlauxe.viewer
 import com.formdev.flatlaf.FlatLightLaf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.belgium.BelgiumContests
-import org.cryptobiotic.rlauxe.belgium.TestPrefs
 import org.cryptobiotic.rlauxe.corla.ColoradoInput
 import org.cryptobiotic.rlauxe.corla.ColoradoAuditViewer
 import ucar.ui.widget.BAMutil
@@ -281,7 +280,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 "ColoradoAuditViewer" -> ColoradoAuditViewer(prefsx, fontSize)
                 "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
                 "RlauxeViewer" -> RlauxeViewer(prefsx, fontSize)
-                "TestPrefs" -> TestPrefs(prefsx, fontSize)
+                // "TestPrefs" -> TestPrefs(prefsx, fontSize)
                 else -> throw RuntimeException()
             }
             frame!!.title = ui?.name() ?: type
