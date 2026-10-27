@@ -411,7 +411,6 @@ acNu = 614, cvrNu = 597 diff = 17
         }
 
         fun getName() = contestUA.name
-
         fun getId() = contestUA.id
 
         fun getRisk(): Double {
@@ -456,6 +455,7 @@ acNu = 614, cvrNu = 597 diff = 17
             return stripped.split(",".toRegex()).dropLastWhile { it.isEmpty() }
         }
 
+        /*
         fun getCorlaEstMvrs(): Int {
             if (!targeted()) return -1
             val CORLAsample = contestUA.contest.info().metadata.get("CORLAsample") ?: return -1
@@ -488,6 +488,50 @@ acNu = 614, cvrNu = 597 diff = 17
             return estRiskStandardBet(getCorlaVoteMargin(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
         }
 
+                fun getCvrNcards() : Int {
+            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards")
+            if (CvrNcards == null) return 0
+            return CvrNcards.toInt()
+        }
+
+        fun getDiffNcards() : Int {
+            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards") ?: return 0
+            val ncvrs = CvrNcards.toInt()
+            return contestUA.Nc - ncvrs
+        }
+
+
+        // Nc - cvrs.ncards / Nc
+        fun getPctNcardsMissing() : Int {
+            return roundToClosest(100 * getDiffNcards() / contestUA.Nc.toDouble())
+        }
+
+
+        fun getCvrNundervotes() : Int {
+            val cvrNvotes = contestUA.contest.info().metadata.get("CvrNundervotes") ?: return 0
+            return cvrNvotes.toInt()
+        }
+
+
+        fun getCvrNvotes() : Int {
+            val CvrNvotes = contestUA.contest.info().metadata.get("CvrNvotes")
+            if (CvrNvotes == null) return 0
+            val nvotes = CvrNvotes.toInt()
+            return nvotes
+        }
+
+        fun getDiffNvotes() : Int {
+            return getNvotes() - getCvrNvotes()
+        }
+
+
+        // Nc - cvrs.ncards / Nc
+        fun getPctNvotesMissing() : Int {
+            return roundToClosest(100 * getDiffNvotes() / getNvotes().toDouble())
+        }
+
+         */
+
         fun getTarget() = if (targeted()) "YES" else ""
 
         fun targeted(): Boolean {
@@ -516,49 +560,7 @@ acNu = 614, cvrNu = 597 diff = 17
         fun getMvrsExtra() = this.getHaveMvrs() - this.getEstMvrs()
 
         fun getNCand() = contestUA.ncandidates
-
-        fun getCvrNcards() : Int {
-            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards")
-            if (CvrNcards == null) return 0
-            return CvrNcards.toInt()
-        }
-
-        fun getDiffNcards() : Int {
-            val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards") ?: return 0
-            val ncvrs = CvrNcards.toInt()
-            return contestUA.Nc - ncvrs
-        }
-
-        // Nc - cvrs.ncards / Nc
-        fun getPctNcardsMissing() : Int {
-            return roundToClosest(100 * getDiffNcards() / contestUA.Nc.toDouble())
-        }
-
-        fun getVotes(): String {
-            val votes = contestUA.contest.votes()
-            if (votes != null) return votes.toString()
-            return "N/A"
-        }
-
-        fun getVoteMargin(): Int {
-            val minAssertion = contestUA.minAssertion() ?: return 0
-            return contestUA.contest.marginInVotes(minAssertion.assorter)
-        }
-
-        fun getNvotes() : Int {
-            return contestUA.contest.nvotes()
-        }
-
-        fun getCvrNvotes() : Int {
-            val CvrNvotes = contestUA.contest.info().metadata.get("CvrNvotes")
-            if (CvrNvotes == null) return 0
-            val nvotes = CvrNvotes.toInt()
-            return nvotes
-        }
-
-        fun getDiffNvotes() : Int {
-            return getNvotes() - getCvrNvotes()
-        }
+        fun getNvotes() = contestUA.contest.nvotes()
 
         fun getPoolPct(): Int {
             val poolPct = contestUA.contest.info().metadata.get("PoolPct") ?: return -1
@@ -571,13 +573,8 @@ acNu = 614, cvrNu = 597 diff = 17
             return roundToClosest(100.0 * (getPhantoms() / getPopulation().toDouble()))
         }
 
-        // Nc - cvrs.ncards / Nc
-        fun getPctNvotesMissing() : Int {
-            return roundToClosest(100 * getDiffNvotes() / getNvotes().toDouble())
-        }
-
-        fun  getPopulation() = contestUA.population()
-
+        fun getNc() = contestUA.contest.Nc()
+        fun getPopulation() = contestUA.population()
         fun getPhantoms() = contestUA.Nphantoms
 
         fun getRecountMargin(): Double {
@@ -586,17 +583,20 @@ acNu = 614, cvrNu = 597 diff = 17
             }
 
         fun getStatus() = Naming.status(contestUA.preAuditStatus)
-
         fun getType() = contestUA.choiceFunction.toString()
-
         fun getUndervotes() = contestUA.contest.Nundervotes()
+        fun getUvPct() = contestUA.contest.undervotePct()
 
-        fun getCvrNundervotes() : Int {
-            val cvrNvotes = contestUA.contest.info().metadata.get("CvrNundervotes") ?: return 0
-            return cvrNvotes.toInt()
+        fun getVotes(): String {
+            val votes = contestUA.contest.votes()
+            if (votes != null) return votes.toString()
+            return "N/A"
         }
 
-        fun getUvPct() = contestUA.contest.undervotePct()
+        fun getVoteMargin(): Int {
+            val minAssertion = contestUA.minAssertion() ?: return 0
+            return contestUA.contest.marginInVotes(minAssertion.assorter)
+        }
 
         fun getWinners() = contestUA.contest.winners().toString()
 

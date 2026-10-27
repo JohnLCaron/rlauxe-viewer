@@ -2,6 +2,7 @@ package org.cryptobiotic.rlauxe.beans
 
 import org.cryptobiotic.rlauxe.core.Assertion
 import org.cryptobiotic.rlauxe.core.ContestWithAssertions
+import org.cryptobiotic.rlauxe.util.Locations.testdataDir
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
@@ -187,7 +188,7 @@ fun <T> printTable(
     }
 
     // TODO user settable
-    val file = "/home/stormy/rla/temp/" + name + ".csv"
+    val file = "$testdataDir/temp/" + name + ".csv"
     try {
         FileOutputStream(file).use { fout ->
             OutputStreamWriter(fout, StandardCharsets.UTF_8).use { writer ->

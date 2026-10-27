@@ -299,17 +299,6 @@ class BelgiumAltContestTable(
         }
     }
 
-    /*
-    fun showAssertionsJson(bean: AltContestBean) = buildString {
-        if (allSeats == null || lastAuditRound == null) return ""
-        val org = writeAllContestsToJsonFile(
-            lastAuditRound!!.contestRounds,
-            "/home/stormy/rla/temp/assertions.json",
-            .05, false, emptyMap()
-        )
-        append(org)
-    } */
-
     //fun showAssertion(bean: AssertionRoundBean) = buildString { // TODO
     //    appendLine(showAssertionWithDesc(bean, assertionTable.tableModel, bean.contestUA, bean.assertion))
     //    append((bean.contestUA.contest as DhondtContest).showRelaxedAssertion(bean.contestRound, bean.cassertion!!))
