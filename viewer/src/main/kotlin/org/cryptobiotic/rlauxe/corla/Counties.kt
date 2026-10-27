@@ -190,7 +190,7 @@ class Counties(
         fun getMinCardsForVote() =  data?.minCards ?: 0
         fun getBlankPrecinct() =  data?.countBlankPrecincts
         fun getUniqueTypes() =  data?.ballotStylesUnique?.toString() ?: "unknown"
-        fun getBallotStyleMin() =  data?.ballotStyleMin
+        fun getCardStyleMin() =  data?.ballotStyleMin
         fun getPrecinctStyleMin() =  data?.precinctStyleMin
 
         // fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
@@ -225,13 +225,15 @@ class Counties(
                 // TableBeanProperty("totalCvrs", "ncvrs + redactedCvrs"),
                 TableBeanProperty("missing", "manifestCount - (cvrUnredacted + cvrRedacted)"),
                 TableBeanProperty("minCardsForVote", "minimum cards needed for missing votes"),
-                TableBeanProperty("ballotTypesUnique", "ballotTypes have unique styles (contest pattern)"),
                 TableBeanProperty("blankPrecinct", "number of rows with blank precinct column"),
-                TableBeanProperty("pythonNredact", "number of additional redaction made by python anonimizer"),
-                TableBeanProperty("extraRedact", "number of additional redaction made by anonimizer"),
-                TableBeanProperty("totalRedact", "total number of redactions expected"),
+                TableBeanProperty("pythonNredact", "total redactions seen after python anonimizer"),
+                TableBeanProperty("extraRedact", "number of additional redaction made by rlauxe"),
+                TableBeanProperty("totalRedact", "total redactions seen after rlauxe anonimizer"),
                 TableBeanProperty("uniqueTypes", "if the ballot style has a single contest set (style)"),
-            )
+                TableBeanProperty("cardStyleMin", "minimum ncards on ballotType/style"),
+                TableBeanProperty("precinctStyleMin", "minimum ncards on precinct/style"),
+
+                )
         }
     }
 
