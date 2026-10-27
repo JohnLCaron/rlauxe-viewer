@@ -142,7 +142,7 @@ class ColoradoInputTable(
 
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "coloradoInput"
+            fun hiddenProperties() = "input"
         }
     }
 

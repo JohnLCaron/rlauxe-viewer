@@ -108,6 +108,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
 
         val bounds: Rectangle = frame!!.getBounds()
         prefs.putBeanObject(FRAME_SIZE, bounds)
+        logger.debug{"save frame bounds = $bounds"}
         prefs.putBean(FONT_SIZE, fontu.getFontSize()) // TODO not working ??
 
         try {
@@ -295,6 +296,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             frame!!.getContentPane().add(ui)
             val bounds = prefsx.getBean(FRAME_SIZE, Rectangle(50, 50, 800, 450)) as Rectangle
             frame!!.setBounds(bounds)
+            logger.debug{"set frame bounds = $bounds"}
 
             frame!!.pack()
             frame!!.setBounds(bounds)
