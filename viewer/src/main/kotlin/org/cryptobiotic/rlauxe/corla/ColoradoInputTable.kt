@@ -7,13 +7,6 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.AuditReason
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2020General
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2022Primary
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2024General
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2026PMerged
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2026Primary
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2026PwithCvrs
-// import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.corlaInput.MergedContestInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
