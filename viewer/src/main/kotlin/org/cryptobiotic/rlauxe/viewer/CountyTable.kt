@@ -143,7 +143,7 @@ class CountyTable(
         this.countyRecord = auditRecord
         this.mvrManager = PersistedMvrManager(this.countyRecord!!, false)
 
-        val countyPools = mvrManager!!.countyPools()
+        val countyPools = mvrManager!!.countyAcPools()
         if (countyPools == null) return false
 
         val countyCvrs = mvrManager!!.countyCvrPools() //.associateBy { it.countyName }

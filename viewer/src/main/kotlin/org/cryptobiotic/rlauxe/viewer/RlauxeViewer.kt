@@ -50,8 +50,7 @@ class RlauxeViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(pr
         topTabs.addTab("Cards", cardPanel)
         activePanels.add(cardPanel)
 
-        auditRoundsPanel = AuditRoundsTable((prefs.node("AuditStateTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize,
-            null)
+        auditRoundsPanel = AuditRoundsTable((prefs.node("AuditStateTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
         topTabs.addTab("AuditRounds", auditRoundsPanel)
         activePanels.add(auditRoundsPanel)
 

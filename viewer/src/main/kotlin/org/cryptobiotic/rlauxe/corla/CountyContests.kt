@@ -17,7 +17,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.strata.Strata
-import org.cryptobiotic.rlauxe.viewer.ViewerMain
+import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -26,10 +26,7 @@ import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
-import java.util.*
 import javax.swing.*
-import javax.swing.event.ListSelectionEvent
-import javax.swing.event.ListSelectionListener
 import kotlin.text.drop
 
 // TODO County specific sampling tool
@@ -66,7 +63,7 @@ class CountyContests(
     private var onlyShowInprogressContests = false
 
     init {
-        localWindow.setBounds(prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
+        localWindow.setBounds(prefs.getBean(INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
 
         countyTable = BeanTable(
             CountyBean::class.java, prefs.node("countyTable") as PreferencesExt, false,
@@ -286,7 +283,7 @@ class CountyContests(
         countyTable.saveState(false)
         prefs.putInt("splitPos1", split1.getDividerLocation())
         // prefs.putInt("splitPos2", split2.getDividerLocation())
-        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, localWindow.getBounds())
+        prefs.putBeanObject(INFO_BOUNDS, localWindow.getBounds())
     }
 
     companion object {

@@ -28,8 +28,11 @@ import java.util.*
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
 
+const val INFO_BOUNDS: String = "InfoBounds"
+
 /** Rlauxe Viewer main program.  */
 abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JPanel() {
+
     var aboutWindow: RlauxeAboutWindow? = null
 
     val leftPanel = JPanel()
@@ -192,7 +195,6 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
         private val logger = KotlinLogging.logger("RlauxeViewerMain")
 
         const val FRAME_SIZE: String = "FrameSize"
-        const val INFO_BOUNDS: String = "InfoBounds"
         const val FONT_SIZE: String = "FontSize"
 
         var frame: JFrame? = null

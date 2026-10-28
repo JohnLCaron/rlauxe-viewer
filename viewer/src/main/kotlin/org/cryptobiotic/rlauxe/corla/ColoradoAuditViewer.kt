@@ -199,32 +199,7 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         headerLabel.setText("$county County")
     }
 
-    fun showInfo() = buildString {
-        /* if (currentCountyInput != null) {
-            val cc = currentCountyInput
-            appendLine("electionName = ${cc.electionName}")
-            appendLine("countyName = ${cc.countyName}")
-            appendLine("manifestSource = ${cc.manifestSource}")
-            appendLine("cvrsSource = ${cc.cvrsSource}")
-            appendLine()
-            val corlaCvrs = countyCvrsTable.corlaCvrs
-            appendLine("         cvrs = ${nfn(corlaCvrs.cvrs().size, 6)}")
-            val nredactedCvrs = corlaCvrs.redaction().nredactedCvrs()
-            appendLine("redacted cvrs = ${nfn(nredactedCvrs, 6)}")
-            appendLine("   total cvrs = ${nfn(corlaCvrs.cvrs().size + nredactedCvrs, 6)}")
-            appendLine()
-            appendLine("# contests = ${corlaCvrs.schema.contests.size}")
-            appendLine("# redactedGroups = ${corlaCvrs.redaction().groups().size}")
-            appendLine("# cardStyles = ${corlaCvrs.cardStyles().size}")
-            val sumCardStyles = corlaCvrs.cardStyles().sumOf { it.countCards}
-            appendLine("sum cardStyles.count = ${sumCardStyles}")
-
-            appendLine()
-            appendLine("cvr file election name = ${corlaCvrs.electionName}")
-            appendLine("cvr file version = ${corlaCvrs.versionName}")
-
-        } */
-    }
+    fun showInfo() = stateTable.showInfo()
 
     companion object {
         private val logger = KotlinLogging.logger("ColoradoAuditViewer")
