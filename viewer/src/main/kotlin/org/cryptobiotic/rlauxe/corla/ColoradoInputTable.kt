@@ -6,12 +6,14 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.AuditReason
+import org.cryptobiotic.rlauxe.auditcenter.ContestTabAllCounties
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.corlaInput.MergedContestInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInputWithCvrs
 import org.cryptobiotic.rlauxe.corlaInput.statewideInputs
+import org.cryptobiotic.rlauxe.util.sfn
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -94,9 +96,12 @@ class ColoradoInputTable(
     fun setSelectedInput(inputBean: ColoradoInputBean) {
         contestTable.setBeans(emptyList())
 
+        val contestTabs: Map<String, ContestTabAllCounties> = inputBean.input.contestTabsAllCounties()
+
+        // using mergedContestMap instead of canonical contests
         val contestBeans = mutableListOf<CanonicalContestBean>()
         inputBean.input.mergedContestMap.forEach {
-            contestBeans.add(CanonicalContestBean(it.key, it.value))
+            contestBeans.add(CanonicalContestBean(it.key, it.value, contestTabs[it.key]))
         }
         contestTable.setBeans(contestBeans)
 
@@ -117,6 +122,11 @@ class ColoradoInputTable(
     fun showCanonicalContest(bean: CanonicalContestBean) = buildString {
         appendLine(contestTable.tableModel.showBean(bean, CanonicalContestBean.beanProperties))
         appendLine(bean.contest.toString())
+        if (bean.contestTab != null) {
+            bean.contestTab.choices.forEach { (key, value) ->
+                 appendLine("  ${sfn(key,20)} : $value")
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////
@@ -141,13 +151,13 @@ class ColoradoInputTable(
 
     ////////////////////////////////////////////////////////////////
 
-    class CanonicalContestBean(val name: String, val mcontest: MergedContestInfo) {
+    class CanonicalContestBean(val name: String, val mcontest: MergedContestInfo, val contestTab: ContestTabAllCounties?) {
         val contest = mcontest.canonicalContest
 
         // contest round
         val auditReason = mcontest.auditReason
-        val npop = mcontest.npop       // ballot_card_count
-        val nc = mcontest.nc         // contest_ballot_card_count
+        val corlaPop = mcontest.corlaPop       // ballot_card_count
+        val ncast = mcontest.nc         // contest_ballot_card_count
         val voteForN = mcontest.voteForN  // winners_allowed
         val nsamples  = mcontest.nsamples // optimistic_samples_to_audit
         val marginInVotes = mcontest.marginInVotes // min_margin
@@ -185,7 +195,7 @@ class ColoradoInputTable(
         
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "mcontest contest"
+            fun hiddenProperties() = "mcontest contest contestTab"
 
             @JvmStatic
             val beanProperties = listOf(

@@ -21,7 +21,6 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
-import org.cryptobiotic.rlauxe.viewer.ViewerMain.MvrAction
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -36,7 +35,6 @@ private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class AuditRoundsTable(
     private val prefs: PreferencesExt, infoTA: TextHistoryPane, infoWindow: IndependentWindow, fontSize: Float,
-    mvrCall: MvrAction? = null
 ) : JPanel(), ViewerPanelIF {
 
     private val auditRoundTable: BeanTable<AuditRoundBean>
@@ -63,17 +61,17 @@ class AuditRoundsTable(
 
     private var samplingChanged = false
 
-    var mvrCall: AbstractAction?
+    // var mvrCall: AbstractAction?
 
     init {
-        this.mvrCall = mvrCall
+        // this.mvrCall = mvrCall
 
         // Popup info window
         this.rerunTA = TextHistoryPane(false)
         rerunTA.setFontSize(fontSize)
 
         this.rerunWindow = IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(rerunTA))
-        val bounds = prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(200, 50, 500, 700)) as Rectangle
+        val bounds = prefs.getBean(INFO_BOUNDS, Rectangle(200, 50, 500, 700)) as Rectangle
         this.rerunWindow.setBounds(bounds)
 
         auditRoundTable = BeanTable<AuditRoundBean>(
@@ -86,7 +84,7 @@ class AuditRoundsTable(
                 setSelectedAuditRound(round)
             }
         }
-        val mvrAction: AbstractAction = object : AbstractAction() {
+        /*val mvrAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
                 val roundBean = auditRoundTable.getSelectedBean()
                 if (roundBean != null && mvrCall != null) {
@@ -94,7 +92,7 @@ class AuditRoundsTable(
                     mvrCall.actionPerformed(null)
                 }
             }
-        }
+        } */
         auditRoundTable.addPopupOption(
             "Show AuditRound",
             auditRoundTable.makeShowAction(infoTA, infoWindow) { bean: AuditRoundBean -> showAuditRound(bean) })
@@ -102,7 +100,7 @@ class AuditRoundsTable(
             "Reread Audit Record",
             makeAction { setAuditRecordLocation(auditRecordLocation) }
         )
-        auditRoundTable.addPopupOption("Show sampled Mvrs", mvrAction)
+        // auditRoundTable.addPopupOption("Show sampled Mvrs", mvrAction)
 
         //   public BeanTable(Class<T> bc, PreferencesExt pstore, boolean canAddDelete, String header, String tooltip, T bean) {
         contestRoundTable = BeanTable(
@@ -386,7 +384,7 @@ class AuditRoundsTable(
         prefs.putInt("splitPos3", split3.getDividerLocation())
         prefs.putInt("splitPos4", split4.getDividerLocation())
 
-        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, rerunWindow.getBounds())
+        prefs.putBeanObject(INFO_BOUNDS, rerunWindow.getBounds())
     }
 
     /**////////////////////////////////////////////////////////////////////////////////////////////////// */

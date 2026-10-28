@@ -58,7 +58,7 @@ class StateContests(
     private var config: Config? = null
     private var lastAuditRound: AuditRoundIF? = null // may not be null
     private var infos: Map<Int, ContestInfo> = emptyMap()
-    private var countyPools: List<CountyPools> = emptyList()
+    private var countyAcPools: List<CountyPools> = emptyList()
     private var countyCvrPools: Map<String, CountyPools> = emptyMap()
 
     private var auditRiskLimit: Double = 0.0
@@ -67,7 +67,7 @@ class StateContests(
 
     init {
         contestTable =
-            BeanTable<CorlaContestBean>(
+            BeanTable(
                 CorlaContestBean::class.java,
                 prefs.node("contestTable") as PreferencesExt,
                 false,
@@ -75,7 +75,7 @@ class StateContests(
                 "Contests",
                 null
             )
-        contestTable.addListSelectionListener { e: ListSelectionEvent? ->
+        contestTable.addListSelectionListener {
             val contest = contestTable.getSelectedBean()
             if (contest != null) {
                 setSelectedContest(contest)
@@ -90,7 +90,7 @@ class StateContests(
                 { printTable(contestTable, BeanProperties.contests,"countyPool") }
         )
 
-        contestCountyTable = BeanTable<ContestCountyBean>(
+        contestCountyTable = BeanTable(
             ContestCountyBean::class.java,
             prefs.node("contestCountyPoolBean") as PreferencesExt,
             false,
@@ -148,12 +148,11 @@ class StateContests(
             CorlaContestBean.auditRiskLimit = config!!.riskLimit
 
             val mvrManager = PersistedMvrManager(this.countyAudit!!, false)
-            val countyPools = mvrManager.countyPools()
+            val countyPools = mvrManager.countyAcPools()
             if (countyPools == null) return false
-            this.countyPools = countyPools
+            this.countyAcPools = countyPools
             val countyCvrPools = mvrManager.countyCvrPools()
-            if (countyCvrPools != null)
-                this.countyCvrPools = countyCvrPools.associateBy { it.countyName }
+            this.countyCvrPools = if (countyCvrPools != null) countyCvrPools.associateBy { it.countyName } else emptyMap()
 
             this.infos = countyAudit!!.contests.associate { it.contest.info().id to it.contest.info() }
 
@@ -186,30 +185,28 @@ class StateContests(
             val bean = CorlaContestBean(cwa, cr) { b -> samplingChanged = b }
             contestList.add(bean)
         }
-        // sort contests by payoff
-        // contestList.sortBy { it.getPayoff() }
         contestTable.setBeans(contestList)
         logger.debug { "loadAuditRecord ${contestList.size} contests" }
-
     }
 
     fun setSelectedContest(contestBean: CorlaContestBean) {
         val beans = mutableListOf<ContestCountyBean>()
-        this.countyPools.forEach { countyPool : CountyPools ->
+        this.countyAcPools.forEach { countyPool : CountyPools ->
             // contestTab from CountyPools (what it should be, according to auditcenter)
             val countyContestTab = countyPool.contestTabs[contestBean.getId()]
             if (countyContestTab != null) {
                 val info = this.infos[contestBean.getId()]!!
                 val auditcenterBean = ContestCountyBean(countyPool, countyContestTab, info)
                 beans.add(auditcenterBean)
-                /* contestTab from CvrPools (what we simulated for the cvrs; or from real cvrs when available)
+
+                // contestTab from CvrPools (what we simulated for the cvrs; or from real cvrs when available)
                 val cvrPool = countyCvrPools[countyPool.countyName]
                 val cvrTab = cvrPool?.contestTabs[contestBean.getId()]
                 if (cvrTab != null) {
-                    val mvrBean = ContestCountyBean(cvrPool,cvrTab, info, true)
+                    val mvrBean = ContestCountyBean(cvrPool,cvrTab, info)
                     mvrBean.acBean = auditcenterBean
                     beans.add(mvrBean)
-                } */
+                }
             }
         }
         contestCountyTable.setBeans(beans)
@@ -437,7 +434,7 @@ acNu = 614, cvrNu = 597 diff = 17
         fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
 
         fun getSamplePct() : Double {
-            val pop = this.getPopulation()
+            val pop = this.getNpop()
             return if (pop == 0) 0.0 else 100 * this.getEstMvrs() / pop.toDouble()
         }
 
@@ -449,7 +446,7 @@ acNu = 614, cvrNu = 597 diff = 17
         }
 
         fun counties(): List<String>? {
-            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
+            val CORLAcounties = contestUA.contest.info().metadata.get("CanonicalCounties")
             if (CORLAcounties == null) return null
             val stripped = CORLAcounties.drop(1).dropLast(1)
             return stripped.split(",".toRegex()).dropLastWhile { it.isEmpty() }
@@ -464,11 +461,6 @@ acNu = 614, cvrNu = 597 diff = 17
 
         fun getCorlaHaveMvrs(): Int {
             val haveMvrss = contestUA.contest.info().metadata.get("CORLAhaveMvrs") ?: return -1
-            return haveMvrss.toInt()
-        }
-
-        fun getCorlaStrata(): Int {
-            val haveMvrss = contestUA.contest.info().metadata.get("CORLAstrataNcards") ?: return -1
             return haveMvrss.toInt()
         }
 
@@ -529,20 +521,34 @@ acNu = 614, cvrNu = 597 diff = 17
         fun getPctNvotesMissing() : Int {
             return roundToClosest(100 * getDiffNvotes() / getNvotes().toDouble())
         }
+                fun statewide(): Boolean {
+            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties") ?: return false
+            val toks = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            return (toks.size > 60)
+
+                fun getPoolPct(): Int {
+            val poolPct = contestUA.contest.info().metadata.get("PoolPct") ?: return -1
+            return poolPct.toInt()
+        }
+
+        fun getPhantomPct(): Int {
+            val poolPct = contestUA.contest.info().metadata.get("PhantomPct")
+            if (poolPct != null && poolPct.isNotEmpty()) return poolPct.toInt()
+            return roundToClosest(100.0 * (getPhantoms() / getPopulation().toDouble()))
+        }
 
          */
+
+        fun getCorlaStrata(): Int {
+            val haveMvrss = contestUA.contest.info().metadata.get("CORLAstrataNcards") ?: return -1
+            return haveMvrss.toInt()
+        }
 
         fun getTarget() = if (targeted()) "YES" else ""
 
         fun targeted(): Boolean {
             val reason = contestUA.contest.info().metadata.get("CORLAauditReason") ?: return false
             return reason == "state_wide_contest" || reason == "county_wide_contest"
-        }
-
-        fun statewide(): Boolean {
-            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties") ?: return false
-            val toks = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            return (toks.size > 60)
         }
 
         fun getPayoff(): String {
@@ -560,21 +566,11 @@ acNu = 614, cvrNu = 597 diff = 17
         fun getMvrsExtra() = this.getHaveMvrs() - this.getEstMvrs()
 
         fun getNCand() = contestUA.ncandidates
+        fun getNCast() = contestUA.contest.Ncast()
         fun getNvotes() = contestUA.contest.nvotes()
 
-        fun getPoolPct(): Int {
-            val poolPct = contestUA.contest.info().metadata.get("PoolPct") ?: return -1
-            return poolPct.toInt()
-        }
-
-        fun getPhantomPct(): Int {
-            val poolPct = contestUA.contest.info().metadata.get("PhantomPct")
-            if (poolPct != null && poolPct.isNotEmpty()) return poolPct.toInt()
-            return roundToClosest(100.0 * (getPhantoms() / getPopulation().toDouble()))
-        }
-
         fun getNc() = contestUA.contest.Nc()
-        fun getPopulation() = contestUA.population()
+        fun getNpop() = contestUA.Npop
         fun getPhantoms() = contestUA.Nphantoms
 
         fun getRecountMargin(): Double {
@@ -620,6 +616,7 @@ acNu = 614, cvrNu = 597 diff = 17
         val countyName: String
         val contestId: Int
         val vunderTab: Vunder
+        var acBean: ContestCountyBean? = null
 
         init {
             countyName = pool.countyName

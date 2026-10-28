@@ -14,8 +14,8 @@ val subprojectVersion = version
 dependencies {
     api(project(":rlauxe-uibase"))
     // TODO
-    implementation(files("/home/joncifer/IdeaProjects/rlauxe/cases/build/libs/rlauxe-cases-0.10.4.9-uber.jar"))
-    // implementation(files("/home/stormy/dev/github/rla/rlauxe/cases/build/libs/rlauxe-cases-0.10.4.9-uber.jar"))
+    // implementation(files("/home/joncifer/IdeaProjects/rlauxe/cases/build/libs/rlauxe-cases-0.10.4.9-uber.jar"))
+    implementation(files("/home/stormy/dev/github/rla/rlauxe/cases/build/libs/rlauxe-cases-0.10.4.9-uber.jar"))
     implementation(files("../libs/rlauxe-cases-0.10.4.9-uber.jar"))
     implementation(libs.flatlaf)
     implementation(libs.slf4j)

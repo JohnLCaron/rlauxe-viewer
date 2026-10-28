@@ -18,7 +18,7 @@ import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.util.*
 import org.cryptobiotic.rlauxe.viewer.AuditRecordViewerIF
-import org.cryptobiotic.rlauxe.viewer.ViewerMain
+import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -69,7 +69,7 @@ class CountySampling(
     var dist = emptyList<Int>()
 
     init {
-        localWindow.setBounds(prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
+        localWindow.setBounds(prefs.getBean(INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
 
         countySamplingTable = BeanTable(
             CountySamplingBean::class.java, prefs.node("countyContestTable") as PreferencesExt, false,
@@ -451,7 +451,7 @@ class CountySampling(
         // countyTable.saveState(false)
         // prefs.putInt("splitPos1", split1.getDividerLocation())
         // prefs.putInt("splitPos2", split2.getDividerLocation())
-        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, localWindow.getBounds())
+        prefs.putBeanObject(INFO_BOUNDS, localWindow.getBounds())
     }
 
     companion object {

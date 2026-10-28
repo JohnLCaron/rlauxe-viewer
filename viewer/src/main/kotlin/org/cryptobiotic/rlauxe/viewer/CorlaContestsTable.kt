@@ -148,7 +148,7 @@ class CorlaContestsTable(
             CorlaContestBean.auditRiskLimit = config!!.riskLimit
 
             val mvrManager = PersistedMvrManager(this.countyAudit!!, false)
-            val countyPools = mvrManager.countyPools()
+            val countyPools = mvrManager.countyAcPools()
             if (countyPools == null) return false
             this.countyPools = countyPools
             val countyCvrPools = mvrManager.countyCvrPools()

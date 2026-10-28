@@ -71,7 +71,7 @@ class SamplingTable(
     private var onlyShowInprogressContests = false
 
     init {
-        localWindow.setBounds(prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
+        localWindow.setBounds(prefs.getBean(INFO_BOUNDS, Rectangle(50, 50, 400, 40)) as Rectangle)
 
         contestTable = BeanTable(
             CorlaContestBean::class.java,
@@ -528,7 +528,7 @@ class SamplingTable(
         countyTable.saveState(false)
         prefs.putInt("splitPos1", split1.getDividerLocation())
         prefs.putInt("splitPos2", split2.getDividerLocation())
-        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, localWindow.getBounds())
+        prefs.putBeanObject(INFO_BOUNDS, localWindow.getBounds())
     }
 
     companion object {

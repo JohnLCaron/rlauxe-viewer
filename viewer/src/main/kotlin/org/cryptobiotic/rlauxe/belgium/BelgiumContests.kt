@@ -12,7 +12,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.viewer.LogsTable
-import org.cryptobiotic.rlauxe.viewer.ViewerMain
+import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import ucar.ui.prefs.ComboBox
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FileManager
@@ -44,7 +44,7 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
     private val assertWindow  = IndependentWindow("Assertion", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(assertTA))
 
     init {
-        val bounds = prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
+        val bounds = prefs.getBean(INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
         this.assertWindow.setBounds(bounds)
 
         contestTable = BelgiumContestTable((prefs.node("BelgiumContestTable") as PreferencesExt), infoTA, infoWindow, fontSize,
@@ -176,7 +176,7 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
     override fun saveMine() {
         fileChooser.save()
         auditRecordDirCB.save()
-        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, assertWindow.getBounds())
+        prefs.putBeanObject(INFO_BOUNDS, assertWindow.getBounds())
     }
 
     companion object {

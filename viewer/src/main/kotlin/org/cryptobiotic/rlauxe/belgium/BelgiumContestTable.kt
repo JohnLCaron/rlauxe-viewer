@@ -25,7 +25,7 @@ import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.persist.json.writeRelaxedAssertionProofs
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.viewer.RlauxeAssertionBean
-import org.cryptobiotic.rlauxe.viewer.ViewerMain
+import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
@@ -74,7 +74,7 @@ class BelgiumContestTable(
     val tables = mutableListOf<BeanTable<out Any>>()
 
     init {
-        val bounds = prefs.getBean(ViewerMain.INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
+        val bounds = prefs.getBean(INFO_BOUNDS, Rectangle(50, 50, 1000, 700)) as Rectangle
         this.assertWindow.setBounds(bounds)
 
         auditData = AuditData(statusButton) // so each panel gets its own AuditDataOld, but for all audit records.
@@ -312,7 +312,7 @@ class BelgiumContestTable(
     override fun saveState() {
         tables.forEach { it.saveState(false) }
 
-        prefs.putBeanObject(ViewerMain.INFO_BOUNDS, assertWindow.getBounds())
+        prefs.putBeanObject(INFO_BOUNDS, assertWindow.getBounds())
         prefs.putInt("splitPos1", split1.getDividerLocation())
         prefs.putInt("splitPos2", split2.getDividerLocation())
     }
