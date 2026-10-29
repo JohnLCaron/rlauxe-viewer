@@ -36,7 +36,7 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
     val poolTable: PoolTable
 
     val countyTabs  = JTabbedPane(JTabbedPane.TOP)
-    // val countyCvrsTable: CountyCvrsTable
+    // val countyCvrsTable: CiCvrs
     val samplingTable: CountySampling // this uses CountyAuditRecord and county cvrs. but could just use the ac county subtotals ??
     val countyStyles: StyleTable
 
@@ -51,7 +51,7 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         countyTable = CountyContests((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize) {
             setCounty(it)
         }
-        topTabs.addTab("Counties", countyTable)
+        topTabs.addTab("CiCounties", countyTable)
         activePanels.add(countyTable)
 
         stateStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
@@ -67,7 +67,7 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
 
         ///////////////////////////
         // county tabs
-        /* countyCvrsTable = CountyCvrsTable((prefs.node("countyCvrsTable") as PreferencesExt),
+        /* countyCvrsTable = CiCvrs((prefs.node("countyCvrsTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyTabs.addTab("Cvrs", countyCvrsTable)
         activePanels.add(countyCvrsTable) */

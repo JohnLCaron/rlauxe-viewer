@@ -26,10 +26,10 @@ import javax.swing.JPanel
 import javax.swing.JSplitPane
 import kotlin.text.appendLine
 
-private val logger = KotlinLogging.logger("CountyCvrsTable")
+private val logger = KotlinLogging.logger("CiCvrs")
 
 // add another table for contests that use CountyCvrs
-class CountySchemaTable(
+class CiSchema(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
@@ -94,7 +94,7 @@ class CountySchemaTable(
         setLayout(BorderLayout())
         add(split2, BorderLayout.CENTER)
 
-        logger.debug { "CountySchemaTable init" }
+        logger.debug { "CiSchema init" }
     }
 
     fun showSchemaContest(bean: SchemaContestBean) = buildString {
@@ -251,7 +251,7 @@ class CountySchemaTable(
     //    val isIRV: Boolean
     //    val nchoices: Int
     //    val voteForN: Int
-    class SchemaContestBean(val schemaTable: CountySchemaTable, val scontest: SchemaContestInfo) {
+    class SchemaContestBean(val schemaTable: CiSchema, val scontest: SchemaContestInfo) {
         val contestIdx = scontest.contestIdx
         val contestName = scontest.contestName
         val canonName = schemaTable.canonicalContest(scontest)
@@ -272,7 +272,7 @@ class CountySchemaTable(
     }
 
     class SchemaChoiceBean(
-        val schemaTable: CountySchemaTable,
+        val schemaTable: CiSchema,
         val sbean: SchemaContestBean,
         val colInfo: SchemaColumnInfo
     ) {

@@ -424,7 +424,7 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
     }
 
     fun counties(): List<String>? {
-        val counties = contestUA.contest.info().metadata.get("Counties")
+        val counties = contestUA.contest.info().metadata.get("CiCounties")
         if (counties == null) return null
         //val stripped = counties.drop(1).dropLast(1)
         return counties.split(",".toRegex()).dropLastWhile { it.isEmpty() }

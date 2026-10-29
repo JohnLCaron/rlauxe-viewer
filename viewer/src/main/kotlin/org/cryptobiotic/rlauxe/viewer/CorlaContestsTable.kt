@@ -99,7 +99,7 @@ class CorlaContestsTable(
             null
         )
         contestCountyTable.addPopupOption(
-            "Show Contest Counties",
+            "Show Contest CiCounties",
             contestCountyTable.makeShowAction(infoTA, infoWindow){ bean: ContestCountyBean -> showContestInCounty(bean) }
         )
 

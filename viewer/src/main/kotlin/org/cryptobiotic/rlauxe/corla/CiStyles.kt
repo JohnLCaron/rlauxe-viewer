@@ -11,11 +11,7 @@ import org.cryptobiotic.rlauxe.corlaInput.CountyInput
 import org.cryptobiotic.rlauxe.corlacvr.CardStyleId
 import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
-import org.cryptobiotic.rlauxe.corlacvr.CvrRow
-import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
 import org.cryptobiotic.rlauxe.corlacvr.cleanCsvString
-import org.cryptobiotic.rlauxe.util.nfn
-import org.cryptobiotic.rlauxe.util.sfn
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -25,10 +21,10 @@ import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
-private val logger = KotlinLogging.logger("CountyCvrsTable")
+private val logger = KotlinLogging.logger("CiCvrs")
 
 // countyInput.readCorlaCvrs()
-class CountyCvrsTable(
+class CiStyles(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
@@ -36,30 +32,16 @@ class CountyCvrsTable(
 ) : JPanel(), SubPanelIF {
 
     val tables = mutableListOf<BeanTable<out Any>>()
-    val cvrTable: BeanTable<CvrRowBean>
     val precinctStyleTable: BeanTable<PrecinctStyleBean>
     val stylesTable: BeanTable<SchemaStyleBean>
 
-    private val split1: JSplitPane
+    // private val split1: JSplitPane
     private val split2: JSplitPane
 
     var corlaCvrs: CorlaCountyCvrsIF? = null
     var cardStyleMap = emptyMap<CardStyleId, CvrCardStyle>()
 
     init {
-        cvrTable = BeanTable(
-            CvrRowBean::class.java, prefs.node("cardTable") as PreferencesExt, false,
-            "CVRs from County", "CvrRow", null
-        )
-        cvrTable.addPopupOption(
-            "Show Cvr",
-            cvrTable.makeShowAction(infoTA, infoWindow) { bean: CvrRowBean -> showSelectedRow(bean) }
-        )
-        cvrTable.addPopupOption(
-            "Show Precinct Style info",
-            cvrTable.makeShowAction(infoTA, infoWindow) { showPrecinctStyleInfo() }
-        )
-        tables.add(cvrTable)
 
         precinctStyleTable = BeanTable(
             PrecinctStyleBean::class.java, prefs.node("precinctStyleTable") as PreferencesExt, false,
@@ -78,15 +60,15 @@ class CountyCvrsTable(
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, cvrTable, precinctStyleTable)
-        split1.setDividerLocation(prefs.getInt("splitPos1", 600))
-        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, stylesTable)
+        //split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, cvrTable, precinctStyleTable)
+        //split1.setDividerLocation(prefs.getInt("splitPos1", 600))
+        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, precinctStyleTable, stylesTable)
         split2.setDividerLocation(prefs.getInt("splitPos2", 1000))
 
         setLayout(BorderLayout())
         add(split2, BorderLayout.CENTER)
 
-        logger.debug { "CountyCvrsTable init" }
+        logger.debug { "CiCvrs init" }
     }
 
     override fun setFontSize(size: Float) {
@@ -95,22 +77,20 @@ class CountyCvrsTable(
 
     override fun saveState() {
         tables.forEach { it.saveState(false) }
-        prefs.putInt("splitPos1", split1.getDividerLocation())
+        // prefs.putInt("splitPos1", split1.getDividerLocation())
         prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
-    fun showSelectedRow(bean: CvrRowBean) = buildString {
-        append(bean.show(corlaCvrs!!.schema))
-    }
-
+    // TODO CountyInput knows its StateInput
     fun setCountyInput(countyInput: CountyInput) {
         val maxRead = 11111
 
         try {
+            // TODO better to run it through CountyCardsFromManifest?
             corlaCvrs = countyInput.readCorlaCvrs()
             if (corlaCvrs != null) setStyles(corlaCvrs!!)
 
-            val beans = mutableListOf<CvrRowBean>()
+            /* val beans = mutableListOf<CvrRowBean>()
             var count = 0
             corlaCvrs!!.cvrs().forEach {
                 beans.add(CvrRowBean(it))
@@ -120,16 +100,12 @@ class CountyCvrsTable(
             val sortedBeans = beans.sortedWith(
                 compareBy<CvrRowBean> { it.precinctPortion ?: "" }.thenBy { it.ballotType }
             )
-            cvrTable.setBeans(sortedBeans)
+            cvrTable.setBeans(sortedBeans) */
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
             logger.error(e) { "setCountyInput failed" }
         }
-    }
-
-    data class PrecinctCardStyle(val cardStyle: CvrCardStyle, val precinct: String) {
-        var ncards = 0
     }
 
     fun setStyles(corlaCvrs: CorlaCountyCvrsIF) {
@@ -214,37 +190,66 @@ class CountyCvrsTable(
     }
 }
 
-class CvrRowBean(val row: CvrRow) {
-    val cvrNumber = row.cvrNumber
-    val tabulatorNum = row.tabulatorNum
-    val batchId = row.batchId
-    val recordId = row.recordId
-    val imprintedId = row.imprintedId
-    val ballotType = row.ballotType
-    val precinctPortion = row.precinctPortion
+/*     fun showPrecinctStyleInfo() = buildString {
+        val cardCount = precinctStyleTable.beans.sumOf { it.ncards }
 
-    val votes = buildString {
-        row.contestVotes.forEach {
-            append("${it.contestId}: ${it.candVotes()}, ")
+        data class PrecinctStyle(val precinct: String, val style: Set<Int>)
+
+        val uniquePrecinctStyles = mutableMapOf<PrecinctStyle, Int>()
+        corlaCvrs!!.cvrs().forEach { row ->
+            val ps = PrecinctStyle(row.precinctPortion?: "", row.contests())
+            val accum = uniquePrecinctStyles.getOrDefault(ps, 0)
+            uniquePrecinctStyles[ps] = accum + 1
         }
-    }
-
-    fun show(schema: CvrSchema) = buildString {
-        appendLine(row.toString())
-        row.contestVotes.forEach {
-            val contest = schema.contests.get(it.contestId)
-            append("  contest: ${sfn(contest.contestName, 60)} (${nfn(it.contestId, 3)}), ")
-            appendLine(" candidate votes: ${it.candVotes()}")
+        var countRarePrecinctStyles = 0
+        var countRarePrecinctStyleCards = 0
+        uniquePrecinctStyles.forEach { (style, ncards) ->
+            if (ncards < 10) {
+                countRarePrecinctStyles++
+                countRarePrecinctStyleCards += ncards
+            }
         }
-    }
 
-    companion object {
-        @JvmStatic
-        fun hiddenProperties() = "row"
-    }
+        var countRareCvrCardStyle = 0
+        var countRareCvrCards = 0
+        stylesTable.beans.forEach {
+            if (it.ncards < 10) {
+                countRareCvrCardStyle++
+                countRareCvrCards += it.ncards
+            }
+        }
+
+        val uniqueStyles = mutableMapOf<Set<Int>, Int>()
+        corlaCvrs!!.cvrs().forEach { row ->
+            val accum = uniqueStyles.getOrDefault(row.contests(), 0)
+            uniqueStyles[row.contests()] = accum + 1
+        }
+        var countRareStyles = 0
+        var countRareStyleCards = 0
+        uniqueStyles.forEach { (style, ncards) ->
+            if (ncards < 10) {
+                countRareStyles++
+                countRareStyleCards += ncards
+                appendLine("rare style = ${style} ncards=$ncards")
+            }
+        }
+
+        appendLine("cardCount = $cardCount")
+        appendLine("unique precinct/styles = ${precinctStyleTable.beans.size}")
+        appendLine("count rare precinct/styles = ${countRarePrecinctStyles} out of ${uniquePrecinctStyles.size} = ${countRarePrecinctStyleCards} cards")
+        appendLine()
+        appendLine("unique ballotType/styles = ${stylesTable.beans.size}")
+        appendLine("count rare ballotType/style = ${countRareCvrCardStyle} out of ${stylesTable.beans.size} = ${countRareCvrCards} cards")
+        appendLine()
+        appendLine("unique styles = ${uniqueStyles.size}")
+        appendLine("count rare styles = ${countRareStyles} out of ${uniqueStyles.size} = ${countRareStyleCards} cards ")
+    } */
+
+data class PrecinctCardStyle(val cardStyle: CvrCardStyle, val precinct: String) {
+    var ncards = 0
 }
 
-class PrecinctStyleBean(precinctStyle: CountyCvrsTable.PrecinctCardStyle) {
+class PrecinctStyleBean(precinctStyle: PrecinctCardStyle) {
     val cardType = precinctStyle.cardStyle.cardStyle
     val contestIds = precinctStyle.cardStyle.contestIds
     val ncards = precinctStyle.ncards

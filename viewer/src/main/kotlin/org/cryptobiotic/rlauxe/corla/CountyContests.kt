@@ -67,7 +67,7 @@ class CountyContests(
 
         countyTable = BeanTable(
             CountyBean::class.java, prefs.node("countyTable") as PreferencesExt, false,
-            "Counties", "County Audit", null
+            "CiCounties", "County Audit", null
         )
         countyTable.addListSelectionListener {
             val county = countyTable.getSelectedBean()

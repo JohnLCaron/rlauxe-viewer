@@ -17,7 +17,7 @@ import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
-private val logger = KotlinLogging.logger("CountyCvrsTable")
+private val logger = KotlinLogging.logger("CiCvrs")
 
 // countyInput.readCorlaCvrs()
 class PrecinctStyle(
