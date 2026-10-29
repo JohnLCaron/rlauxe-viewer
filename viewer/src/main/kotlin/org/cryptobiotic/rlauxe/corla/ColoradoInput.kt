@@ -18,14 +18,15 @@ import javax.swing.*
 
 class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     var corlaInputPanel: ColoradoInputTable
-    var countiesTab: Counties
+    var countiesTab: CiCounties
     var mvrSamplePanel: MvrSampleTable
     var mvrComparisonPanel: MvrComparisonTable
 
     var countyCvrTabs  = JTabbedPane(JTabbedPane.TOP)
-    var countyCvrsTable: CountyCvrsTable
-    var countyRedactionTable: CountyRedactionTable
-    var countySchemaTable: CountySchemaTable
+    var countyCvrsTable: CiCvrs
+    var countyStylesTable: CiStyles
+    var countyRedactionTable: CiRedactions
+    var countySchemaTable: CiSchema
     var countyMvrTable: MvrSampleTable
 
     var currentStateInput: StatewideInput? = null
@@ -37,12 +38,12 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         corlaInputPanel = ColoradoInputTable((prefs.node("ColoradoInputTable") as PreferencesExt),
             infoTA, infoWindow, fontSize) { setInput(it) }
         corlaInputPanel.getActions(actionsPanel)
-        topTabs.addTab("Colorado Input", corlaInputPanel)
+        topTabs.addTab("Auditcenter Input", corlaInputPanel)
         activePanels.add(corlaInputPanel)
 
-        countiesTab = Counties((prefs.node("Counties") as PreferencesExt),
+        countiesTab = CiCounties((prefs.node("CiCounties") as PreferencesExt),
             infoTA, infoWindow, fontSize, { setCountyInput(it)}, { setCounty(it)})
-        topTabs.addTab("Counties", countiesTab)
+        topTabs.addTab("CiCounties", countiesTab)
         activePanels.add(countiesTab)
 
         mvrSamplePanel = MvrSampleTable((prefs.node("mvrSamplePanel") as PreferencesExt),
@@ -59,22 +60,22 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         topTabs.setSelectedIndex(0)
 
         // countyCvrs
-        countyCvrsTable = CountyCvrsTable((prefs.node("countyCvrsTable") as PreferencesExt),
+        countyCvrsTable = CiCvrs((prefs.node("countyCvrsTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("Cvrs", countyCvrsTable)
         activePanels.add(countyCvrsTable)
 
-        /* precinctStyle = PrecinctStyle((prefs.node("precinctStyle") as PreferencesExt),
+        countyStylesTable = CiStyles((prefs.node("cyStyles") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("Cvrs", countyCvrsTable)
-        activePanels.add(countyCvrsTable) */
+        countyCvrTabs.addTab("Styles", countyStylesTable)
+        activePanels.add(countyStylesTable)
 
-        countyRedactionTable = CountyRedactionTable((prefs.node("countyRedactionTable") as PreferencesExt),
+        countyRedactionTable = CiRedactions((prefs.node("countyRedactionTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("Redactions", countyRedactionTable)
         activePanels.add(countyRedactionTable)
 
-        countySchemaTable = CountySchemaTable((prefs.node("countySchemaTable") as PreferencesExt),
+        countySchemaTable = CiSchema((prefs.node("countySchemaTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("CountySchema", countySchemaTable)
         activePanels.add(countySchemaTable)

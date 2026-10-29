@@ -95,7 +95,7 @@ public class ViewerMain extends JPanel {
         activePanels.add(corlaPanel);
 
         countyPoolsPanel = new CountyTable((PreferencesExt) prefs.node("CountyPoolsTable"), infoTA, infoWindow, fontSize);
-        tabbedPane.addTab("Counties", countyPoolsPanel);
+        tabbedPane.addTab("CiCounties", countyPoolsPanel);
         activePanels.add(countyPoolsPanel);
 
         samplingPanel = new SamplingTable((PreferencesExt) prefs.node("CountyTable"), infoTA, infoWindow, fontSize);

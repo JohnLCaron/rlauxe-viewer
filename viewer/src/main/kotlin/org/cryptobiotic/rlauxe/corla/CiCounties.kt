@@ -23,10 +23,8 @@ import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JSplitPane
-import javax.swing.event.ListSelectionEvent
-import javax.swing.event.ListSelectionListener
 
-class Counties(
+class CiCounties(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
@@ -38,7 +36,7 @@ class Counties(
     val tables = mutableListOf<BeanTable<out Any>>()
 
     private val countyTable: BeanTable<CountyTabBean>
-    private val countyContestTable: BeanTable<CountyContestVotesBean>
+    private val countyContestTable: BeanTable<CountyContestTabBean>
 
     // TextHistoryPane localInfo = new TextHistoryPane();
     private val split1: JSplitPane
@@ -76,13 +74,14 @@ class Counties(
             { printTable(countyTable, CountyTabBean.beanProperties,"CountyRedactions") }
         )
 
+        // all the contests in this county
         countyContestTable = BeanTable(
-            CountyContestVotesBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
-            "CountyContestVotes", "ContestVotes in selected county", null
+            CountyContestTabBean::class.java, prefs.node("contestTable") as PreferencesExt, false,
+            "CountyContestTabs", "contest/county from tabulateCountyFile", null
         )
         /* countyContestTable.addPopupOption(
             "Show Canonical Contest",
-            countyContestTable.makeShowAction(infoTA, infoWindow) { bean: CountyContestVotesBean -> showCanonicalContest(bean) }
+            countyContestTable.makeShowAction(infoTA, infoWindow) { bean: CountyContestTabBean -> showCanonicalContest(bean) }
         ) */
         tables.add(countyContestTable)
 
@@ -143,9 +142,9 @@ class Counties(
     fun setSelectedCounty(bean: CountyTabBean) {
         countyContestTable.setBeans(emptyList())
 
-        val countyContests = mutableListOf<CountyContestVotesBean>()
+        val countyContests = mutableListOf<CountyContestTabBean>()
         bean.countyTab.contests.forEach {
-            countyContests.add(CountyContestVotesBean(it.value))
+            countyContests.add(CountyContestTabBean(it.value))
         }
         countyContestTable.setBeans(countyContests)
     }
@@ -237,8 +236,7 @@ class Counties(
         }
     }
 
-    // all the contests in this county
-    class CountyContestVotesBean(val countyContest: CountyContestVotes) {
+    class CountyContestTabBean(val countyContest: CountyContestVotes) {
         val county = countyContest.countyName
         val contest = countyContest.contestName
         val choices = countyContest.choices
@@ -262,6 +260,6 @@ class Counties(
     }
 
     companion object {
-        private val logger = KotlinLogging.logger("Counties")
+        private val logger = KotlinLogging.logger("CiCounties")
     }
 }
