@@ -43,7 +43,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
 
         countiesTab = CiCounties((prefs.node("CiCounties") as PreferencesExt),
             infoTA, infoWindow, fontSize, { setCountyInput(it)}, { setCounty(it)})
-        topTabs.addTab("CiCounties", countiesTab)
+        topTabs.addTab("Counties", countiesTab)
         activePanels.add(countiesTab)
 
         mvrSamplePanel = MvrSampleTable((prefs.node("mvrSamplePanel") as PreferencesExt),
@@ -139,6 +139,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         currentCountyInput = countyInput
 
         countyCvrsTable.setCountyInput(countyInput)
+        countyStylesTable.setCountyInput(countyInput)
         countySchemaTable.setCorlaInput(countyInput, currentStateInput!!, countyCvrsTable.corlaCvrs)
         countyRedactionTable.setCorlaCvrs(countyCvrsTable.corlaCvrs)
         countyMvrTable.setColoradoInput(currentStateInput!!, countyInput.countyName)

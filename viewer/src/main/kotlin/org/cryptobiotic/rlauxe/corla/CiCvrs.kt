@@ -6,16 +6,15 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.auditcenter.CountyContestVotes
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.corlaCounty.CorlaContestInfo
+import org.cryptobiotic.rlauxe.corlaCounty.CountyCardsFromManifest
 import org.cryptobiotic.rlauxe.corlaInput.CountyInput
-import org.cryptobiotic.rlauxe.corlacvr.CardStyleId
 import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
-import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
 import org.cryptobiotic.rlauxe.corlacvr.CvrRow
 import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
-import org.cryptobiotic.rlauxe.corlacvr.cleanCsvString
+import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.util.sfn
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
@@ -39,13 +38,12 @@ class CiCvrs(
 
     val tables = mutableListOf<BeanTable<out Any>>()
     val cvrTable: BeanTable<CvrRowBean>
-    val countyContestCvrTable: BeanTable<CountyContestCvrBean>
+    val countyContestCvrs: BeanTable<CountyContestCvrBean>
 
     private val split1: JSplitPane
     // private val split2: JSplitPane
 
     var corlaCvrs: CorlaCountyCvrsIF? = null
-    var cardStyleMap = emptyMap<CardStyleId, CvrCardStyle>()
 
     init {
         cvrTable = BeanTable(
@@ -58,18 +56,18 @@ class CiCvrs(
         )
         tables.add(cvrTable)
 
-        countyContestCvrTable = BeanTable(
+        countyContestCvrs = BeanTable(
             CountyContestCvrBean::class.java, prefs.node("precinctStyleTable") as PreferencesExt, false,
-            "Precinct Styles", "CvrRow", null
+            "CountyContest Tabs from Cvrs", "contest/county tabulation from cvr file", null
         )
-        tables.add(countyContestCvrTable)
+        tables.add(countyContestCvrs)
 
         //cardTable.addPopupOption("Show Population", cardTable.makeShowAction(localInfo,
         //    bean -> ((cardTable) bean).show()));
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, cvrTable, countyContestCvrTable)
+        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, cvrTable, countyContestCvrs)
         split1.setDividerLocation(prefs.getInt("splitPos1", 800))
         //split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, stylesTable)
         //split2.setDividerLocation(prefs.getInt("splitPos2", 1000))
@@ -99,21 +97,26 @@ class CiCvrs(
         val maxRead = 11111
 
         try {
-            // TODO better to run it through CountyCardsFromManifest?
-            corlaCvrs = countyInput.readCorlaCvrs()
-            // if (corlaCvrs != null) setStyles(corlaCvrs!!)
+            val countyCards = CountyCardsFromManifest(countyInput)
+            corlaCvrs = countyCards.corlaCvrs
+            val manifestEntries = countyCards.manifestEntries
 
             val beans = mutableListOf<CvrRowBean>()
             var count = 0
             corlaCvrs!!.cvrs().forEach {
-                beans.add(CvrRowBean(it))
+                beans.add(CvrRowBean(it, manifestEntries.contains(it)))
                 if (count++ > maxRead) return@forEach
             }
+            cvrTable.setBeans(beans)
 
-            val sortedBeans = beans.sortedWith(
-                compareBy<CvrRowBean> { it.precinctPortion ?: "" }.thenBy { it.ballotType }
-            )
-            cvrTable.setBeans(sortedBeans)
+            val infos = countyCards.infos
+
+            val cvrBeans = mutableListOf<CountyContestCvrBean>()
+            countyCards.cvrTabs.values.forEach { cvrTab ->
+                cvrBeans.add(CountyContestCvrBean(cvrTab, infos[cvrTab.contestId]))
+            }
+            countyContestCvrs.setBeans(cvrBeans)
+
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
@@ -122,7 +125,7 @@ class CiCvrs(
     }
 }
 
-class CvrRowBean(val row: CvrRow) {
+class CvrRowBean(val row: CvrRow, val inManifest: Boolean) {
     val cvrNumber = row.cvrNumber
     val tabulatorNum = row.tabulatorNum
     val batchId = row.batchId
@@ -153,24 +156,28 @@ class CvrRowBean(val row: CvrRow) {
 }
 
 // tabulation from the Cvr file
-class CountyContestCvrBean(val countyContest: CountyContestVotes) {
-    val county = countyContest.countyName
-    val contest = countyContest.contestName
-    val choices = countyContest.choices
-    val totalVotes = countyContest.contestVotes()
+class CountyContestCvrBean(val cvrTab: ContestTabulation, info: CorlaContestInfo?) {
+    val contestId = cvrTab.contestId
+    val contestName = info?.name ?: "N/A"
+    val ncards = cvrTab.ncards()
+    val votes = cvrTab.votes
+    val undervotes = cvrTab.undervotes
+    val uvPct = cvrTab.undervotes / (cvrTab.ncards().toDouble() * cvrTab.voteForN)
 
     companion object {
         val header = " id,                                     name, tabNCards, styleNCards, diffNCards, nvotes, undervotes, uvPct"
 
         @JvmStatic
-        fun hiddenProperties() = "countyContest"
+        fun hiddenProperties() = "cvrTab info"
 
         @JvmStatic
         val beanProperties = listOf(
             TableBeanProperty("contestId", "contest Id"),
             TableBeanProperty("contestName", "contest name"),
-            TableBeanProperty("diffNVotes", "auditcenter.votes - cvr.votes"),
-            TableBeanProperty("pctDiffNVotes", "(auditcenter.votes - cvr.votes)/auditcenter.votes"),
+            TableBeanProperty("ncards", "number of cards with this contest on it"),
+            TableBeanProperty("votes", "tabulated votes for this contest"),
+            TableBeanProperty("undervotes", "undervotes (no candidate selected) for this contest"),
+            TableBeanProperty("uvPct", "pct undervotes / ncards"),
         )
 
     }
