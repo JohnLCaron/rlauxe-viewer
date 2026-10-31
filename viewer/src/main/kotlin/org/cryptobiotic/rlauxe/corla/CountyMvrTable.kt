@@ -5,7 +5,6 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
@@ -34,8 +33,6 @@ class CountyMvrTable(
     val localInfo = TextHistoryPane()
     private val split1: JSplitPane
     // private val split2: JSplitPane
-
-    val currentInput: ColoradoInput? = null
 
     init {
         // problem is it does a static parsing of the beans....we need a new table each time
@@ -122,7 +119,7 @@ class CountyMvrTable(
             val headerSet = "county_name,contest_name,imprinted_id,ballot_type,choice_per_voting_computer,"+
                     "audit_board_selection,consensus,record_type,audit_board_comment,timestamp,cvr_id,audit_reason".split(",").toSet()
 
-            fun checkHeaders(input: ColoradoInput, headers: List<String>) {
+            fun checkHeaders(input: StatewideInput, headers: List<String>) {
                 headers.forEach {
                     if (!headerSet.contains(it))
                         logger.warn { "Header $it is not present in ${input.name()}" }

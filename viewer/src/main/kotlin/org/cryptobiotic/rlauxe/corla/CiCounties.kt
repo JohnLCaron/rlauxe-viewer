@@ -15,7 +15,6 @@ import org.cryptobiotic.rlauxe.beans.printTable
 import org.cryptobiotic.rlauxe.corlaInput.CountyInput
 import org.cryptobiotic.rlauxe.corlaInput.CountyInputData
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
-import org.cryptobiotic.rlauxe.corlaInput.StatewideInputWithCvrs
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -106,8 +105,6 @@ class CiCounties(
         val strataMap: Map<String, StrataInfo> = input.strataMap
 
         // val requireCountyInput = (input is StatewideInputWithCvrs)
-        val inputWithCvrs: StatewideInputWithCvrs? = if (input is StatewideInputWithCvrs) input else null
-
         val countySummaryData ="/resources/data/cases/corla/countySummaryData/${input.name()}.csv"
         val inputDataMap = try {
             println("reading CountyInputData from $countySummaryData")
@@ -131,7 +128,7 @@ class CiCounties(
 
         val countyContests = mutableListOf<CountyTabBean>()
         input.countyTabsAllContests().forEach { (county, countyTab) ->
-            val corlaCountyInput = inputWithCvrs?.corlaCountyInput(county)
+            val corlaCountyInput = input.corlaCountyInput(county)
 
             countyContests.add(CountyTabBean(county, countyTab, strataMap[county], corlaCountyInput,
                 inputDataMap[county], redactedCountMap[county]))
@@ -175,7 +172,7 @@ class CiCounties(
         val ncontests = countyTab.contests.size
         val nmvrs = strata?.nmvrs ?: 0
         val total = strata?.ballotCardCount ?: 0
-        val hasCvrs = (countyInput != null)
+        val hasCvrs = (countyInput != null) && countyInput.hasCvrs()
 
         fun getManifest() =  data?.manifestCount ?: 0
         fun getCvrUnredacted() =  data?.unredactedCvrs ?: 0
