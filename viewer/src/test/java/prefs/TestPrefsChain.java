@@ -1,6 +1,6 @@
 package prefs;
 
-import org.cryptobiotic.rlauxe.viewer.ViewerMain;
+import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
@@ -35,11 +35,11 @@ public class TestPrefsChain {
             PreferencesExt prefs = store.getPreferences();
 
             // from the default
-            var fontSize = prefs.getBean(ViewerMain.FONT_SIZE, 12.0f);
+            var fontSize = prefs.getBean(RlauxeViewerMain.FONT_SIZE, 12.0f);
             assertThat(fontSize).isEqualTo(28.0f);
 
-            prefs.putBean(ViewerMain.FONT_SIZE, 30.0f);
-            var fontSize2 = prefs.getBean(ViewerMain.FONT_SIZE, 12.0f);
+            prefs.putBean(RlauxeViewerMain.FONT_SIZE, 30.0f);
+            var fontSize2 = prefs.getBean(RlauxeViewerMain.FONT_SIZE, 12.0f);
             assertThat(fontSize2).isEqualTo(30.0f); // sensitive to FLoat or Double
 
         } catch (IOException e) {

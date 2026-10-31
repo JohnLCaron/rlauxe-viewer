@@ -51,7 +51,7 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         countyTable = CountyContests((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize) {
             setCounty(it)
         }
-        topTabs.addTab("CiCounties", countyTable)
+        topTabs.addTab("Counties", countyTable)
         activePanels.add(countyTable)
 
         stateStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)

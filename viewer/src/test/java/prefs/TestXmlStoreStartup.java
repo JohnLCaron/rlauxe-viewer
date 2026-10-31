@@ -1,7 +1,6 @@
 package prefs;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import org.cryptobiotic.rlauxe.viewer.ViewerMain;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -18,6 +17,7 @@ import java.io.IOException;
 import java.util.HashSet;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain.FONT_SIZE;
 
 @RunWith(JUnit4.class)
 public class TestXmlStoreStartup {
@@ -37,10 +37,10 @@ public class TestXmlStoreStartup {
             var prefsx = (PreferencesExt) prefs.node("WhatTheHecIsaNode");
             Debug.setStore(prefsx.node("Debug"));
 
-            var fontSize = (Float) prefsx.getBean(ViewerMain.FONT_SIZE, 12.0f);
+            var fontSize = (Float) prefsx.getBean(FONT_SIZE, 12.0f);
             FontUtil.init();
             resizeDefaultFonts(fontSize);
-            prefs.putBean(ViewerMain.FONT_SIZE, 21.0);
+            prefs.putBean(FONT_SIZE, 21.0);
 
             BeanTable<String> logsTable = new BeanTable(String.class, (PreferencesExt) prefsx.node("BeanTable"), false);
             logsTable.saveState(false);
