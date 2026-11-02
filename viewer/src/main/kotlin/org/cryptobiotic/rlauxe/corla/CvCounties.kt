@@ -30,7 +30,7 @@ import javax.swing.*
 import kotlin.text.drop
 
 // TODO County specific sampling tool
-class CountyContests(
+class CvCounties(
     private val prefs: PreferencesExt,
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
@@ -56,6 +56,7 @@ class CountyContests(
     var contestMap = emptyMap<Int, ContestWithAssertions>()
     var contestRoundMap = emptyMap<Int, ContestRound>()
     var countyContestData = emptyList<CountyContestData>()
+    var contestCounties =  mutableMapOf<String, MutableList<CountyContestData>>() // contestName -> List<CountyContestData>, for each county
 
     private var config : Config? = null
     private var auditRiskLimit: Double = 0.0
@@ -196,24 +197,28 @@ class CountyContests(
         // if (statewide != null) statewide.nmvrsUniform = countUniformMvrs;
         // this.countyMap = countyList.associateBy { it.name }
         this.countyContestData = countyAudit!!.countyContestData
-        // countMvrsByCounty()
+        contestCounties =  mutableMapOf()
+        for (countyContest in countyContestData) {
+            val counties = contestCounties.getOrPut(countyContest.contestName) { mutableListOf() }
+            counties.add(countyContest)
+        }
 
         this.contestMap =  countyAudit!!.contests.associateBy { it.id }
         this.contestRoundMap =  lastAuditRound!!.contestRounds.associateBy { it.id }
     }
 
     fun setSelectedCounty(countyBean: CountyBean) {
+
         val beanList = mutableListOf<CountyContestBean>()
-        for (countyContest in countyContestData) {
-            val contestRound = contestRoundMap[countyContest.id]
+        countyContestData.filter { it.countyName == countyBean.name }.forEach {
+            val contestRound = contestRoundMap[it.id]
             if (contestRound != null && contestRound.status == TestH0Status.InProgress) {
-                if (countyContest.countyName == countyBean.name) {
-                    val bean = CountyContestBean(contestRound, countyContest, this.auditRiskLimit)  { b -> samplingChanged = b }
-                    beanList.add(bean)
-                    bean.countyPopulation = countyBean.population
-                    bean.rlauxeNmvrs = countyBean.rlauxeSampling
-                    bean.corlaNmvrs = countyBean.corlaSampling
-                }
+                val counties = contestCounties[it.contestName] ?: emptyList()
+                val bean = CountyContestBean(contestRound, counties, this.auditRiskLimit)  { b -> samplingChanged = b }
+                beanList.add(bean)
+                bean.countyPopulation = countyBean.population
+                bean.rlauxeNmvrs = countyBean.rlauxeSampling
+                bean.corlaNmvrs = countyBean.corlaSampling
             }
         }
         countyContestTable.setBeans(beanList)
@@ -311,7 +316,7 @@ class CountyBean(countyData: Strata) {
 }
 
 // data class CountyContestData(val countyName: String, val contestName: String, val id: Int, val voteDiff: Int, val votes: Map<Int, Int>)
-class CountyContestBean(val contestRound: ContestRound, val countyContestData: CountyContestData, val auditRiskLimit: Double,
+class CountyContestBean(val contestRound: ContestRound, val counties: List<CountyContestData>, val auditRiskLimit: Double,
                         val sampleChanged: (Boolean) -> Any) {
     val contestUA: ContestWithAssertions = contestRound.contestUA
     /* var mvrLimit: Int = -1
@@ -384,7 +389,7 @@ class CountyContestBean(val contestRound: ContestRound, val countyContestData: C
     }
 
     fun counties(): List<String>? {
-        val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
+        val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties") // TODO change to "CanonicalCounties"
         if (CORLAcounties == null) return null
         val stripped = CORLAcounties.drop(1).dropLast(1)
         return stripped.split(",".toRegex()).dropLastWhile { it.isEmpty() }

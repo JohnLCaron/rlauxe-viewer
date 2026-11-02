@@ -157,7 +157,7 @@ class ColoradoInputTable(
         val corlaPop = mcontest.corlaPop       // ballot_card_count
         val ncast = mcontest.nc         // contest_ballot_card_count
         val voteForN = mcontest.voteForN  // winners_allowed
-        val nsamples  = mcontest.nsamples // optimistic_samples_to_audit
+        val estSamples  = mcontest.estSamples // Corla estimated_samples_to_audit
         val marginInVotes = mcontest.marginInVotes // min_margin
         val riskLimit  = mcontest.riskLimit // risk_limit
 

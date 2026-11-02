@@ -361,21 +361,12 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
     val mvrsUsed: Int
         get() = if (contestRound == null) 0 else contestRound.maxSamplesUsed()
 
-    val nc: Int
-        get() = contestUA.Nc
-
-    val nCand: Int
-        get() = contestUA.ncandidates
-
-    val npop: Int
-        get() = contestUA.Npop
-
-    val xpop: Int
-        get() = contestUA.Npop - contestUA.Nc
-
-    val phantoms: Int
-        get() = contestUA.Nphantoms
-
+    val nc = contestUA.Nc
+    val nCast = contestUA.contest.Ncast()
+    val nCand = contestUA.ncandidates
+    val npop = contestUA.Npop
+    val xpop = contestUA.Npop - contestUA.Nc
+    val phantoms = contestUA.Nphantoms
     val nvotes = contestUA.contest.nvotes()
 
     val recountMargin: Double

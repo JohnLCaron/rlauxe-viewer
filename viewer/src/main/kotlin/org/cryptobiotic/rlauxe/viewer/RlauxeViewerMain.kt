@@ -8,7 +8,7 @@ import com.formdev.flatlaf.FlatLightLaf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.belgium.BelgiumContests
 import org.cryptobiotic.rlauxe.corla.ColoradoInput
-import org.cryptobiotic.rlauxe.corla.ColoradoAuditViewer
+import org.cryptobiotic.rlauxe.corla.ColoradoViewer
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FontUtil
 import ucar.ui.widget.FontUtil.StandardFont
@@ -54,7 +54,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
 
     init {
         fontu = FontUtil.getStandardFont(fontSize)
-        headerLabel.setFont(headerLabel.getFont().deriveFont(Font.BOLD, fontSize + 3.0f));
+        headerLabel.setFont(headerLabel.getFont().deriveFont(Font.BOLD, fontSize + 3.0f))
         headerLabel.setHorizontalAlignment(JLabel.CENTER); // Centers text inside the label's area
 
         // Popup info window
@@ -280,7 +280,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             frame = JFrame(type)
             ui = when (type) {
                 "ColoradoInput" -> ColoradoInput(prefsx, fontSize)
-                "ColoradoAuditViewer" -> ColoradoAuditViewer(prefsx, fontSize)
+                "ColoradoAuditViewer" -> ColoradoViewer(prefsx, fontSize)
                 "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
                 "RlauxeViewer" -> RlauxeViewer(prefsx, fontSize)
                 // "TestPrefs" -> TestPrefs(prefsx, fontSize)

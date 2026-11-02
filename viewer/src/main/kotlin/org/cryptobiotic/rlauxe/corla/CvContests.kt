@@ -21,7 +21,6 @@ import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.util.nfn
-import org.cryptobiotic.rlauxe.util.roundToClosest
 import org.cryptobiotic.rlauxe.util.trunc
 import org.cryptobiotic.rlauxe.viewer.CountyBean
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
@@ -37,9 +36,8 @@ import javax.swing.AbstractAction
 import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
-import javax.swing.event.ListSelectionEvent
 
-class StateContests(
+class CvContests(
     private val prefs: PreferencesExt,
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
@@ -47,8 +45,8 @@ class StateContests(
 ) : JPanel(), ViewerPanelIF, SubPanelIF {
     var countyTotal: CountyBean? = null
 
-    private val contestTable: BeanTable<CorlaContestBean>
-    private val contestCountyTable: BeanTable<ContestCountyBean>
+    private val contestTable: BeanTable<CvContestBean>
+    private val contestCountyTable: BeanTable<CvContestCountyBean>
 
     // private val split1: JSplitPane
     private val split2: JSplitPane
@@ -59,7 +57,6 @@ class StateContests(
     private var lastAuditRound: AuditRoundIF? = null // may not be null
     private var infos: Map<Int, ContestInfo> = emptyMap()
     private var countyAcPools: List<CountyPools> = emptyList()
-    private var countyCvrPools: Map<String, CountyPools> = emptyMap()
 
     private var auditRiskLimit: Double = 0.0
     private var samplingChanged = false
@@ -68,7 +65,7 @@ class StateContests(
     init {
         contestTable =
             BeanTable(
-                CorlaContestBean::class.java,
+                CvContestBean::class.java,
                 prefs.node("contestTable") as PreferencesExt,
                 false,
                 "Contests",
@@ -83,7 +80,7 @@ class StateContests(
         }
         contestTable.addPopupOption(
             "Show Contest",
-            contestTable.makeShowAction(infoTA, infoWindow) { bean: CorlaContestBean -> showContest(bean) }
+            contestTable.makeShowAction(infoTA, infoWindow) { bean: CvContestBean -> showContest(bean) }
         )
         contestTable.addPopupOption(
             "Print Contests", contestTable.makeShowAction(infoTA, infoWindow)
@@ -91,7 +88,7 @@ class StateContests(
         )
 
         contestCountyTable = BeanTable(
-            ContestCountyBean::class.java,
+            CvContestCountyBean::class.java,
             prefs.node("contestCountyPoolBean") as PreferencesExt,
             false,
             "County subtotals for selected Contest",
@@ -100,7 +97,7 @@ class StateContests(
         )
         contestCountyTable.addPopupOption(
             "Show Contest CiCounties",
-            contestCountyTable.makeShowAction(infoTA, infoWindow){ bean: ContestCountyBean -> showContestInCounty(bean) }
+            contestCountyTable.makeShowAction(infoTA, infoWindow){ bean: CvContestCountyBean -> showContestInCounty(bean) }
         )
 
         // countyTable.addPopupOption("Show County", countyTable.makeShowAction(infoTA, infoWindow, bean -> ((CountyBean) bean).show()));
@@ -145,14 +142,12 @@ class StateContests(
             this.lastAuditRound = countyAudit!!.rounds.last()
             this.config = countyAudit!!.config
             this.auditRiskLimit = config!!.riskLimit
-            CorlaContestBean.auditRiskLimit = config!!.riskLimit
+            CvContestBean.auditRiskLimit = config!!.riskLimit
 
             val mvrManager = PersistedMvrManager(this.countyAudit!!, false)
             val countyPools = mvrManager.countyAcPools()
             if (countyPools == null) return false
             this.countyAcPools = countyPools
-            val countyCvrPools = mvrManager.countyCvrPools()
-            this.countyCvrPools = if (countyCvrPools != null) countyCvrPools.associateBy { it.countyName } else emptyMap()
 
             this.infos = countyAudit!!.contests.associate { it.contest.info().id to it.contest.info() }
 
@@ -179,34 +174,25 @@ class StateContests(
         }
         logger.debug { "loadAuditRecord ${contestRoundMap.size} rounds" }
 
-        val contestList = mutableListOf<CorlaContestBean>()
+        val contestList = mutableListOf<CvContestBean>()
         auditRecord.contests.filter { !onlyShowInprogressContests || it.preAuditStatus == TestH0Status.InProgress }.forEach { cwa ->
             val cr = contestRoundMap.get(cwa.id)
-            val bean = CorlaContestBean(cwa, cr) { b -> samplingChanged = b }
+            val bean = CvContestBean(cwa, cr) { b -> samplingChanged = b }
             contestList.add(bean)
         }
         contestTable.setBeans(contestList)
         logger.debug { "loadAuditRecord ${contestList.size} contests" }
     }
 
-    fun setSelectedContest(contestBean: CorlaContestBean) {
-        val beans = mutableListOf<ContestCountyBean>()
+    fun setSelectedContest(contestBean: CvContestBean) {
+        val beans = mutableListOf<CvContestCountyBean>()
         this.countyAcPools.forEach { countyPool : CountyPools ->
             // contestTab from CountyPools (what it should be, according to auditcenter)
             val countyContestTab = countyPool.contestTabs[contestBean.getId()]
             if (countyContestTab != null) {
                 val info = this.infos[contestBean.getId()]!!
-                val auditcenterBean = ContestCountyBean(countyPool, countyContestTab, info)
+                val auditcenterBean = CvContestCountyBean(countyPool, countyContestTab, info)
                 beans.add(auditcenterBean)
-
-                // contestTab from CvrPools (what we simulated for the cvrs; or from real cvrs when available)
-                val cvrPool = countyCvrPools[countyPool.countyName]
-                val cvrTab = cvrPool?.contestTabs[contestBean.getId()]
-                if (cvrTab != null) {
-                    val mvrBean = ContestCountyBean(cvrPool,cvrTab, info)
-                    mvrBean.acBean = auditcenterBean
-                    beans.add(mvrBean)
-                }
             }
         }
         contestCountyTable.setBeans(beans)
@@ -331,7 +317,7 @@ acNvotes = 7650, cvrNvotes = 7441 diff = 209
 acNu = 614, cvrNu = 597 diff = 17
      */
 
-    fun showContest(bean: CorlaContestBean) = buildString {
+    fun showContest(bean: CvContestBean) = buildString {
         append( showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
         appendLine()
         val votes: Map<Int, Int> = bean.contestUA.contest.votes()!!
@@ -368,13 +354,13 @@ acNu = 614, cvrNu = 597 diff = 17
         append(showSums)
     }
 
-    fun showContestInCounty(bean: ContestCountyBean) = buildString {
+    fun showContestInCounty(bean: CvContestCountyBean) = buildString {
         append( showContestWithDesc(bean, contestCountyTable.tableModel, null))
         appendLine("    ${bean.contestTab}")
     }
 
     // used also in SamplingTable
-    class CorlaContestBean(var contestUA: ContestWithAssertions, var contestRound: ContestRound?, val sampleChanged: (Boolean) -> Any) {
+    class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: ContestRound?, val sampleChanged: (Boolean) -> Any) {
         var mvrLimit: Int = -1
 
         fun canedit(): Boolean {
@@ -452,10 +438,9 @@ acNu = 614, cvrNu = 597 diff = 17
             return stripped.split(",".toRegex()).dropLastWhile { it.isEmpty() }
         }
 
-        /*
         fun getCorlaEstMvrs(): Int {
             if (!targeted()) return -1
-            val CORLAsample = contestUA.contest.info().metadata.get("CORLAsample") ?: return -1
+            val CORLAsample = contestUA.contest.info().metadata.get("CORLAestMvrs") ?: return -1
             return CORLAsample.toInt()
         }
 
@@ -471,6 +456,10 @@ acNu = 614, cvrNu = 597 diff = 17
             return minMargin.toInt()
         }
 
+        fun getDiffVoteMargin(): Int {
+            return getVoteMargin() - getCorlaVoteMargin()
+        }
+
         // same as corlaSampling plot
         fun getCorlaRisk(): Double {
             val contest = contestUA.contest
@@ -480,7 +469,8 @@ acNu = 614, cvrNu = 597 diff = 17
             return estRiskStandardBet(getCorlaVoteMargin(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
         }
 
-                fun getCvrNcards() : Int {
+        /*
+        fun getCvrNcards() : Int {
             val CvrNcards = contestUA.contest.info().metadata.get("CvrNcards")
             if (CvrNcards == null) return 0
             return CvrNcards.toInt()
@@ -521,7 +511,8 @@ acNu = 614, cvrNu = 597 diff = 17
         fun getPctNvotesMissing() : Int {
             return roundToClosest(100 * getDiffNvotes() / getNvotes().toDouble())
         }
-                fun statewide(): Boolean {
+
+        fun statewide(): Boolean {
             val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties") ?: return false
             val toks = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             return (toks.size > 60)
@@ -544,7 +535,12 @@ acNu = 614, cvrNu = 597 diff = 17
             return haveMvrss.toInt()
         }
 
-        fun getTarget() = if (targeted()) "YES" else ""
+        fun getTarget(): String {
+            val reason = contestUA.contest.info().metadata.get("CORLAauditReason") ?: return ""
+            if (reason == "state_wide_contest") return "STATE"
+            if (reason == "county_wide_contest") return "COUNTY"
+            return ""
+        }
 
         fun targeted(): Boolean {
             val reason = contestUA.contest.info().metadata.get("CORLAauditReason") ?: return false
@@ -569,8 +565,9 @@ acNu = 614, cvrNu = 597 diff = 17
         fun getNCast() = contestUA.contest.Ncast()
         fun getNvotes() = contestUA.contest.nvotes()
 
-        fun getNc() = contestUA.contest.Nc()
         fun getNpop() = contestUA.Npop
+        fun getNc() = contestUA.contest.Nc()
+        fun getXPop() = getNpop() - getNc()
         fun getPhantoms() = contestUA.Nphantoms
 
         fun getRecountMargin(): Double {
@@ -612,11 +609,11 @@ acNu = 614, cvrNu = 597 diff = 17
     }
 
     // all the counties for this contest
-    class ContestCountyBean(val pool: CountyPools, val contestTab: ContestTabulation, val info: ContestInfo) {
+    class CvContestCountyBean(val pool: CountyPools, val contestTab: ContestTabulation, val info: ContestInfo) {
         val countyName: String
         val contestId: Int
         val vunderTab: Vunder
-        var acBean: ContestCountyBean? = null
+        var acBean: CvContestCountyBean? = null
 
         init {
             countyName = pool.countyName

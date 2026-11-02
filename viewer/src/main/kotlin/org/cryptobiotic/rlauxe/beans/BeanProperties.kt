@@ -73,7 +73,7 @@ object BeanProperties {
         contests.add(TableBeanProperty("round", "index of audit round"))
 
         // Corla
-        contests.add(TableBeanProperty("corlaHaveMvrs", "Corla mvrs for contest's strata (from contestComparisonFile)"))
+        contests.add(TableBeanProperty("corlaHaveMvrs", "single county: count mvrs in county (from comparison file), else min rate algorithm"))
         contests.add(TableBeanProperty("corlaRisk", "estimated Corla uniform risk"))
         contests.add(TableBeanProperty("corlaStrata", "Corla strata size (from contestRoundFile ballot_card_count)"))
         contests.add(TableBeanProperty("corlaVoteDiff", "TODO"))

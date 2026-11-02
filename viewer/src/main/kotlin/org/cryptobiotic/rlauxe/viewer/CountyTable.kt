@@ -34,6 +34,8 @@ import javax.swing.event.ListSelectionListener
 
 private val logger: Logger = LoggerFactory.getLogger(CountyTable::class.java)
 
+// not used right now
+
 class CountyTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,

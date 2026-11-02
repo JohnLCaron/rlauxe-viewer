@@ -102,7 +102,7 @@ class CiCounties(
         logger.debug { "setColoradoInput to ${input.name()}." }
 
         countyTable.setBeans(emptyList())
-        val strataMap: Map<String, StrataInfo> = input.strataMap
+        val strataMap: Map<String, StrataInfo> = input.countyStrataMap
 
         // val requireCountyInput = (input is StatewideInputWithCvrs)
         val countySummaryData ="/resources/data/cases/corla/countySummaryData/${input.name()}.csv"
