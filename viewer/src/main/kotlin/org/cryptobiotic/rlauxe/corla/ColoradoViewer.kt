@@ -23,7 +23,6 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JLabel
 import javax.swing.JOptionPane
-import javax.swing.JTabbedPane
 
 class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     val fileChooser: FileManager
@@ -34,24 +33,24 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
     val stateStyles: StyleTable
     val poolTable: PoolTable
 
-    val countyTabs  = JTabbedPane(JTabbedPane.TOP)
+    // val countyTabs  = JTabbedPane(JTabbedPane.TOP)
     // val countyCvrsTable: CiCvrs
-    val samplingTable: CvCountySampling // this uses CountyAuditRecord and county cvrs. but could just use the ac county subtotals ??
-    val countyStyles: StyleTable
+    // val samplingTable: CvCountySampling // this uses CountyAuditRecord and county cvrs. but could just use the ac county subtotals ??
+    // val countyStyles: StyleTable
     var countyName: String? = null
 
     init {
         ////////////////////////////////////////////
         // topTabs
-        stateContests = CvContests(prefs.node("StateContests") as PreferencesExt, infoTA, infoWindow, fontSize);
-        stateContests.getActions(actionsPanel);
-        topTabs.addTab("Contests", stateContests);
-        activePanels.add(stateContests);
+        stateContests = CvContests(prefs.node("StateContests") as PreferencesExt, infoTA, infoWindow, fontSize, headerLabel)
+        stateContests.getActions(actionsPanel)
+        topTabs.addTab("Contests", stateContests)
+        activePanels.add(stateContests)
 
-        countyTable = CvCounties((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize) {
-            setCounty(it)
-        }
-        topTabs.addTab("Counties", countyTable)
+        countyTable = CvCounties((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize,
+            headerLabel) { county, nmvrs -> countyTable.setCountyNmvrs(county, nmvrs)}
+
+        topTabs.addTab("County Sampling", countyTable)
         activePanels.add(countyTable)
 
         stateStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
@@ -62,19 +61,20 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
         topTabs.addTab("All Pools", poolTable)
         activePanels.add(poolTable)
 
-        topTabs.addTab("CountyCvrs", countyTabs);
+        // topTabs.addTab("CountySampling", countyTabs)
         topTabs.setSelectedIndex(0)
 
         ///////////////////////////
-        // county tabs
+        /* county tabs
 
-        samplingTable = CvCountySampling((prefs.node("CountySampling") as PreferencesExt), infoTA, infoWindow, fontSize, headerLabel)
+        samplingTable = CvCountySampling((prefs.node("CountySampling") as PreferencesExt), infoTA, infoWindow, fontSize,
+            headerLabel) { county, nmvrs -> countyTable.setCountyNmvrs(county, nmvrs)}
         countyTabs.addTab("County Sampling", samplingTable)
         activePanels.add(samplingTable)
 
         countyStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
         countyTabs.addTab("County Styles", countyStyles)
-        activePanels.add(countyStyles)
+        activePanels.add(countyStyles) */
 
         // TODO push up?; put into seperate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
@@ -112,17 +112,18 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
             val c: Component = topTabs.getSelectedComponent()
             actionsPanel.removeAll()
             when (c) {
-                countyTabs -> {
+                /* countyTabs -> {
                     if (countyTabs.selectedIndex == 0)
                         samplingTable.getActions(actionsPanel)
                     if (countyName != null) headerLabel.setText("$countyName County")
-                }
+                } */
                 stateContests -> stateContests.getActions(actionsPanel)
-                else -> headerLabel.setText("")
+                countyTable -> countyTable.getActions(actionsPanel)
+                else -> {} // headerLabel.setText("")
             }
             validate()
         }
-        countyTabs.addChangeListener {
+        /* countyTabs.addChangeListener {
             val c: Component = countyTabs.getSelectedComponent()
             actionsPanel.removeAll()
             when (c) {
@@ -131,7 +132,7 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
             }
             if (countyName != null) headerLabel.setText("$countyName County")
             validate()
-        }
+        } */
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
 
         ////////////////////////////////////////////
@@ -185,7 +186,6 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
                 return false
             }
 
-            countyTable.setAuditRecordLocation(auditRecordDir)
             for (vpanel in activePanels) {
                 if (vpanel is AuditRecordViewerIF) vpanel.setAuditRecord(auditRecord)
                 else if (vpanel is ViewerPanelIF) vpanel.setAuditRecordLocation(auditRecordDir)
@@ -199,6 +199,16 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
         return false
     }
 
+    /*
+    fun sampleCounty(county: String, sample: Boolean) {
+        if (!sample) {
+            setCounty(county)
+        } else {
+            samplingTable.setCounty(county)
+            samplingTable.resample()
+        }
+    }
+
     fun setCounty(county: String) {
         samplingTable.setCounty(county)
         countyStyles.setCounty(county)
@@ -206,7 +216,7 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
         topTabs.setSelectedComponent(countyTabs)
         headerLabel.setText("$county County")
         this.countyName = county
-    }
+    } */
 
     fun showInfo() = stateContests.showInfo()
 

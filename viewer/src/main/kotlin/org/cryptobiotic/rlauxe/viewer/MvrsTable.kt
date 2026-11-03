@@ -13,6 +13,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.persist.Publisher
 import org.cryptobiotic.rlauxe.persist.SortedManifest
+import org.cryptobiotic.rlauxe.persist.csv.AddStyles
 import org.cryptobiotic.rlauxe.persist.csv.readCardsCsvIterator
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
 import ucar.ui.widget.IndependentWindow
@@ -111,7 +112,7 @@ class MvrsTable(
         try {
             val publisher = Publisher(auditRecordLocation!!)
             val mvrFile = publisher.sampleMvrsFile(roundIdx)
-            val mvrCardIter = readCardsCsvIterator(mvrFile, styles=styles)
+            val mvrCardIter = readCardsCsvIterator(mvrFile, AddStyles(styles))
 
             val styles = this.mvrManager!!.styles()
 

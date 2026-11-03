@@ -37,7 +37,7 @@ import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
-// obsolete
+// not used
 
 class SamplingTable(
     private val prefs: PreferencesExt,
@@ -50,7 +50,7 @@ class SamplingTable(
     private val localWindow  = IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(localTA))
 
     private val contestTable: BeanTable<CorlaContestBean>
-    private val countyTable: BeanTable<CountyBean>
+    private val countyTable: BeanTable<CountyBeanOld>
     private val countyContestTable: BeanTable<CountyContestBean>
 
     private val split1: JSplitPane
@@ -60,8 +60,8 @@ class SamplingTable(
     private var countyAudit: CountyAuditRecord? = null
     private var lastAuditRound: AuditRound? = null
 
-    var countyMap = emptyMap<String, CountyBean>()
-    var totalBean : CountyBean? = null
+    var countyMap = emptyMap<String, CountyBeanOld>()
+    var totalBean : CountyBeanOld? = null
 
     var contestMap = emptyMap<Int, ContestWithAssertions>()
     var contestRoundMap = emptyMap<Int, ContestRound>()
@@ -90,7 +90,7 @@ class SamplingTable(
         )
 
         countyTable = BeanTable(
-            CountyBean::class.java, prefs.node("countyTable") as PreferencesExt, false,
+            CountyBeanOld::class.java, prefs.node("countyTable") as PreferencesExt, false,
             "CiCounties", "County Audit", null
         )
         countyTable.addListSelectionListener(ListSelectionListener { e: ListSelectionEvent? ->
@@ -140,7 +140,7 @@ class SamplingTable(
         this.onlyShowInprogressContests = prefs.getBoolean( "onlyInProgress", false)
         this.auditRecordLocation = auditRecordLocation
         contestTable.setBeans(emptyList<CorlaContestBean>())
-        countyTable.setBeans(emptyList<CountyBean>())
+        countyTable.setBeans(emptyList<CountyBeanOld>())
         countyContestTable.setBeans(emptyList<CountyContestBean>())
 
         logger.debug("samplingTable setAuditRecord " + auditRecordLocation)
@@ -199,12 +199,12 @@ class SamplingTable(
 
         //// countyTable
         var countUniformMvrs = 0
-        var statewide: CountyBean? = null
+        var statewide: CountyBeanOld? = null
 
-        val countyList = mutableListOf<CountyBean>()
-        val _countyMap = mutableMapOf<String, CountyBean>()
+        val countyList = mutableListOf<CountyBeanOld>()
+        val _countyMap = mutableMapOf<String, CountyBeanOld>()
         for (countyData in countyAudit!!.countyData) {
-            val bean = CountyBean(countyData)
+            val bean = CountyBeanOld(countyData)
             if (bean.name == "Statewide") statewide = bean
             else countUniformMvrs += bean.corlaSampling // statewide now included in counties, so dont count twice
 
@@ -214,7 +214,7 @@ class SamplingTable(
         countyMap = _countyMap
 
         val totalPopulation = countyAudit!!.countyData.filter { it.strataName != "Statewide"}.sumOf { it.population }
-        val countyTotal = CountyBean( Strata("=Total", countUniformMvrs, totalPopulation))
+        val countyTotal = CountyBeanOld( Strata("=Total", countUniformMvrs, totalPopulation))
         countyList.add(countyTotal)
 
         // sort counties by nmvrs
@@ -236,7 +236,7 @@ class SamplingTable(
         }
     }
 
-    fun setSelectedCounty(countyBean: CountyBean) {
+    fun setSelectedCounty(countyBean: CountyBeanOld) {
         val beanList = mutableListOf<CountyContestBean>()
         for (countyContest in countyContestData) {
             val contestRound = contestRoundMap[countyContest.id]
@@ -539,7 +539,7 @@ class SamplingTable(
 }
 
 ////////////////////////////////////////////////////////////////
-class CountyBean(countyData: Strata) {
+class CountyBeanOld(countyData: Strata) {
     val name: String
     val population: Int
     val corlaSampling: Int
@@ -586,7 +586,7 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
 
     fun getNCounties(): String {
         if (contestUA == null) return "N/A"
-        val CORLAcounties = contestUA!!.contest.info().metadata.get("CORLAcounties")
+        val CORLAcounties = contestUA!!.contest.info().metadata.get("CanonicalCounties")
         if (CORLAcounties == null) return "N/A"
         val toks: List<String> = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }
         if (toks.size == 1) return toks[0]
@@ -601,9 +601,9 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
         return CORLAsample.toInt()
     }
 
-    fun getCorlaHaveMvrs(): Int {
+    fun getStrataNmvrs(): Int {
         if (contestUA == null) return -1
-        val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAhaveMvrs")
+        val haveMvrss = contestUA!!.contest.info().metadata.get("StrataNmvrs")
         if (haveMvrss == null) return -1
         return haveMvrss.toInt()
     }
@@ -630,7 +630,7 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
         if (contestUA == null) return 1.0
         val cua = contestUA!!
         val contest = cua.contest
-        val haveMvrss: String? = contest.info().metadata.get("CORLAhaveMvrs")
+        val haveMvrss: String? = contest.info().metadata.get("StrataNmvrs")
         if (haveMvrss == null) return 1.0
         val minAssertion: Assertion? = cua.minAssertion()
         if (minAssertion == null) return 1.0
@@ -639,18 +639,13 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
         return estRiskStandardBet(getCorlaVoteMargin(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
     }
 
-    //                 val haveMvrss: String = it.contest.info().metadata.get("CORLAhaveMvrs")!!
-    //                val haveMvrs = haveMvrss.toInt()
-    //                val estRisk = estRiskStandardBet(it.Npop, noerror, haveMvrs)
-    //                plotData.add(PlotData(it.id, noerror, estRisk, cat))
-
     fun getTarget(): String {
         return if (targeted()) "YES" else ""
     }
 
     fun contained(): Boolean {
         if (contestUA == null) return false
-        val CORLAcounties = contestUA!!.contest.info().metadata.get("CORLAcounties")
+        val CORLAcounties = contestUA!!.contest.info().metadata.get("CanonicalCounties")
         if (CORLAcounties == null) return false
         val toks: List<String> = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }
         return  (toks.size == 1)
