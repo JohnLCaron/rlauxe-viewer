@@ -117,10 +117,8 @@ class StyleTable(
         // auditRecord.
         val beanList = mutableListOf<StyleBean>()
         val styles = mvrManager!!.styles()
-        if (styles != null) {
-            styles.filter{ CountyAuditRecord.getCountyNameFrom(it.name()) == wantCounty }.forEach {
-                beanList.add(StyleBean(it))
-            }
+        styles.filter{ it.county() == wantCounty }.forEach {
+            beanList.add(StyleBean(it))
         }
         styleTable.setBeans(beanList)
     }
@@ -136,6 +134,7 @@ class StyleTable(
     }
 
     class StyleBean(val style: StyleIF) {
+        val county = style.county()
         val styleName = style.name()
         val id = style.id()
         val ncards= style.ncards()
@@ -146,12 +145,6 @@ class StyleTable(
                 val ids = style.possibleContests().toList().sorted()
                 return ids.toString()
             }
-
-        fun getCounty(): String {
-            return if (styleName.indexOf(":") > 0) styleName.substring(0, styleName.indexOf(":"))
-            else if (styleName.indexOf("-") > 0) styleName.substring(0, styleName.indexOf("-"))
-            else "N/A"
-        }
         fun show() = style.toString()
 
         companion object {

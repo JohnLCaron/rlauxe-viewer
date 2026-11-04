@@ -24,8 +24,6 @@ import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.util.roundToClosest
 import org.cryptobiotic.rlauxe.util.trunc
 import org.cryptobiotic.rlauxe.workflow.PersistedMvrManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -39,13 +37,15 @@ import javax.swing.JPanel
 import javax.swing.JSplitPane
 import javax.swing.event.ListSelectionEvent
 
+// used by old SamplingTable
+
 class CorlaContestsTable(
     private val prefs: PreferencesExt,
     infoTA: TextHistoryPane,
     infoWindow: IndependentWindow,
     fontSize: Float,
 ) : JPanel(), ViewerPanelIF, SubPanelIF {
-    var countyTotal: CountyBean? = null
+    var countyTotal: CountyBeanOld? = null
 
     private val contestTable: BeanTable<CorlaContestBean>
     private val contestCountyTable: BeanTable<ContestCountyBean>
@@ -58,7 +58,9 @@ class CorlaContestsTable(
     private var config: Config? = null
     private var lastAuditRound: AuditRoundIF? = null // may not be null
     private var infos: Map<Int, ContestInfo> = emptyMap()
-    private var countyPools: List<CountyPools> = emptyList()
+
+    // heres where we have both and are comparing them ...
+    private var countyAcPools: List<CountyPools> = emptyList()
     private var countyCvrPools: Map<String, CountyPools> = emptyMap()
 
     private var auditRiskLimit: Double = 0.0
@@ -150,7 +152,7 @@ class CorlaContestsTable(
             val mvrManager = PersistedMvrManager(this.countyAudit!!, false)
             val countyPools = mvrManager.countyAcPools()
             if (countyPools == null) return false
-            this.countyPools = countyPools
+            this.countyAcPools = countyPools
             val countyCvrPools = mvrManager.countyCvrPools()
             if (countyCvrPools != null)
                 this.countyCvrPools = countyCvrPools.associateBy { it.countyName }
@@ -192,7 +194,7 @@ class CorlaContestsTable(
 
     fun setSelectedContest(contestBean: CorlaContestBean) {
         val beans = mutableListOf<ContestCountyBean>()
-        this.countyPools.forEach { countyPool : CountyPools ->
+        this.countyAcPools.forEach { countyPool : CountyPools ->
             // contestTab from CountyPools (what it should be, according to auditcenter)
             val countyContestTab = countyPool.contestTabs[contestBean.getId()]
             if (countyContestTab != null) {
@@ -298,38 +300,6 @@ class CorlaContestsTable(
             }
         }
     }
-
-    /*
-    Contest 'Carbondale and Rural Fire Protection District Ballot Issue 7B' (45) PLURALITY voteForN=1 votes={0=5640, 1=2010} undervotes=614, winners=[0] Nc=8264 Nphantoms=0 Nu=614 sumVotes=7650 Npop=8264 hasStyle=true
-   minAssertion= 0/1 votes=5640/2010 diff=3630 dilutedMargin=0.439255 noerror=0.6407
-
-   0 'Yes/For': votes=5640 (73.73%)  (winner)
-   1 'No/Against': votes=2010 (26.27%)
-    Total=7650
-Metadata
-  CORLAhaveMvrs=298
-  CORLAstrataNcards=43334
-  CORLAsample=80
-  CORLAauditReason=opportunistic_benefits
-  CORLAmarginInVotes=3630
-  CORLAcounties=[Garfield, Gunnison, Pitkin]
-  CORLAcountyMvrs=69
-  CORLAstatewideNmvrs=0
-  PoolPct=8
-
-sortedVotes   = {0=5640, 1=2010}
-
-         county auditcenter   cvrs
-                ncards nvotes ncards nvotes
-       Garfield   7542   6978   7329   6781
-         Pitkin    722    672    709    660
-          Total   8264   7650   8038   7441
-
-ac   = ContestTabulation(id=45 isIrv=false, voteForN=1, votes=[0=5640, 1=2010], nvotes=7650 ncards=8264, undervotes=614
-cvrs = ContestTabulation(id=45 isIrv=false, voteForN=1, votes=[0=5496, 1=1945], nvotes=7441 ncards=8038, undervotes=597
-acNvotes = 7650, cvrNvotes = 7441 diff = 209
-acNu = 614, cvrNu = 597 diff = 17
-     */
 
     fun showContest(bean: CorlaContestBean) = buildString {
         append( showContestWithDesc(bean, contestTable.tableModel, bean.contestUA))
@@ -457,7 +427,7 @@ acNu = 614, cvrNu = 597 diff = 17
         }
 
         fun counties(): List<String>? {
-            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
+            val CORLAcounties = contestUA.contest.info().metadata.get("CanonicalCounties")
             if (CORLAcounties == null) return null
             val stripped = CORLAcounties.drop(1).dropLast(1)
             return stripped.split(",".toRegex()).dropLastWhile { it.isEmpty() }
@@ -469,8 +439,8 @@ acNu = 614, cvrNu = 597 diff = 17
             return CORLAsample.toInt()
         }
 
-        fun getCorlaHaveMvrs(): Int {
-            val haveMvrss = contestUA.contest.info().metadata.get("CORLAhaveMvrs") ?: return -1
+        fun getStrataNmvrs(): Int {
+            val haveMvrss = contestUA.contest.info().metadata.get("StrataNmvrs") ?: return -1
             return haveMvrss.toInt()
         }
 
@@ -489,7 +459,7 @@ acNu = 614, cvrNu = 597 diff = 17
         // same as corlaSampling plot
         fun getCorlaRisk(): Double {
             val contest = contestUA.contest
-            val haveMvrss: String = contest.info().metadata.get("CORLAhaveMvrs") ?: return 1.0
+            val haveMvrss: String = contest.info().metadata.get("StrataNmvrs") ?: return 1.0
             val minAssertion: Assertion = contestUA.minAssertion() ?: return 1.0
 
             return estRiskStandardBet(getCorlaVoteMargin(), getCorlaStrata(), minAssertion.upper, haveMvrss.toInt())
@@ -503,7 +473,7 @@ acNu = 614, cvrNu = 597 diff = 17
         }
 
         fun statewide(): Boolean {
-            val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties") ?: return false
+            val CORLAcounties = contestUA.contest.info().metadata.get("CanonicalCounties") ?: return false
             val toks = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             return (toks.size > 60)
         }

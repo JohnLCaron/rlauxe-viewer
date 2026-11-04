@@ -124,7 +124,7 @@ class PoolTable(
             totalPoolTab.sumContestTabulations(pool.contestTabs)
             totalPoolCards += pool.totalCards
         }
-        beanList.add(PoolBean(CardPool("Total", -1, false, totalPoolTab, totalPoolCards)))
+        beanList.add(PoolBean(CardPool("All", "Total", -1, false, totalPoolTab, totalPoolCards)))
         poolTable.setBeans(beanList)
         logger.debug { "PoolTable beans ${beanList.size}" }
 
@@ -134,7 +134,7 @@ class PoolTable(
     fun setCounty(wantCounty: String) {
         val beanList = mutableListOf<PoolBean>()
         for (bean in poolTable.beans) {
-            if (bean.getCounty() == wantCounty)
+            if (bean.county == wantCounty)
             beanList.add(bean)
         }
         poolTable.setBeans(beanList)
@@ -159,6 +159,7 @@ class PoolTable(
 
     /**/////////////////////////////////////////////////////////////// */
     class PoolBean (val pool: CardPool) {
+        val county = pool.county()
         val name = pool.name()
         val id = pool.id()
         val singleStyle = pool.hasExactContests()
@@ -170,12 +171,6 @@ class PoolTable(
                     append("$id,")
                 }
             }
-
-        fun getCounty(): String {
-            return if (name.indexOf(":") > 0) name.substring(0, name.indexOf(":"))
-            else if (name.indexOf("-") > 0) name.substring(0, name.indexOf("-"))
-            else "N/A"
-        }
 
         fun show(): String {
             return pool.toString()

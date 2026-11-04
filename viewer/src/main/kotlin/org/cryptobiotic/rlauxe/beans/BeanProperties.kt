@@ -73,7 +73,7 @@ object BeanProperties {
         contests.add(TableBeanProperty("round", "index of audit round"))
 
         // Corla
-        contests.add(TableBeanProperty("corlaHaveMvrs", "Corla mvrs for contest's strata (from contestComparisonFile)"))
+        contests.add(TableBeanProperty("strataNmvrs", "single county: count mvrs in county (from comparison file), else min rate algorithm"))
         contests.add(TableBeanProperty("corlaRisk", "estimated Corla uniform risk"))
         contests.add(TableBeanProperty("corlaStrata", "Corla strata size (from contestRoundFile ballot_card_count)"))
         contests.add(TableBeanProperty("corlaVoteDiff", "TODO"))
@@ -113,6 +113,7 @@ object BeanProperties {
         contests.add(TableBeanProperty("voteForN", "allowed number of votes"))
 
         // CountySampling
+        contests.add(TableBeanProperty("CountyMvrs", "number of samples in this county"))
         contests.add(TableBeanProperty("NCvrs", "number of cards for this contest and county"))
     }
 
@@ -124,7 +125,7 @@ object BeanProperties {
     init {
         assertions.add(TableBeanProperty("desc", "assertion description"))
         assertions.add(TableBeanProperty("difficulty", "assertion difficulty measure"))
-        assertions.add(TableBeanProperty("estMvrs", "estimated number of mvrs needed"))
+        assertions.add(TableBeanProperty("estMvrs", "estimated number of mvrs needed for this contest"))
         assertions.add(TableBeanProperty("estRisk", "estimated risk"))
 
         assertions.add(TableBeanProperty("loser", "assertion loser candidate"))

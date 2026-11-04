@@ -34,6 +34,8 @@ import javax.swing.event.ListSelectionListener
 
 private val logger: Logger = LoggerFactory.getLogger(CountyTable::class.java)
 
+// not used right now
+
 class CountyTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
@@ -52,7 +54,7 @@ class CountyTable(
     private var countyRecord: CountyAuditRecord? = null
     var mvrManager: PersistedMvrManager? = null
     var infos: Map<Int, ContestInfo> = emptyMap()
-    var countyCvrMap: Map<String, CountyPools> = emptyMap()
+    var countyCvrPoolsMap: Map<String, CountyPools> = emptyMap()
 
     init {
         countyTable = BeanTable(
@@ -147,8 +149,8 @@ class CountyTable(
         if (countyPools == null) return false
 
         val countyCvrs = mvrManager!!.countyCvrPools() //.associateBy { it.countyName }
-        this.countyCvrMap = if (countyCvrs == null) emptyMap() else countyCvrs.associateBy { it.countyName }
-        logger.debug("read countyCvrPools=" + countyCvrMap.size)
+        this.countyCvrPoolsMap = if (countyCvrs == null) emptyMap() else countyCvrs.associateBy { it.countyName }
+        logger.debug("read countyCvrPools=" + countyCvrPoolsMap.size)
 
         this.infos = auditRecord.contests.associate { it.contest.info().id to it.contest.info() }
         val countyData = countyRecord!!.countyData.associateBy { it.strataName }
@@ -158,7 +160,7 @@ class CountyTable(
             val countyData = countyData[it.countyName]
             if (countyData != null) {
                 val bean = CountyPoolsBean(it, countyData)
-                val cvrTabs = this.countyCvrMap[it.countyName]
+                val cvrTabs = this.countyCvrPoolsMap[it.countyName]
                 if (cvrTabs != null)
                     bean.cvrTabs = cvrTabs.contestTabs
                 beanList.add(bean)
@@ -326,7 +328,7 @@ class CountyTable(
         val source = if (isMvrs) "cvrs" else "auditcenter"
 
         fun getNCounties(): String {
-            val CORLAcounties = info.metadata.get("CORLAcounties")
+            val CORLAcounties = info.metadata.get("CanonicalCounties")
             if (CORLAcounties == null) return "N/A"
             val toks: List<String> = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }
             if (toks.size == 1) return toks[0]

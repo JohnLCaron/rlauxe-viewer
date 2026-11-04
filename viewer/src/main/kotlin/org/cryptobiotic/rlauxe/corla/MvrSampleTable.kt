@@ -6,7 +6,6 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.ComparisonMvr
-import org.cryptobiotic.rlauxe.corlaInput.ColoradoInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
@@ -34,8 +33,6 @@ class MvrSampleTable(
     val localInfo = TextHistoryPane()
     private val split1: JSplitPane
     // private val split2: JSplitPane
-
-    val currentInput: ColoradoInput? = null
 
     init {
         // problem is it does a static parsing of the beans....we need a new table each time

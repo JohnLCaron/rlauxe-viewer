@@ -63,15 +63,14 @@ class RlauxeViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(pr
         activePanels.add(logsPanel)
 
         topTabs.setSelectedIndex(0)
-
         topTabs.addChangeListener {
             val c: Component = topTabs.getSelectedComponent()
             actionsPanel.removeAll()
 
             // actions on right side of Audit record chooser
             when (c) {
-                cardPanel -> this@RlauxeViewer.cardPanel.setSelectedTab()
-                contestTable -> this@RlauxeViewer.contestTable.getActions(actionsPanel)
+                cardPanel -> cardPanel.setSelectedTab()
+                contestTable -> contestTable.getActions(actionsPanel)
                 auditRoundsPanel -> auditRoundsPanel.getActions(actionsPanel)
                 else -> {}
             }

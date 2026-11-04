@@ -35,7 +35,7 @@ private val logger = KotlinLogging.logger("CvrStylesTable")
 
 class AuditRoundsTable(
     private val prefs: PreferencesExt, infoTA: TextHistoryPane, infoWindow: IndependentWindow, fontSize: Float,
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), AuditRecordViewerIF, ViewerPanelIF {
 
     private val auditRoundTable: BeanTable<AuditRoundBean>
     private val contestRoundTable: BeanTable<ContestRoundBean>
@@ -242,12 +242,13 @@ class AuditRoundsTable(
         val auditRecord = read(location)
         if (auditRecord != null) {
             auditRecordLocation = location
-            setAuditRecord(auditRecord)
+            return setAuditRecord(auditRecord)
         }
-        return (auditRecord != null)
+        logger.info{"no audit record at $location"}
+        return false
     }
 
-    fun setAuditRecord(auditRecord: AuditRecordIF) {
+    override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
         auditRoundTable.setBeans(null)
         contestRoundTable.setBeans(null)
         assertionTable.setBeans(null)
@@ -280,6 +281,7 @@ class AuditRoundsTable(
         }
 
         oneshotMvrs = auditRecord.readOneShotMvrs()
+        return true
     }
 
     fun setInclude(include: Boolean): Boolean {
@@ -649,7 +651,7 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
     }
 
     fun statewide(): Boolean {
-        val CORLAcounties = contestUA.contest.info().metadata.get("CORLAcounties")
+        val CORLAcounties = contestUA.contest.info().metadata.get("CanonicalCounties")
         if (CORLAcounties == null) return false
         val toks: Array<String?> = CORLAcounties.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         return (toks.size > 60)

@@ -9,7 +9,6 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.AuditRecordViewerIF
-import org.cryptobiotic.rlauxe.viewer.CorlaContestsTable
 import org.cryptobiotic.rlauxe.viewer.PoolTable
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import org.cryptobiotic.rlauxe.viewer.StyleTable
@@ -24,34 +23,34 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JLabel
 import javax.swing.JOptionPane
-import javax.swing.JTabbedPane
 
-class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
+class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     val fileChooser: FileManager
     val auditRecordDirCB: ComboBox<String>
 
-    val stateTable: StateContests
-    val countyTable: CountyContests
+    val stateContests: CvContests
+    val countyTable: CvCounties
     val stateStyles: StyleTable
     val poolTable: PoolTable
 
-    val countyTabs  = JTabbedPane(JTabbedPane.TOP)
+    // val countyTabs  = JTabbedPane(JTabbedPane.TOP)
     // val countyCvrsTable: CiCvrs
-    val samplingTable: CountySampling // this uses CountyAuditRecord and county cvrs. but could just use the ac county subtotals ??
-    val countyStyles: StyleTable
+    // val samplingTable: CvCountySampling // this uses CountyAuditRecord and county cvrs. but could just use the ac county subtotals ??
+    // val countyStyles: StyleTable
+    var countyName: String? = null
 
     init {
         ////////////////////////////////////////////
         // topTabs
-        stateTable = StateContests(prefs.node("StateContests") as PreferencesExt, infoTA, infoWindow, fontSize);
-        stateTable.getActions(actionsPanel);
-        topTabs.addTab("Contests", stateTable);
-        activePanels.add(stateTable);
+        stateContests = CvContests(prefs.node("StateContests") as PreferencesExt, infoTA, infoWindow, fontSize, headerLabel)
+        stateContests.getActions(actionsPanel)
+        topTabs.addTab("Contests", stateContests)
+        activePanels.add(stateContests)
 
-        countyTable = CountyContests((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize) {
-            setCounty(it)
-        }
-        topTabs.addTab("Counties", countyTable)
+        countyTable = CvCounties((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize,
+            headerLabel) { county, nmvrs -> countyTable.setCountyNmvrs(county, nmvrs)}
+
+        topTabs.addTab("County Sampling", countyTable)
         activePanels.add(countyTable)
 
         stateStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
@@ -62,23 +61,20 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         topTabs.addTab("All Pools", poolTable)
         activePanels.add(poolTable)
 
-        topTabs.addTab("CountyCvrs", countyTabs);
+        // topTabs.addTab("CountySampling", countyTabs)
         topTabs.setSelectedIndex(0)
 
         ///////////////////////////
-        // county tabs
-        /* countyCvrsTable = CiCvrs((prefs.node("countyCvrsTable") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        countyTabs.addTab("Cvrs", countyCvrsTable)
-        activePanels.add(countyCvrsTable) */
+        /* county tabs
 
-        samplingTable = CountySampling((prefs.node("CountySampling") as PreferencesExt), infoTA, infoWindow, fontSize)
+        samplingTable = CvCountySampling((prefs.node("CountySampling") as PreferencesExt), infoTA, infoWindow, fontSize,
+            headerLabel) { county, nmvrs -> countyTable.setCountyNmvrs(county, nmvrs)}
         countyTabs.addTab("County Sampling", samplingTable)
         activePanels.add(samplingTable)
 
         countyStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
         countyTabs.addTab("County Styles", countyStyles)
-        activePanels.add(countyStyles)
+        activePanels.add(countyStyles) */
 
         // TODO push up?; put into seperate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
@@ -111,20 +107,33 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         BAMutil.setActionProperties(refreshAction, "refresh-icon.png", "Reread Audit Record", false, '-'.code, -1)
         BAMutil.addActionToContainer(leftPanel, refreshAction)
 
-        this.rightPanel.add(actionsPanel, BorderLayout.EAST)
+        topTabs.setSelectedIndex(0)
         topTabs.addChangeListener {
             val c: Component = topTabs.getSelectedComponent()
             actionsPanel.removeAll()
-
-            // actions on right side of Audit record chooser
-            when {
-                c is CorlaContestsTable -> c.getActions(actionsPanel)
-                c is CountyContests -> c.getActions(actionsPanel)
-                c is CountySampling -> c.getActions(actionsPanel)
-                else -> {}
+            when (c) {
+                /* countyTabs -> {
+                    if (countyTabs.selectedIndex == 0)
+                        samplingTable.getActions(actionsPanel)
+                    if (countyName != null) headerLabel.setText("$countyName County")
+                } */
+                stateContests -> stateContests.getActions(actionsPanel)
+                countyTable -> countyTable.getActions(actionsPanel)
+                else -> {} // headerLabel.setText("")
             }
             validate()
         }
+        /* countyTabs.addChangeListener {
+            val c: Component = countyTabs.getSelectedComponent()
+            actionsPanel.removeAll()
+            when (c) {
+                samplingTable -> samplingTable.getActions(actionsPanel)
+                else -> {}
+            }
+            if (countyName != null) headerLabel.setText("$countyName County")
+            validate()
+        } */
+        this.rightPanel.add(actionsPanel, BorderLayout.EAST)
 
         ////////////////////////////////////////////
         this.fileChooser = FileManager(RlauxeViewerMain.frame, "", null, prefs.node("FileManager") as PreferencesExt?)
@@ -177,7 +186,6 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
                 return false
             }
 
-            countyTable.setAuditRecordLocation(auditRecordDir)
             for (vpanel in activePanels) {
                 if (vpanel is AuditRecordViewerIF) vpanel.setAuditRecord(auditRecord)
                 else if (vpanel is ViewerPanelIF) vpanel.setAuditRecordLocation(auditRecordDir)
@@ -191,15 +199,26 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         return false
     }
 
+    /*
+    fun sampleCounty(county: String, sample: Boolean) {
+        if (!sample) {
+            setCounty(county)
+        } else {
+            samplingTable.setCounty(county)
+            samplingTable.resample()
+        }
+    }
+
     fun setCounty(county: String) {
         samplingTable.setCounty(county)
         countyStyles.setCounty(county)
 
         topTabs.setSelectedComponent(countyTabs)
         headerLabel.setText("$county County")
-    }
+        this.countyName = county
+    } */
 
-    fun showInfo() = stateTable.showInfo()
+    fun showInfo() = stateContests.showInfo()
 
     companion object {
         private val logger = KotlinLogging.logger("ColoradoAuditViewer")
