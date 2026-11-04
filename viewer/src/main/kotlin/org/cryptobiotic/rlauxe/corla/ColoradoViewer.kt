@@ -9,6 +9,9 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.verify.VerifyContests
 import org.cryptobiotic.rlauxe.viewer.AuditRecordViewerIF
+import org.cryptobiotic.rlauxe.viewer.AuditRoundsTable
+import org.cryptobiotic.rlauxe.viewer.LogsTable
+import org.cryptobiotic.rlauxe.viewer.MvrsTable
 import org.cryptobiotic.rlauxe.viewer.PoolTable
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import org.cryptobiotic.rlauxe.viewer.StyleTable
@@ -23,6 +26,7 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JLabel
 import javax.swing.JOptionPane
+import javax.swing.JTabbedPane
 
 class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     val fileChooser: FileManager
@@ -30,10 +34,14 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
 
     val stateContests: CvContests
     val countyTable: CvCounties
+    val auditRoundsTable: AuditRoundsTable
+
     val stateStyles: StyleTable
     val poolTable: PoolTable
+    val mvrsTable: MvrsTable
+    val logsPanel: LogsTable
 
-    // val countyTabs  = JTabbedPane(JTabbedPane.TOP)
+    val detailTabs  = JTabbedPane(JTabbedPane.TOP)
     // val countyCvrsTable: CiCvrs
     // val samplingTable: CvCountySampling // this uses CountyAuditRecord and county cvrs. but could just use the ac county subtotals ??
     // val countyStyles: StyleTable
@@ -53,28 +61,31 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
         topTabs.addTab("County Sampling", countyTable)
         activePanels.add(countyTable)
 
-        stateStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-        topTabs.addTab("All Styles", stateStyles)
-        activePanels.add(stateStyles)
+        auditRoundsTable = AuditRoundsTable((prefs.node("AuditRoundsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        topTabs.addTab("AuditRounds", auditRoundsTable)
+        activePanels.add(auditRoundsTable)
 
-        poolTable = PoolTable((prefs.node("PoolTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-        topTabs.addTab("All Pools", poolTable)
-        activePanels.add(poolTable)
-
-        // topTabs.addTab("CountySampling", countyTabs)
+        topTabs.addTab("Details", detailTabs)
         topTabs.setSelectedIndex(0)
 
         ///////////////////////////
-        /* county tabs
+        // detail tabs
 
-        samplingTable = CvCountySampling((prefs.node("CountySampling") as PreferencesExt), infoTA, infoWindow, fontSize,
-            headerLabel) { county, nmvrs -> countyTable.setCountyNmvrs(county, nmvrs)}
-        countyTabs.addTab("County Sampling", samplingTable)
-        activePanels.add(samplingTable)
+        stateStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        detailTabs.addTab("Styles", stateStyles)
+        activePanels.add(stateStyles)
 
-        countyStyles = StyleTable((prefs.node("Styles") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
-        countyTabs.addTab("County Styles", countyStyles)
-        activePanels.add(countyStyles) */
+        poolTable = PoolTable((prefs.node("PoolTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        detailTabs.addTab("Pools", poolTable)
+        activePanels.add(poolTable)
+
+        mvrsTable = MvrsTable((prefs.node("MvrsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        detailTabs.addTab("Mvrs", mvrsTable)
+        activePanels.add(mvrsTable)
+
+        logsPanel = LogsTable((prefs.node("LogsTable") as PreferencesExt?)!!, infoTA, infoWindow, fontSize)
+        detailTabs.addTab("Logs", logsPanel)
+        activePanels.add(logsPanel)
 
         // TODO push up?; put into seperate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
@@ -112,13 +123,9 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
             val c: Component = topTabs.getSelectedComponent()
             actionsPanel.removeAll()
             when (c) {
-                /* countyTabs -> {
-                    if (countyTabs.selectedIndex == 0)
-                        samplingTable.getActions(actionsPanel)
-                    if (countyName != null) headerLabel.setText("$countyName County")
-                } */
                 stateContests -> stateContests.getActions(actionsPanel)
                 countyTable -> countyTable.getActions(actionsPanel)
+                auditRoundsTable -> auditRoundsTable.getActions(actionsPanel)
                 else -> {} // headerLabel.setText("")
             }
             validate()

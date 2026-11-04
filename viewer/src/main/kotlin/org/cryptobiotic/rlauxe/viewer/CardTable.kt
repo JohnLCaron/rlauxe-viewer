@@ -176,7 +176,7 @@ class CardBean(val card: AuditableCard) {
     val possibleContests: String = card.possibleContests().contentToString()
     val styleId = card.styleId
     val poolId = card.poolId()
-    val cardStyle = card.style()?.name() ?: "not set"
+    val cardStyle = card.style?.name() ?: "not set"
 
     val votes = buildString {
         if (card.votes() != null) {
@@ -186,7 +186,7 @@ class CardBean(val card: AuditableCard) {
 
     fun show()= buildString {
         appendLine(card.toString())
-        appendLine(card.style().toString())
+        appendLine(card.style?.toString() ?: "style not set")
     }
 
     companion object {

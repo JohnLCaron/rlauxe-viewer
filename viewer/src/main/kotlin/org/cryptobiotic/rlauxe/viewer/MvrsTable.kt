@@ -10,6 +10,7 @@ import org.cryptobiotic.rlauxe.audit.StyleIF
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
+import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.persist.Publisher
 import org.cryptobiotic.rlauxe.persist.SortedManifest
@@ -32,7 +33,7 @@ class MvrsTable(
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
     fontSize: Float,
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), AuditRecordViewerIF {
 
     val tables = mutableListOf<BeanTable<out Any>>()
     val cardTable: BeanTable<CardBean>
@@ -82,19 +83,15 @@ class MvrsTable(
         localInfo.setFontSize(size)
     }
 
-    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
-        logger.debug{"CardTable setAuditRecord $auditRecordLocation"}
-        cardTable.setBeans(null)
-
-        this.auditRecordLocation = auditRecordLocation
-        val auditRecord = read(auditRecordLocation)
-        if (auditRecord == null) {
-            logger.info{"CardTable failed on readFrom $auditRecordLocation"}
-            return false
-        }
+    override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
         if (auditRecord is CompositeAuditRecord) return false
         this.auditRecord = auditRecord as AuditRecord
-        this.mvrManager = PersistedMvrManager(this.auditRecord!!, false)
+        this.auditRecordLocation = auditRecord.topdir
+
+        logger.debug{"setAuditRecord ${auditRecord.topdir}"}
+        cardTable.setBeans(null)
+
+        this.mvrManager = PersistedMvrManager(auditRecord, false)
 
         needsReading = true
         readCards(1)
@@ -103,10 +100,6 @@ class MvrsTable(
     }
 
     fun readCards(roundIdx: Int): Boolean {
-        if (auditRecord == null) return false
-        val config = auditRecord!!.config
-        // val cutoff = config.round.sampling.contestSampleCutoff
-        // val ncardsToRead = if (cutoff == null || cutoff < 11111) 11111 else cutoff
         val styles = mvrManager!!.styles()
 
         try {
@@ -127,6 +120,7 @@ class MvrsTable(
             }
             cardTable.setBeans(beanList)
             logger.debug { "readCards " + index + " cards from " + auditRecordLocation }
+
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
@@ -150,7 +144,6 @@ class MvrsTable(
         for (vpanel in tables) {
             vpanel.saveState(false)
         }
-
         prefs.putInt("splitPos1", split1.getDividerLocation())
     }
 }

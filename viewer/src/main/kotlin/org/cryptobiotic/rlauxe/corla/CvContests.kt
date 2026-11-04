@@ -65,7 +65,7 @@ class CvContests(
 
     private var auditRiskLimit: Double = 0.0
     private var samplingChanged = false
-    private var onlyShowInprogressContests = false
+    var onlyShowInprogressContests = prefs.getBoolean("onlyInProgress", false)
 
     var wantNmvrs = emptyMap<Int, Int>()
     var dist = emptyList<Int>()
@@ -242,6 +242,7 @@ class CvContests(
         contestCountyTable.saveState(false)
 
         prefs.putInt("splitPos2", split2.getDividerLocation())
+        prefs.putBoolean("onlyInProgress", onlyShowInprogressContests)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -394,7 +395,7 @@ class CvContests(
             logger.debug { "wantNmvrs $wantNmvrs" }
 
             val stopwatch = Stopwatch()
-            val qdist = sampleStateCvrs(countyAudit!!, wantNmvrs, 10)
+            val qdist = sampleStateCvrs(countyAudit!!, wantNmvrs, 1)
             if (qdist == null) {
                 logger.error{ "resample failed"}
                 return

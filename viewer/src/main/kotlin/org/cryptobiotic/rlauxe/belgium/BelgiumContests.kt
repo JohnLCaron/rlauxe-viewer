@@ -4,13 +4,10 @@
 */
 package org.cryptobiotic.rlauxe.belgium
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.audit.AuditRoundIF
-import org.cryptobiotic.rlauxe.audit.Config
 import org.cryptobiotic.rlauxe.dhondt.RelaxedAssertionsIF
 import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
-import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.viewer.LogsTable
 import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import ucar.ui.prefs.ComboBox
@@ -34,11 +31,6 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
     val altContestTable: BelgiumAltContestTable
     val logsTable: LogsTable
     var county: String?= null
-
-    private var auditRecordLocation: String? = "none"
-    private var auditRecord: CompositeAuditRecord? = null
-    private var config: Config? = null
-    private var lastAuditRound: AuditRoundIF? = null // may be null
 
     private val assertTA = TextHistoryPane()
     private val assertWindow  = IndependentWindow("Assertion", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(assertTA))
@@ -139,7 +131,6 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
 
     override fun name() = "Belgium d'Hondt Audit"
 
-
     fun setAltContest(relax: RelaxedAssertionsIF, sampleLimit: Int) {
         logger.debug { "setAltContest ${relax.orgContest.name}" }
         altContestTable.setAltContest(relax, sampleLimit)
@@ -162,7 +153,7 @@ class BelgiumContests(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain
             }
 
             contestTable.setAuditRecordLocation(auditRecordDir)
-            logsTable.setAuditRecordLocation(auditRecordDir)
+            logsTable.setAuditRecord(auditRecord)
             logger.info{"setAuditRecord to $auditRecordDir"}
             return true
 
