@@ -38,7 +38,7 @@ object BeanProperties {
         contests.add(TableBeanProperty("nc", "trusted upper bound on contest number of cards"))
         // contests.add(TableBeanProperty("ncast", "number of cards cast"))
         contests.add(TableBeanProperty("noerror", "assort value when mvr agrees with the cvr"))
-        contests.add(TableBeanProperty("npop", "Npop size (for diluted margin)"))
+        contests.add(TableBeanProperty("npop", "population size (for diluted margin)"))
         contests.add(TableBeanProperty("nvotes", "tabulated nvotes from auditcenter or cvrs"))
         contests.add(TableBeanProperty("payoff", "payoff factor for each mvr that agrees with the cvr"))
         contests.add(TableBeanProperty("population", "Nc (hasStyle) or Npop (noStyle)"))
@@ -57,7 +57,9 @@ object BeanProperties {
 
         //contests.add(TableBeanProperty("dilutedMargin", "voteMargin/Npop (smallest assertion)"))
         //contests.add(TableBeanProperty("reportedMargin", "voteMargin/Nc (smallest assertion)"))
-        // contests.add(TableBeanProperty("samplePct", "estMvrs/population size"))
+        contests.add(TableBeanProperty("samplePct", "estMvrs/population size"))
+        contests.add(TableBeanProperty("Xpop", "nPop - nc"))
+        contests.add(TableBeanProperty("NCast", "number of votes cast"))
 
         // Belgium
         contests.add(TableBeanProperty("failNodes", "number of failure nodes from CandSeatRangeBuilder.countContestedSeats()"))

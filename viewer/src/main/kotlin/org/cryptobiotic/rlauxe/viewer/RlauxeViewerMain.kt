@@ -284,7 +284,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
                 "RlauxeViewer" -> RlauxeViewer(prefsx, fontSize)
                 // "TestPrefs" -> TestPrefs(prefsx, fontSize)
-                else -> throw RuntimeException()
+                else -> RlauxeViewer(prefsx, fontSize)
             }
             frame!!.title = ui?.name() ?: type
 

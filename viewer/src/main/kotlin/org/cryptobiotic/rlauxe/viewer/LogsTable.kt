@@ -7,7 +7,6 @@ package org.cryptobiotic.rlauxe.viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.Publisher
 import ucar.ui.widget.IndependentWindow
@@ -24,7 +23,7 @@ class LogsTable(
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
     fontSize: Float,
-) : JPanel(), ViewerPanelIF {
+) : JPanel(), AuditRecordViewerIF {
     
     private val logsTable: BeanTable<LogBean>
     var localInfo: TextHistoryPane = TextHistoryPane()
@@ -62,30 +61,21 @@ class LogsTable(
         localInfo.setFontSize(size)
     }
 
-    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
-        logger.debug { "LogsTable setAuditRecord $auditRecordLocation" }
+    override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
+        this.auditRecordLocation = auditRecord.topdir
+        logger.debug { "setAuditRecord $auditRecordLocation" }
         logsTable.setBeans(null)
 
-        this.auditRecordLocation = auditRecordLocation
-        /* val auditRecordTry = read(auditRecordLocation)
-        if (auditRecordTry == null) {
-            logger.info { "LogsTable failed on readFrom $auditRecordLocation" }
-            return false
-        }
-        this.auditRecord = auditRecordTry
-        return loadLogs(null) */
+        return loadLogs(auditRecord.topdir)
         return true
     }
 
     fun setContest(contest: String) {
-        loadLogs(contest)
+        loadLogs("${auditRecordLocation}/$contest")
     }
 
-    fun loadLogs(contest: String?): Boolean {
+    fun loadLogs(topdir: String): Boolean {
         logsTable.setBeans(null)
-
-        val topdir = "${auditRecordLocation}/$contest"
-        logger.debug { "read logs from $topdir" }
 
         val logsFile = Publisher(topdir).logsFile()
 
