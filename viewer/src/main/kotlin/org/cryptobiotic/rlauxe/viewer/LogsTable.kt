@@ -163,7 +163,7 @@ class LogsTable(
     }
 
     companion object {
-        private val logger = KotlinLogging.logger("BelgiumContestsTable")
+        private val logger = KotlinLogging.logger("LogsTable")
         val levels = setOf("TRACE", "DEBUG", "INFO", "WARN", "ERROR")
     }
 
