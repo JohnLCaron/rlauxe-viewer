@@ -408,8 +408,8 @@ class BelgiumContestTable(
         appendLine()
     }
 
-    fun writeAssertionFile(bean: ContestBean) = buildString {
-        if (allSeats == null || lastAuditRound == null || sampleLimits == null) return ""
+    fun writeAssertionFile(bean: ContestBean): String = buildString {
+        if (allSeats == null || lastAuditRound == null || sampleLimits == null) { return "" }
         val filename = "$auditRecordLocation/assertions.v5.json"
 
         val org = writeRelaxedAssertionProofs(

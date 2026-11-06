@@ -404,30 +404,27 @@ class CountyContestBean(val contestRound: ContestRound, val counties: List<Count
 
     fun getCorlaEstMvrs(): Int {
         if (!targeted()) return -1
-        if (contestUA == null) return -1
-        val CORLAsample = contestUA!!.contest.info().metadata.get("CORLAsample")
+        val CORLAsample = contestUA.contest.info().metadata.get("CORLAsample")
         if (CORLAsample == null) return -1
         return CORLAsample.toInt()
     }
 
     fun getStrataNmvrs(): Int {
-        if (contestUA == null) return -1
-        val haveMvrss = contestUA!!.contest.info().metadata.get("StrataNmvrs")
+        val haveMvrss = contestUA.contest.info().metadata.get("StrataNmvrs")
         if (haveMvrss == null) return -1
         return haveMvrss.toInt()
     }
 
     fun getCorlaStrata(): Int {
         if (contestUA == null) return -1
-        val haveMvrss = contestUA!!.contest.info().metadata.get("CORLAstrataNcards")
+        val haveMvrss = contestUA.contest.info().metadata.get("CORLAstrataNcards")
         if (haveMvrss == null) return -1
         return haveMvrss.toInt()
     }
 
     // same as corlaSampling plot
     fun getCorlaVoteMargin(): Int {
-        if (contestUA == null) return -1
-        val cua = contestUA!!
+        val cua = contestUA
         val contest = cua.contest
         val minMargin: String? = contest.info().metadata.get("CORLAmarginInVotes")
         if (minMargin == null) return -1
@@ -436,8 +433,7 @@ class CountyContestBean(val contestRound: ContestRound, val counties: List<Count
 
     // same as corlaSampling plot
     fun getCorlaRisk(): Double {
-        if (contestUA == null) return 1.0
-        val cua = contestUA!!
+        val cua = contestUA
         val contest = cua.contest
         val haveMvrss: String? = contest.info().metadata.get("StrataNmvrs")
         if (haveMvrss == null) return 1.0
@@ -480,12 +476,11 @@ class CountyContestBean(val contestRound: ContestRound, val counties: List<Count
     }
 
     fun getEstMvrs(): Int {
-        if (contestUA == null) return 0
-        return estSampleSizeStandardBet(contestUA!!.population(), getNoerror(), maxrisk())
+        return estSampleSizeStandardBet(contestUA.population(), getNoerror(), maxrisk())
     }
 
     fun getEstNewMvrs(): Int {
-        val minAssertion = contestUA!!.minClcaAssertion()!!
+        val minAssertion = contestUA.minClcaAssertion()!!
         return estSampleSizeStandardBet(getCorlaVoteMargin(), getCorlaStrata(), minAssertion.upper, maxrisk())
     }
 

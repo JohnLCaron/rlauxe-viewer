@@ -473,7 +473,7 @@ class CvCountySamplingBean(val county: String,
     }
 
     fun calcEstMvrs(maxRisk: Double): Int {
-        val minAssertion = contestUA?.minClcaAssertion()
+        val minAssertion = contestUA.minClcaAssertion()
         if (minAssertion == null) return 0
         val noerror = minAssertion.noerror
 
