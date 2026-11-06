@@ -105,9 +105,7 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             vpanel.saveState()
         }
 
-        if (infoWindow != null) {
-            prefs.putBeanObject(INFO_BOUNDS, infoWindow.getBounds())
-        }
+        prefs.putBeanObject(INFO_BOUNDS, infoWindow.getBounds())
 
         val bounds: Rectangle = frame!!.getBounds()
         prefs.putBeanObject(FRAME_SIZE, bounds)

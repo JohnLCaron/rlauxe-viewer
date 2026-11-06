@@ -148,7 +148,7 @@ class RlauxeContestsTable(
         logger.debug("RlauxeContestsTable setAuditRecord " + auditRecordLocation)
 
         this.auditRecord = auditRecord
-        this.config = auditRecord!!.config
+        this.config = auditRecord.config
         this.alpha = config!!.riskLimit
 
         return loadAuditRecord()
@@ -251,8 +251,8 @@ class RlauxeContestsTable(
         prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
-    fun showInfo() = buildString {
-        if (auditRecord == null) return "no audit record"
+    fun showInfo(): String = buildString {
+        if (auditRecord == null) { return "no audit record" }
         resetAuditRecord()
 
         appendLine("Audit record at ${auditRecord!!.topdir}")
@@ -401,7 +401,7 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
     val voteMargin: Int
         get() {
             val minAssertion = contestUA.minAssertion()
-            return if (minAssertion == null) 0 else contestUA.contest.marginInVotes(minAssertion!!.assorter)
+            return if (minAssertion == null) 0 else contestUA.contest.marginInVotes(minAssertion.assorter)
         }
 
     val winners: String

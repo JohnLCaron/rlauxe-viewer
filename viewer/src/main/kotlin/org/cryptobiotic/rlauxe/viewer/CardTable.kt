@@ -111,24 +111,12 @@ class CardTable(
             this.cardManifest = this.mvrManager!!.sortedManifest()
 
             val styles = this.mvrManager!!.styles()
-            if (styles != null) {
-                val pools = mutableMapOf<String, StyleIF>() // sorted
-                for (pool in styles) {
-                    val cardStyle = "P" + pool.id()
-                    pools.put(cardStyle, pool)
-                }
-                this.poolMap = pools
-            } else {
-                val cardPools = this.mvrManager!!.pools()
-                if (cardPools != null) {
-                    val pools = mutableMapOf<String, StyleIF>() // sorted
-                    for (pool in cardPools) {
-                        val cardStyle = "P" + pool.id()
-                        pools.put(cardStyle, pool)
-                    }
-                    this.poolMap = pools
-                }
+            val pools = mutableMapOf<String, StyleIF>() // sorted
+            for (pool in styles) {
+                val cardStyle = "P" + pool.id()
+                pools.put(cardStyle, pool)
             }
+            this.poolMap = pools
 
             val beanList = mutableListOf<CardBean>()
             var index = 1

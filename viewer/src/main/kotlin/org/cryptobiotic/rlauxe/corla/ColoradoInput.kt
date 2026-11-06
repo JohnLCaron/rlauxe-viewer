@@ -90,7 +90,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
             override fun actionPerformed(e: ActionEvent) {
                 val verifier = VerifyContests(auditRecordDir, false)
                 infoTA.setText(verifier.verify().toString())
-                infoWindow!!.show()
+                infoWindow.show()
             }
         }
         // Verify-icon.png
@@ -101,7 +101,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
             override fun actionPerformed(e: ActionEvent) {
                 infoTA.setFont(infoTA.getFont().deriveFont(fontSize))
                 infoTA.setText(showInfo())
-                infoWindow!!.show()
+                infoWindow.show()
             }
         }
         BAMutil.setActionProperties(infoAction, "Info-icon.png", "info on Election Record", false, 'I'.code, -1)

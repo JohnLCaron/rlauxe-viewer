@@ -100,10 +100,8 @@ class StyleTable(
 
         val beanList = mutableListOf<StyleBean>()
         val styles = mvrManager!!.styles()
-        if (styles != null) {
-            for (style in styles) {
-                beanList.add(StyleBean(style))
-            }
+        for (style in styles) {
+            beanList.add(StyleBean(style))
         }
         styleTable.setBeans(beanList)
         logger.debug{"setAuditRecord bean count=${beanList.size}" }
