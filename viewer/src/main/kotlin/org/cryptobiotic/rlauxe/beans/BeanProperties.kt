@@ -128,6 +128,7 @@ object BeanProperties {
         assertions.add(TableBeanProperty("desc", "assertion description"))
         assertions.add(TableBeanProperty("difficulty", "assertion difficulty measure"))
         assertions.add(TableBeanProperty("estMvrs", "estimated number of mvrs needed for this contest"))
+        assertions.add(TableBeanProperty("estMvrs2", "estimated number of mvrs with mu = .5 approximation"))
         assertions.add(TableBeanProperty("estRisk", "estimated risk"))
 
         assertions.add(TableBeanProperty("loser", "assertion loser candidate"))

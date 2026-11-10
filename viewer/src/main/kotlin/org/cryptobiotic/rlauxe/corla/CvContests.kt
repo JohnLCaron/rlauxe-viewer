@@ -105,7 +105,7 @@ class CvContests(
             null
         )
         contestCountyTable.addPopupOption(
-            "Show Contest CiCounties",
+            "Show row",
             contestCountyTable.makeShowAction(infoTA, infoWindow) { bean: CvContestCountyBean ->
                 showContestInCounty(
                     bean

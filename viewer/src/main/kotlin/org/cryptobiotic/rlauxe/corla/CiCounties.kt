@@ -104,7 +104,6 @@ class CiCounties(
         countyTable.setBeans(emptyList())
         val strataMap: Map<String, StrataInfo> = input.countyStrataMap
 
-        // val requireCountyInput = (input is StatewideInputWithCvrs)
         val countySummaryData ="/resources/data/cases/corla/countySummaryData/${input.name()}.csv"
         val inputDataMap = try {
             println("reading CountyInputData from $countySummaryData")
@@ -112,7 +111,7 @@ class CiCounties(
         } catch (e: Exception) {
             emptyMap()
         }
-        logger.debug { inputDataMap.toString() }
+        logger.debug { "CountyInputData = ${inputDataMap}" }
 
         val redactedCountFilename = "/resources/data/cases/corla/redactedCount/${input.name()}.csv"
         val redactedCountMap = try {

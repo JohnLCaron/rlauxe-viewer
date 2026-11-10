@@ -15,6 +15,7 @@ import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.payoff
+import org.cryptobiotic.rlauxe.betting.stdBet
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.AssorterIF
 import org.cryptobiotic.rlauxe.core.ClcaAssertion
@@ -24,6 +25,7 @@ import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.CompositeAuditRecord
 import org.cryptobiotic.rlauxe.persist.json.writeRelaxedAssertionProofs
 import org.cryptobiotic.rlauxe.util.dfn
+import org.cryptobiotic.rlauxe.util.roundUp
 import org.cryptobiotic.rlauxe.viewer.RlauxeAssertionBean
 import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import org.cryptobiotic.rlauxe.viewer.ViewerPanelIF
@@ -35,6 +37,7 @@ import java.awt.BorderLayout
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.*
+import kotlin.math.ln
 
 private val logger = KotlinLogging.logger("BelgiumContests")
 
@@ -647,6 +650,13 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
     val margin: Double = cassertion.cassorter.assorterMargin
     val recountMargin = cua.contest.recountMargin(assorter)
     val noerror = dfn(assorter.noerror(cua.hasStyle), 5)
+
+    fun getEstMvrs2(): Int {
+        val noerror = assorter.noerror(cua.hasStyle)
+        val payoff = 1 + stdBet * (noerror - 0.5)  // mui ~= 1/2
+        return roundUp((-ln(alpha) / ln(payoff)))
+        // return estSampleSize(cua.Npop, 2.0 / 1.03905, assorter.noerror(cua.hasStyle), alpha)
+    }
 
     val payoff: String
         get() {
