@@ -5,6 +5,7 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.cryptobiotic.rlauxe.corlaCounty.CountyCardsFromManifest
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.corlaInput.CountyInput
 import org.cryptobiotic.rlauxe.util.nfn
@@ -13,6 +14,7 @@ import org.cryptobiotic.rlauxe.viewer.RlauxeViewerMain
 import ucar.ui.widget.BAMutil
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.*
 
@@ -23,7 +25,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
     var mvrComparisonPanel: MvrComparisonTable
 
     var countyCvrTabs  = JTabbedPane(JTabbedPane.TOP)
-    var countyCvrsTable: CiCvrs
+    var countyCardsTable: CiCountyCards
     var countyStylesTable: CiStyles
     var countyRedactionTable: CiRedactions
     var countySchemaTable: CiSchema
@@ -56,36 +58,49 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         topTabs.addTab("Mvr Comparisons", mvrComparisonPanel)
         activePanels.add(mvrComparisonPanel)
 
-        topTabs.addTab("CountyCvrs", countyCvrTabs);
+        topTabs.addTab("CountyCvrs", countyCvrTabs)
         topTabs.setSelectedIndex(0)
 
-        // countyCvrs
-        countyCvrsTable = CiCvrs((prefs.node("countyCvrsTable") as PreferencesExt),
+        // countyCvrTabs
+        countySchemaTable = CiSchema((prefs.node("countySchemaTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("Cvrs", countyCvrsTable)
-        activePanels.add(countyCvrsTable)
-
-        countyStylesTable = CiStyles((prefs.node("cyStyles") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("Styles", countyStylesTable)
-        activePanels.add(countyStylesTable)
+        countyCvrTabs.addTab("CountySchema", countySchemaTable)
+        activePanels.add(countySchemaTable)
 
         countyRedactionTable = CiRedactions((prefs.node("countyRedactionTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("Redactions", countyRedactionTable)
         activePanels.add(countyRedactionTable)
 
-        countySchemaTable = CiSchema((prefs.node("countySchemaTable") as PreferencesExt),
+        countyStylesTable = CiStyles((prefs.node("cyStyles") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("CountySchema", countySchemaTable)
-        activePanels.add(countySchemaTable)
+        countyCvrTabs.addTab("Styles", countyStylesTable)
+        activePanels.add(countyStylesTable)
 
         countyMvrTable = MvrSampleTable((prefs.node("countyMvrTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("CountyMvrs", countyMvrTable)
         activePanels.add(countyMvrTable)
 
-        // TODO put into seperate thread
+        countyCardsTable = CiCountyCards((prefs.node("countyCvrsTable") as PreferencesExt),
+            infoTA, infoWindow, fontSize)
+        countyCvrTabs.addTab("CountyCards", countyCardsTable)
+        activePanels.add(countyCardsTable)
+
+        countyCvrTabs.setSelectedIndex(0)
+        countyCvrTabs.addChangeListener {
+            val c: Component = countyCvrTabs.getSelectedComponent()
+            when (c) {
+                // countyCardsTable -> countyCardsTable.setSelectedTab()
+                countyCardsTable -> countyCardsTable.setCountyInput(countyCards())
+                countyRedactionTable -> countyRedactionTable.setCountyInput(countyCards())
+                countyStylesTable -> countyStylesTable.setCountyInput(countyCards())
+                else -> {}
+            }
+            validate()
+        }
+
+        // TODO put into separate thread
         val verifyAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
                 val verifier = VerifyContests(auditRecordDir, false)
@@ -137,15 +152,16 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
 
     fun setCountyInput(countyInput: CountyInput) {
         currentCountyInput = countyInput
+        countyCards = null
 
-        countyCvrsTable.setCountyInput(countyInput)
-        countyStylesTable.setCountyInput(countyInput)
-        countySchemaTable.setCorlaInput(countyInput, currentStateInput!!, countyCvrsTable.corlaCvrs)
-        countyRedactionTable.setCorlaCvrs(countyCvrsTable.corlaCvrs)
+        countySchemaTable.setCorlaInput( currentStateInput!!, countyInput)
+        // countyStylesTable.setCountyInput(countyInput)
+        // countyRedactionTable.setCorlaCvrs(countySchemaTable.currentCorlaCvrs)
         countyMvrTable.setColoradoInput(currentStateInput!!, countyInput.countyName)
+        // countyCardsTable.setCountyInput(countyCards())
 
         topTabs.setSelectedComponent(countyCvrTabs)
-        countyCvrTabs.setSelectedComponent(countyCvrsTable)
+        countyCvrTabs.setSelectedIndex(0)
         headerLabel.setText("${currentStateInput!!.name()} : ${countyInput.countyName} County")
     }
 
@@ -163,7 +179,8 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
             appendLine("manifestSource = ${cc.manifestSource}")
             appendLine("cvrsSource = ${cc.cvrsSource}")
             appendLine()
-            val corlaCvrs = countyCvrsTable.corlaCvrs!!
+
+            val corlaCvrs = countyCards().corlaCvrs
             appendLine("         cvrs = ${nfn(corlaCvrs.nrows(), 6)}")
             val nredactedCvrs = corlaCvrs.redaction().nredactedCvrs()
             appendLine("redacted cvrs = ${nfn(nredactedCvrs, 6)}")
@@ -180,6 +197,14 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
             appendLine("cvr file version = ${corlaCvrs.versionName}")
 
         }
+    }
+
+    private var countyCards: CountyCardsFromManifest? = null
+    fun countyCards(): CountyCardsFromManifest {
+        if (countyCards != null) return countyCards!!
+        logger.debug{"make CountyCardsFromManifest for ${currentCountyInput!!.countyName}"}
+        countyCards =  CountyCardsFromManifest(currentCountyInput!!)
+        return countyCards!!
     }
 
     companion object {

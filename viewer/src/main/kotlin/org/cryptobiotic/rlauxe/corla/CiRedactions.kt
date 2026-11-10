@@ -7,7 +7,7 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
+import org.cryptobiotic.rlauxe.corlaCounty.CountyCardsFromManifest
 import org.cryptobiotic.rlauxe.corlacvr.CvrRow
 import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
 import org.cryptobiotic.rlauxe.corlacvr.RedactedGroup
@@ -91,14 +91,14 @@ class CiRedactions(
         // ?? appendLine("B${bean.row.batchId}_T${bean.row.tabulatorNum}_R${bean.row.recordId}") // example B28_T30_R68
     }
 
-    fun setCorlaCvrs(corlaCvrs: CorlaCountyCvrsIF?) {
-        if (corlaCvrs == null) return
-        logger.debug { "CiRedactions setCorlaCvrs" }
-        val ncontests = corlaCvrs.schema.contests.size
+    fun setCountyInput(countyCards: CountyCardsFromManifest?) {
+        if (countyCards == null) return
+        logger.debug { "CiRedactions setCountyInput" }
+        val ncontests = countyCards.corlaCvrs.schema.contests.size
 
         redactionTable.setBeans(null)
 
-        val redaction = corlaCvrs.redaction()
+        val redaction = countyCards.corlaCvrs.redaction()
         if (redaction.groups().isNotEmpty()) {
             val first = redaction.groups().first()
             val totalGroup = RedactedGroup("---Totals---", first.firstCsv, first.corlaCvrs) // adds the first group

@@ -7,7 +7,7 @@ package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.corlaInput.CountyInput
+import org.cryptobiotic.rlauxe.corlaCounty.CountyCardsFromManifest
 import org.cryptobiotic.rlauxe.corlacvr.CardStyleId
 import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
@@ -17,7 +17,6 @@ import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
 import ucar.util.prefs.PreferencesExt
 import java.awt.BorderLayout
-import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
@@ -38,11 +37,11 @@ class CiStyles(
     // private val split1: JSplitPane
     private val split2: JSplitPane
 
-    var corlaCvrs: CorlaCountyCvrsIF? = null
+    // var corlaCvrs: CorlaCountyCvrsIF? = null
+    var currentCountyCards: CountyCardsFromManifest? = null
     var cardStyleMap = emptyMap<CardStyleId, CvrCardStyle>()
 
     init {
-
         precinctStyleTable = BeanTable(
             PrecinctStyleBean::class.java, prefs.node("precinctStyleTable") as PreferencesExt, false,
             "Precinct Styles", "CvrRow", null
@@ -51,7 +50,7 @@ class CiStyles(
 
         stylesTable = BeanTable(
             SchemaStyleBean::class.java, prefs.node("stylesTable") as PreferencesExt, false,
-            "Styles", "CvrCardStyle", null
+            "Cvr Card Styles", "CvrCardStyle", null
         )
         tables.add(stylesTable)
 
@@ -82,30 +81,12 @@ class CiStyles(
     }
 
     // TODO CountyInput knows its StateInput
-    fun setCountyInput(countyInput: CountyInput) {
-        val maxRead = 11111
-
-        try {
-            // TODO better to run it through CountyCardsFromManifest?
-            corlaCvrs = countyInput.readCorlaCvrs()
-            if (corlaCvrs != null) setStyles(corlaCvrs!!)
-
-            /* val beans = mutableListOf<CvrRowBean>()
-            var count = 0
-            corlaCvrs!!.cvrs().forEach {
-                beans.add(CvrRowBean(it))
-                if (count++ > maxRead) return@forEach
-            }
-
-            val sortedBeans = beans.sortedWith(
-                compareBy<CvrRowBean> { it.precinctPortion ?: "" }.thenBy { it.ballotType }
-            )
-            cvrTable.setBeans(sortedBeans) */
-        } catch (e: Exception) {
-            e.printStackTrace()
-            JOptionPane.showMessageDialog(null, e.message)
-            logger.error(e) { "setCountyInput failed" }
-        }
+    fun setCountyInput(countyCards: CountyCardsFromManifest?) {
+        if (countyCards == null) return
+        if (countyCards == currentCountyCards) return
+        logger.debug { "CiStyles setCountyInput" }
+        setStyles(countyCards.corlaCvrs)
+        currentCountyCards = countyCards
     }
 
     fun setStyles(corlaCvrs: CorlaCountyCvrsIF) {
@@ -134,6 +115,7 @@ class CiStyles(
         stylesTable.setBeans(styleList)
     }
 
+    /*
     fun showPrecinctStyleInfo() = buildString {
         val cardCount = precinctStyleTable.beans.sumOf { it.ncards }
 
@@ -187,7 +169,7 @@ class CiStyles(
         appendLine()
         appendLine("unique styles = ${uniqueStyles.size}")
         appendLine("count rare styles = ${countRareStyles} out of ${uniqueStyles.size} = ${countRareStyleCards} cards ")
-    }
+    } */
 }
 
 /*     fun showPrecinctStyleInfo() = buildString {

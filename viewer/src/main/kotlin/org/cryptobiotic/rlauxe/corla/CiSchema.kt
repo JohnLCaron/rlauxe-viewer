@@ -10,13 +10,13 @@ import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.printTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.corlaInput.CountyInput
-import org.cryptobiotic.rlauxe.corlaInput.Statewide2026PwithCvrs
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.corlaInput.isWriteIn
-import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
 import org.cryptobiotic.rlauxe.corlacvr.CvrCardStyle
+import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
 import org.cryptobiotic.rlauxe.corlacvr.SchemaColumnInfo
 import org.cryptobiotic.rlauxe.corlacvr.SchemaContestInfo
+import org.cryptobiotic.rlauxe.corlacvr.readCountyCvrs
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -26,7 +26,7 @@ import javax.swing.JPanel
 import javax.swing.JSplitPane
 import kotlin.text.appendLine
 
-private val logger = KotlinLogging.logger("CiCvrs")
+private val logger = KotlinLogging.logger("CiSchema")
 
 // add another table for contests that use CountyCvrs
 class CiSchema(
@@ -40,16 +40,18 @@ class CiSchema(
 
     private val contestTable: BeanTable<SchemaContestBean>
     private val choiceTable: BeanTable<SchemaChoiceBean>
-    private val stylesTable: BeanTable<SchemaStyleBean>
+    // private val stylesTable: BeanTable<SchemaStyleBean>
 
-    var currentCorlaCvrs: CorlaCountyCvrsIF? = null
+    //var currentCountyCards: CountyCardsFromManifest? = null
+    //var currentCorlaCvrs: CorlaCountyCvrsIF? = null
     var currentStateInput: StatewideInput? = null
     var currentCountyInput: CountyInput? = null
     var currentCountyName: String? = null
+    var currentCountySchema: CvrSchema? = null
 
     // TextHistoryPane localInfo = new TextHistoryPane();
     private val split1: JSplitPane
-    private val split2: JSplitPane
+    // private val split2: JSplitPane
 
     init {
         contestTable = BeanTable(
@@ -66,8 +68,10 @@ class CiSchema(
         )
         contestTable.addPopupOption(
             "Print Table",
-            contestTable.makeShowAction(infoTA, infoWindow)
-            { printTable(contestTable, SchemaContestBean.beanProperties,"CountyContests") }
+            contestTable.makeShowAction(infoTA, infoWindow) {
+                logger.debug {"print table"}
+                printTable(contestTable, SchemaContestBean.beanProperties,"ContestSchema")
+            }
         )
         tables.add(contestTable)
 
@@ -77,22 +81,23 @@ class CiSchema(
         )
         tables.add(choiceTable)
 
+        /*
         stylesTable = BeanTable(
             SchemaStyleBean::class.java, prefs.node("stylesTable") as PreferencesExt, false,
             "CvrCardStyle", "CvrCardStyle", null
         )
-        tables.add(stylesTable)
+        tables.add(stylesTable) */
 
         setFontSize(fontSize)
 
         // layout of tables
         split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, contestTable, choiceTable)
         split1.setDividerLocation(prefs.getInt("splitPos1", 600))
-        split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, stylesTable)
-        split2.setDividerLocation(prefs.getInt("splitPos2", 1000))
+        //split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, stylesTable)
+        //split2.setDividerLocation(prefs.getInt("splitPos2", 1000))
 
         setLayout(BorderLayout())
-        add(split2, BorderLayout.CENTER)
+        add(split1, BorderLayout.CENTER)
 
         logger.debug { "CiSchema init" }
     }
@@ -101,7 +106,7 @@ class CiSchema(
         append(showContestWithDesc(bean, contestTable.tableModel, null))
         appendLine(bean.scontest.show())
         appendLine("choices")
-        currentCorlaCvrs!!.schema.columnsFor(bean.scontest).forEach { colInfo ->
+        currentCountySchema!!.columnsFor(bean.scontest).forEach { colInfo ->
             appendLine("  ${colInfo}")
         }
         appendLine()
@@ -156,36 +161,31 @@ class CiSchema(
         }
     }
 
-    fun setCorlaInput(countyInput: CountyInput, stateInput: StatewideInput, corlaCvrs: CorlaCountyCvrsIF?) {
-        if (corlaCvrs == null) return
+    fun setCorlaInput(stateInput: StatewideInput, countyInput: CountyInput) {
         currentStateInput = stateInput
-        currentCorlaCvrs = corlaCvrs
         currentCountyInput = countyInput
         currentCountyName = countyInput.countyName
-        logger.debug { "set county $currentCountyName stateInput=${stateInput.name()} corlaCvrs=${corlaCvrs.electionName}" }
+        logger.debug { "set county $currentCountyName stateInput=${stateInput.name()}" }
+
+        val countyCvrs = readCountyCvrs(countyInput.cvrsSource, readRows=false)
+        currentCountySchema = countyCvrs.schema
 
         val beanList = mutableListOf<SchemaContestBean>()
-        corlaCvrs.schema.contests.forEach {
+        countyCvrs.schema.contests.forEach {
             beanList.add(SchemaContestBean(this, it))
         }
         contestTable.setBeans(beanList)
 
-        val styleList = mutableListOf<SchemaStyleBean>()
-        corlaCvrs.cardStyles().forEach {
+        /* val styleList = mutableListOf<SchemaStyleBean>()
+        countyCards.corlaCvrs.cardStyles().forEach {
             styleList.add(SchemaStyleBean(it))
         }
-        stylesTable.setBeans(styleList)
-
-        if (stateInput == Statewide2026PwithCvrs() && currentCountyName == "La Plata") {
-            val failing = "Secretary of State"
-            val canon = stateInput.matchCanonicalContest(currentCountyName!!, failing)
-            logger.debug{"$failing -> $canon"}
-        }
+        stylesTable.setBeans(styleList) */
     }
 
     fun setSelectedContest(bean: SchemaContestBean) {
         val beanList = mutableListOf<SchemaChoiceBean>()
-        currentCorlaCvrs!!.schema.columnsFor(bean.scontest).forEach { colInfo ->
+        currentCountySchema!!.columnsFor(bean.scontest).forEach { colInfo ->
             if (!isWriteIn(colInfo.choiceName)) {
                 beanList.add(SchemaChoiceBean(this, bean,colInfo))
             }
@@ -200,7 +200,7 @@ class CiSchema(
     override fun saveState() {
         tables.forEach { it.saveState(false) }
         prefs.putInt("splitPos1", split1.getDividerLocation())
-        prefs.putInt("splitPos2", split2.getDividerLocation())
+        // prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
     fun hasExact(scontest: SchemaContestBean): Boolean {
@@ -241,7 +241,7 @@ class CiSchema(
         val cleanedName = currentCountyInput!!.contestNameCleanup(scontest.contestName)
         val cc = currentStateInput!!.canonicalContests()[cleanedName]
         if (cc == null) return false
-        currentCorlaCvrs!!.schema.columnsFor(scontest).forEach { colInfo ->
+        currentCountySchema!!.columnsFor(scontest).forEach { colInfo ->
             if (currentStateInput!!.matchCanonicalCandidate(currentCountyName!!, cc, colInfo.choiceName) == null) return false
         }
         return true
@@ -265,7 +265,9 @@ class CiSchema(
             @JvmStatic
             val beanProperties = listOf(
                 TableBeanProperty("contestIdx", "index of contest in county schema"),
-                TableBeanProperty("contestName", "contest name"),
+                TableBeanProperty("contestName", "schema name"),
+                TableBeanProperty("canonName", "canonical name"),
+                TableBeanProperty("match", "changed"),
             )
 
         }

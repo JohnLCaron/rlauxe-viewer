@@ -9,10 +9,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.corlaCounty.CorlaContestInfo
+import org.cryptobiotic.rlauxe.corlaCounty.CountyCard
 import org.cryptobiotic.rlauxe.corlaCounty.CountyCardsFromManifest
-import org.cryptobiotic.rlauxe.corlaInput.CountyInput
-import org.cryptobiotic.rlauxe.corlacvr.CorlaCountyCvrsIF
-import org.cryptobiotic.rlauxe.corlacvr.CvrRow
 import org.cryptobiotic.rlauxe.corlacvr.CvrSchema
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.nfn
@@ -29,7 +27,7 @@ import javax.swing.JSplitPane
 private val logger = KotlinLogging.logger("CiCvrs")
 
 // countyInput.readCorlaCvrs()
-class CiCvrs(
+class CiCountyCards(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
     val infoWindow: IndependentWindow,
@@ -37,28 +35,31 @@ class CiCvrs(
 ) : JPanel(), SubPanelIF {
 
     val tables = mutableListOf<BeanTable<out Any>>()
-    val cvrTable: BeanTable<CvrRowBean>
+    val countyCardTable: BeanTable<CountyCardBean>
     val countyContestCvrs: BeanTable<CountyContestCvrBean>
 
     private val split1: JSplitPane
     // private val split2: JSplitPane
 
-    var corlaCvrs: CorlaCountyCvrsIF? = null
+     // var corlaCvrs: CorlaCountyCvrsIF? = null
+    var needsReading = true
+    var currentCountyCards: CountyCardsFromManifest? = null
+    var currentSchema: CvrSchema? = null
 
     init {
-        cvrTable = BeanTable(
-            CvrRowBean::class.java, prefs.node("cardTable") as PreferencesExt, false,
-            "CVRs from County", "CvrRow", null
+        countyCardTable = BeanTable(
+            CountyCardBean::class.java, prefs.node("cardTable") as PreferencesExt, false,
+            "CountyCards from Manifest", "CountyCards from County Manifest and redacted CVR file", null
         )
-        cvrTable.addPopupOption(
-            "Show Cvr",
-            cvrTable.makeShowAction(infoTA, infoWindow) { bean: CvrRowBean -> showSelectedRow(bean) }
+        countyCardTable.addPopupOption(
+            "Show CountyCard",
+            countyCardTable.makeShowAction(infoTA, infoWindow) { bean: CountyCardBean -> showSelectedRow(bean) }
         )
-        tables.add(cvrTable)
+        tables.add(countyCardTable)
 
         countyContestCvrs = BeanTable(
             CountyContestCvrBean::class.java, prefs.node("precinctStyleTable") as PreferencesExt, false,
-            "CountyContest Tabs from Cvrs", "contest/county tabulation from cvr file", null
+            "CountyContest Tabs from CountyCards", "contest/county tabulation from cvr file", null
         )
         tables.add(countyContestCvrs)
 
@@ -67,7 +68,7 @@ class CiCvrs(
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, cvrTable, countyContestCvrs)
+        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, countyCardTable, countyContestCvrs)
         split1.setDividerLocation(prefs.getInt("splitPos1", 800))
         //split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, stylesTable)
         //split2.setDividerLocation(prefs.getInt("splitPos2", 1000))
@@ -88,26 +89,24 @@ class CiCvrs(
         // prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
-    fun showSelectedRow(bean: CvrRowBean) = buildString {
-        append(bean.show(corlaCvrs!!.schema))
+    fun showSelectedRow(bean: CountyCardBean) = buildString {
+        append(bean.show(currentSchema!!))
     }
 
-    // TODO CountyInput knows its StateInput
-    fun setCountyInput(countyInput: CountyInput) {
-        val maxRead = 11111
+    fun setCountyInput(countyCards: CountyCardsFromManifest): Boolean {
+        if (currentCountyCards == countyCards) return true
+
+        countyCardTable.setBeans(null)
+        val maxRead = 100000
 
         try {
-            val countyCards = CountyCardsFromManifest(countyInput)
-            corlaCvrs = countyCards.corlaCvrs
-            val manifestEntries = countyCards.manifestEntries
-
-            val beans = mutableListOf<CvrRowBean>()
+            val beans = mutableListOf<CountyCardBean>()
             var count = 0
-            corlaCvrs!!.cvrs().forEach {
-                beans.add(CvrRowBean(it, manifestEntries.contains(it)))
-                if (count++ > maxRead) return@forEach
+            for (card in countyCards.iterator()) {
+                beans.add(CountyCardBean(card, count))
+                if (count++ > maxRead) break
             }
-            cvrTable.setBeans(beans)
+            countyCardTable.setBeans(beans)
 
             val infos = countyCards.infos
 
@@ -117,32 +116,40 @@ class CiCvrs(
             }
             countyContestCvrs.setBeans(cvrBeans)
 
+            this.currentCountyCards = countyCards
+            this.currentSchema = countyCards.corlaCvrs.schema
+
         } catch (e: Exception) {
             e.printStackTrace()
             JOptionPane.showMessageDialog(null, e.message)
             logger.error(e) { "setCountyInput failed" }
+            return false
         }
+        return true
     }
 }
-
-class CvrRowBean(val row: CvrRow, val inManifest: Boolean) {
-    val cvrNumber = row.cvrNumber
-    val tabulatorNum = row.tabulatorNum
-    val batchId = row.batchId
-    val recordId = row.recordId
+// data class CountyCard (
+//   val imprintedId: String,
+//   val location: String,
+//   val style: String, // must have a style or "missing"
+//   val votes: List<ContestVotes>, // contest -> votedFor
+//   val poolName: String?, // must be set if its from a OneAudit CardPool
+//)
+class CountyCardBean(val row: CountyCard, val index: Int) {
     val imprintedId = row.imprintedId
-    val ballotType = row.ballotType
-    val precinctPortion = row.precinctPortion
+    val location = row.location
+    val style = row.style
+    val poolName = row.poolName
 
     val votes = buildString {
-        row.contestVotes.forEach {
+        row.votes.forEach {
             append("${it.contestId}:${it.votedFor}, ")
         }
     }
 
     fun show(schema: CvrSchema) = buildString {
-        appendLine(row.toString())
-        row.contestVotes.forEach {
+        appendLine("id=${row.imprintedId}, location=${row.location}, style=${row.style}, pool=${row.poolName}")
+        row.votes.forEach {
             val contest = schema.contests.get(it.contestId)
             append("  contest: ${sfn(contest.contestName, 60)} (${nfn(it.contestId, 3)}), ")
             appendLine(" candidate votes: ${it.candVotes()}")
