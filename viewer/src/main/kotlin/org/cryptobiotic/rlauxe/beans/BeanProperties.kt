@@ -156,6 +156,35 @@ object BeanProperties {
         assertions.add(TableBeanProperty("scoreDiff", "(winner-loser) score"))
         assertions.add(TableBeanProperty("scoreRange", "max scoreDiff for this number of samples"))
     }
+
+    // data class AuditableCard (
+    //    val id: String, // enough info to find the card for a manual audit.
+    //    val county: String, // enough info to find the card for a manual audit.
+    //    val location: String, // enough info to find the card for a manual audit.
+    //    val index: Int,  // index into the original, canonical list of cards, aka manifest index
+    //    val prn: Long,   // psuedo random number
+    //    val phantom: Boolean,
+    //    val styleId: Int, // must have a styleId
+    //    val contestIds: IntArray,   // these 3 form the cvr.votes map. will be empty if no cvr.
+    //    val contestStarts: IntArray,
+    //    val candidates: IntArray,
+    //    val poolId: Int?, // must be set if its from a OneAudit CardPool; if not OneAudit, ok to set anyway for visibility
+    //)
+    var cards = mutableListOf<TableBeanProperty>()
+
+    init {
+        cards.add(TableBeanProperty("id", "card identifier"))
+        cards.add(TableBeanProperty("county", "county name"))
+        cards.add(TableBeanProperty("location", "card location"))
+        cards.add(TableBeanProperty("manifestIndex", "index in the canonical card manifest"))
+        cards.add(TableBeanProperty("prn", "psuedo random number"))
+        cards.add(TableBeanProperty("phantom", "is a phantom card"))
+        cards.add(TableBeanProperty("styleId", "card style id"))
+        cards.add(TableBeanProperty("styleName", "card style name"))
+        cards.add(TableBeanProperty("possibleContests", "(possible or actual) contests on card"))
+        cards.add(TableBeanProperty("poolId", "OneAudit pool"))
+        cards.add(TableBeanProperty("votes", "votes on CVR"))
+    }
 }
 
 fun <T> showContestWithDesc(bean: T, tableModel: BeanTableModel<T>, cua: ContestWithAssertions?) = buildString {

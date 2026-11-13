@@ -101,7 +101,7 @@ class CiCountyCards(
 
         try {
             val beans = mutableListOf<CountyCardBean>()
-            var count = 0
+            var count = 1
             for (card in countyCards.iterator()) {
                 beans.add(CountyCardBean(card, count))
                 if (count++ > maxRead) break

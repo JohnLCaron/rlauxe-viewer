@@ -28,7 +28,7 @@ import javax.swing.JLabel
 import javax.swing.JOptionPane
 import javax.swing.JTabbedPane
 
-class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
+class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     val fileChooser: FileManager
     val auditRecordDirCB: ComboBox<String>
 
@@ -57,7 +57,6 @@ class ColoradoViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(
 
         countyTable = CvCounties((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize,
             headerLabel) { county, nmvrs -> countyTable.setCountyNmvrs(county, nmvrs)}
-
         topTabs.addTab("County Sampling", countyTable)
         activePanels.add(countyTable)
 

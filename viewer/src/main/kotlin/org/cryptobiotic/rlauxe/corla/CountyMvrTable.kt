@@ -88,7 +88,7 @@ class CountyMvrTable(
 
     //////////////////////////////////////////////////////
 
-    // TODO change Bean introspectipon to get dynamic fields
+    // TODO change Bean introspection to get dynamic fields
     class MvrComparisonBean(val headers: List<String>, val values: List<String>) {
         val valueMap = mutableMapOf<String, String>()
 

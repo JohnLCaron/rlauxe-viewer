@@ -7,7 +7,10 @@ package org.cryptobiotic.rlauxe.viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.StyleIF
+import org.cryptobiotic.rlauxe.beans.BeanProperties
 import org.cryptobiotic.rlauxe.beans.BeanTable
+import org.cryptobiotic.rlauxe.belgium.AssertionBean
+import org.cryptobiotic.rlauxe.belgium.ContestBean
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
@@ -60,6 +63,10 @@ class MvrsTable(
                 setSelectedCard(cardBean)
             }
         }
+        cardTable.addPopupOption(
+            "Show Row",
+            cardTable.makeShowAction(infoTA, infoWindow) { bean: CardBean -> showCard(bean) }
+        )
         tables.add(cardTable)
 
         //cardTable.addPopupOption("Show Population", cardTable.makeShowAction(localInfo,
@@ -129,6 +136,10 @@ class MvrsTable(
         }
 
         return true
+    }
+
+    fun showCard(bean: CardBean) = buildString {
+        append(cardTable.tableModel.showBean(bean, BeanProperties.cards))
     }
 
     fun findPool(cardStyle: String?): StyleIF? {

@@ -7,8 +7,8 @@ package org.cryptobiotic.rlauxe.viewer
 import com.formdev.flatlaf.FlatLightLaf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.belgium.BelgiumContests
-import org.cryptobiotic.rlauxe.corla.ColoradoInput
-import org.cryptobiotic.rlauxe.corla.ColoradoViewer
+import org.cryptobiotic.rlauxe.corla.ColoradoInputViewer
+import org.cryptobiotic.rlauxe.corla.ColoradoAuditViewer
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FontUtil
 import ucar.ui.widget.FontUtil.StandardFont
@@ -222,16 +222,18 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             UIManager.put( "TabbedPane.showTabSeparators", true );
             UIManager.put( "TabbedPane.selectedBackground", Color.white );
 
-            var type = "TestPrefs"
+            var type = "RlauxeViewer"
             var datadir = ""
             for (idx in args.indices) {
                 val arg = args[idx]
                 if (arg == "-datadir") datadir = args[idx + 1]
                 if (arg == "-ColoradoAuditViewer") type = "ColoradoAuditViewer"
-                if (arg == "-ColoradoInput") type = "ColoradoInput"
+                if (arg == "-ColoradoInputViewer") type = "ColoradoInput"
                 if (arg == "-BelgiumContests") type = "BelgiumContests"
                 if (arg == "-RlauxeViewer") type = "RlauxeViewer"
+                else logger.warn { "unknown argument: $arg"}
             }
+            val name = if (type == "ColoradoInput") "ColoradoInputViewer" else type // kludge to change visible name
 
             // prefs storage
             val prefsStore = XMLStore.makeStandardFilename(".rlauxe", "${type}.xml")
@@ -246,42 +248,18 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
                 throw e
             }
 
-            /* var prefffs: PreferencesExt? = null
-            try {
-                val storeName = "CorlaInputData.xml"
-
-                val prefStore = XMLStore.makeStandardFilename(".rlauxe", storeName)
-                val storedDefaults = XMLStore.createFromResource("/resources/prefs/CorlaInputDataDefaults.xml", null)
-
-                store = XMLStore.createFromFile(prefStore, storedDefaults)
-                prefffs = store!!.getPreferences()
-
-            } catch (e: IOException) {
-                logger.error(e) {"RlauxeViewerMain store.create() failed"}
-                return
-            }
-
-            val prefsx = when (type) {
-                "ColoradoInput" -> preffs!!.node("ColoradoInput") as PreferencesExt
-                "ColoradoAuditViewer" -> preffs!!.node("ColoradoAuditViewer") as PreferencesExt
-                "BelgiumContests" -> preffs!!.node("BelgiumContests") as PreferencesExt
-                else -> throw RuntimeException()
-            }
-
-            Debug.setStore(prefsx.node("Debug")) */
             val fontSize = prefsx.getBean(FONT_SIZE, 18.0f) as Float
             FontUtil.init()
             resizeDefaultFonts(fontSize) // done before the ui starts ??
 
             // put UI in a JFrame
             // JFrame.setDefaultLookAndFeelDecorated(true);
-            frame = JFrame(type)
+            frame = JFrame(name)
             ui = when (type) {
-                "ColoradoInput" -> ColoradoInput(prefsx, fontSize)
-                "ColoradoAuditViewer" -> ColoradoViewer(prefsx, fontSize)
+                "ColoradoInput" -> ColoradoInputViewer(prefsx, fontSize)
+                "ColoradoAuditViewer" -> ColoradoAuditViewer(prefsx, fontSize)
                 "BelgiumContests" -> BelgiumContests(prefsx, fontSize)
                 "RlauxeViewer" -> RlauxeViewer(prefsx, fontSize)
-                // "TestPrefs" -> TestPrefs(prefsx, fontSize)
                 else -> RlauxeViewer(prefsx, fontSize)
             }
             frame!!.title = ui?.name() ?: type
