@@ -156,9 +156,9 @@ class ColoradoInputTable(
         val auditReason = mcontest.auditReason
         val corlaPop = mcontest.corlaPop       // ballot_card_count
         val ncast = mcontest.nc         // contest_ballot_card_count
-        val voteForN = mcontest.voteForN  // winners_allowed
         val estSamples  = mcontest.estSamples // Corla estimated_samples_to_audit
         val marginInVotes = mcontest.marginInVotes // min_margin
+        val voteForN = mcontest.voteForN  // winners_allowed
         val riskLimit  = mcontest.riskLimit // risk_limit
 
         // mvr file
@@ -197,23 +197,21 @@ class ColoradoInputTable(
 
             @JvmStatic
             val beanProperties = listOf(
-                TableBeanProperty("auditReason", "from round"),
-                TableBeanProperty("countyPoolId", "county name"),
-                TableBeanProperty("marginInVotes", "from round.min_margin"),
-                TableBeanProperty("nsamples", "from round.optimistic_samples_to_audit"),
-                TableBeanProperty("nc", "contest population from round.contestBallotCardCount"),
-                TableBeanProperty("npop", "county population from round.ballotCardCount"),
-                TableBeanProperty("riskLimit", "from round.risk_limit"),
+                TableBeanProperty("auditReason", "from round.audit_reason"),
+                TableBeanProperty("corlaPop", "round.ballot_card_count"),
+                TableBeanProperty("ncast", "from round.contest_ballot_card_count"),
+                TableBeanProperty("estSamples", "from round.estimated_samples_to_audit"),
                 TableBeanProperty("voteForN", "from round.winners_allowed"),
+                TableBeanProperty("marginInVotes", "from round.min_margin"),
+                TableBeanProperty("riskLimit", "from round.risk_limit"),
 
                 TableBeanProperty("name", "contest name"),
                 TableBeanProperty("countyMvrs", "count of county mvrs over all counties with this contest"),
                 TableBeanProperty("statewideMvrs", "count of statewide mvrs over all counties with this contest"),
                 TableBeanProperty("NCounties", "number of counties, or county name if only one"),
-                TableBeanProperty("counties", "list of counties from tabulateCountyFile"),
                 TableBeanProperty("choices", "list of choices/candidates"),
                 TableBeanProperty("targeted", "if targeted for audit"),
-                TableBeanProperty("NCand", "number of choices / candidates"),
+                TableBeanProperty("NCand", "number of choices (candidates)"),
             )
         }
     }

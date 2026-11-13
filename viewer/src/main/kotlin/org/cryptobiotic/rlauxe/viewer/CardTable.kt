@@ -8,6 +8,7 @@ package org.cryptobiotic.rlauxe.viewer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditableCard
 import org.cryptobiotic.rlauxe.audit.StyleIF
+import org.cryptobiotic.rlauxe.beans.BeanProperties
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.persist.AuditRecord
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.read
@@ -56,6 +57,10 @@ class CardTable(
                 setSelectedCard(cardBean)
             }
         }
+        cardTable.addPopupOption(
+            "Show Row",
+            cardTable.makeShowAction(infoTA, infoWindow) { bean: CardBean -> showCard(bean) }
+        )
 
         //cardTable.addPopupOption("Show Population", cardTable.makeShowAction(localInfo,
         //    bean -> ((cardTable) bean).show()));
@@ -148,6 +153,10 @@ class CardTable(
         localInfo.gotoTop()
     }
 
+    fun showCard(bean: CardBean) = buildString {
+        append(cardTable.tableModel.showBean(bean, BeanProperties.cards))
+    }
+
     override fun saveState() {
         cardTable.saveState(false)
 
@@ -157,20 +166,17 @@ class CardTable(
 
 class CardBean(val card: AuditableCard) {
     val id = card.id()
+    val county = card.county
     val location = card.location()
     val manifestIndex = card.index()
     val prn = card.prn()
     val phantom = card.phantom()
     val possibleContests: String = card.possibleContests().contentToString()
     val styleId = card.styleId
+    val styleName = card.style?.name() ?: "not set"
     val poolId = card.poolId()
-    val cardStyle = card.style?.name() ?: "not set"
 
-    val votes = buildString {
-        if (card.votes() != null) {
-            card.votes()!!.forEach { append("${it.key}:${it.value.contentToString()}, ") }
-        }
-    }
+    val votes = card.voteString()
 
     fun show()= buildString {
         appendLine(card.toString())

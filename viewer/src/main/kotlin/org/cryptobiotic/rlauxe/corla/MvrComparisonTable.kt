@@ -10,6 +10,7 @@ import org.apache.commons.csv.CSVParser
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
+import org.cryptobiotic.rlauxe.viewer.CardBean
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -33,8 +34,8 @@ class MvrComparisonTable(
 
     private val mvrComparisonTable: BeanTable<MvrComparisonBean>
 
-    val localInfo = TextHistoryPane()
-    private val split1: JSplitPane
+    // val localInfo = TextHistoryPane()
+    // private val split1: JSplitPane
     // private val split2: JSplitPane
 
     init {
@@ -47,18 +48,19 @@ class MvrComparisonTable(
             "Show Row",
             mvrComparisonTable.makeShowAction(infoTA, infoWindow) { bean: MvrComparisonBean -> showMvr(bean) }
         )
+
         tables.add(mvrComparisonTable)
 
         setFontSize(fontSize)
 
         // layout of tables
-        split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, mvrComparisonTable, localInfo)
-        split1.setDividerLocation(prefs.getInt("splitPos1", 200))
+        // split1 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, mvrComparisonTable, localInfo)
+        // split1.setDividerLocation(prefs.getInt("splitPos1", 200))
         // split2 = JSplitPane(JSplitPane.VERTICAL_SPLIT, false, split1, styleTable)
         // split2.setDividerLocation(prefs.getInt("splitPos2", 600))
 
         setLayout(BorderLayout())
-        add(split1, BorderLayout.CENTER)
+        add(mvrComparisonTable, BorderLayout.CENTER)
 
         logger.debug { "CountyPoolTable init" }
     }
@@ -89,7 +91,7 @@ class MvrComparisonTable(
     override fun saveState() {
         tables.forEach { it.saveState(false) }
 
-        prefs.putInt("splitPos1", split1.getDividerLocation())
+        // prefs.putInt("splitPos1", split1.getDividerLocation())
         //prefs.putInt("splitPos2", split2.getDividerLocation())
     }
 
@@ -122,8 +124,9 @@ class MvrComparisonTable(
         val recordType = valueMap["record_type"]
         val auditBoardComment = valueMap["audit_board_comment"]
         val timestamp = valueMap["timestamp"]
-        val cvrId = valueMap["cvr_id"]
+        val dbId = valueMap["cvr_id"]
         val auditReason = valueMap["audit_reason"]
+        val disagree = cvrSelection != auditSelection
 
         companion object {
             @JvmStatic
@@ -151,7 +154,7 @@ class MvrComparisonTable(
                 TableBeanProperty("recordType", "record_type"),
                 TableBeanProperty("auditBoardComment", "audit board comment"),
                 TableBeanProperty("timestamp", "timestamp"),
-                TableBeanProperty("cvrId", "internal database id (cvr_id)"),
+                TableBeanProperty("dbId", "internal database id (aka cvr_id)"),
                 TableBeanProperty("auditReason", "audit reason"),
             )
         }

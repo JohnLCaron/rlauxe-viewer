@@ -189,15 +189,15 @@ class CvCounties(
         return true
     }
 
-    fun addTotal(countyList: MutableList<CountyBean>) {
+    fun addTotal(countyList: MutableList<CountyBean>): Int {
         var population = 0
         var corlaSampling = 0
         var rlauxeSampling = 0
         var totalDiff = 0
-        println("nbeans = ${countyTable.beans.size}")
+        // println("nbeans = ${countyTable.beans.size}")
         countyTable.beans.forEach { bean ->
             if (bean.name != "=Total") {
-                println(bean)
+                // println(bean)
                 population += bean.population
                 corlaSampling += bean.corlaSampling
                 rlauxeSampling += bean.rlauxeSampling
@@ -208,10 +208,10 @@ class CvCounties(
         val countyTotal = CountyBean( Strata("=Total", corlaSampling, population))
         countyTotal.rlauxeSampling = rlauxeSampling
         countyTotal.totalDiff = totalDiff
-        //this.totalBean = countyTotal
 
         countyList.add(countyTotal)
         countyTable.setBeans(countyList)
+        return rlauxeSampling
     }
 
     fun setSelectedCounty(countyBean: CountyBean) {
@@ -233,8 +233,9 @@ class CvCounties(
             countySampling.resample()
             countyTable.refresh()
         }
-        addTotal(countyTable.beans.filter{ it.name != "=Total"}.toMutableList())
+        val total = addTotal(countyTable.beans.filter{ it.name != "=Total"}.toMutableList())
         countyTable.refresh()
+        headerLabel.setText("All counties: nmvrs = $total")
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////

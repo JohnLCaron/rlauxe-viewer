@@ -18,7 +18,7 @@ import java.awt.Component
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
+class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(prefs, fontSize) {
     var corlaInputPanel: ColoradoInputTable
     var countiesTab: CiCounties
     var mvrSamplePanel: MvrSampleTable
@@ -50,7 +50,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
 
         mvrSamplePanel = MvrSampleTable((prefs.node("mvrSamplePanel") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        topTabs.addTab("Mvr Samples", mvrSamplePanel)
+        topTabs.addTab("All Samples", mvrSamplePanel)
         activePanels.add(mvrSamplePanel)
 
         mvrComparisonPanel = MvrComparisonTable((prefs.node("mvrComparisonPanel") as PreferencesExt),
@@ -79,7 +79,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
 
         countyMvrTable = MvrSampleTable((prefs.node("countyMvrTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        countyCvrTabs.addTab("CountyMvrs", countyMvrTable)
+        countyCvrTabs.addTab("County Samples", countyMvrTable)
         activePanels.add(countyMvrTable)
 
         countyCardsTable = CiCountyCards((prefs.node("countyCvrsTable") as PreferencesExt),
@@ -131,7 +131,7 @@ class ColoradoInput(prefs: PreferencesExt, fontSize: Float) : RlauxeViewerMain(p
         BAMutil.addActionToContainer(leftPanel, refreshAction)
 
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
-        headerLabel.setText("headerLabel from ${name()}")
+        headerLabel.setText("")
 
         logger.debug{"ColoradoInput started"}
     }
