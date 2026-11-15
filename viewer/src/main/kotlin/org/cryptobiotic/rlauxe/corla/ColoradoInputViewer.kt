@@ -194,7 +194,8 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
 
             appendLine()
             appendLine("cvr file election name = ${corlaCvrs.electionName}")
-            appendLine("cvr file version = ${corlaCvrs.versionName}")
+            appendLine("cvr formatVersion= ${corlaCvrs.formatVersion}")
+            appendLine("cvr redactionVersion = ${corlaCvrs.redactionVersion}")
 
         }
     }
