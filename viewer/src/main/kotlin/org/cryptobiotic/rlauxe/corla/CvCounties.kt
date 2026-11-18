@@ -4,10 +4,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditRound
 import org.cryptobiotic.rlauxe.audit.Config
 import org.cryptobiotic.rlauxe.audit.ContestRound
-import org.cryptobiotic.rlauxe.beans.BeanProperties
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.showContestWithDesc
-import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.bridge.Naming
@@ -17,6 +15,8 @@ import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.strata.Strata
+import org.cryptobiotic.rlauxe.util.dfn
+import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.viewer.AuditRecordViewerIF
 import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import ucar.ui.widget.BAMutil
@@ -36,14 +36,13 @@ class CvCounties(
     infoWindow: IndependentWindow,
     fontSize: Float,
     val headerLabel: JLabel,
-    val setCountyMvrs: (String, Int) -> Unit,
 ) : JPanel(), AuditRecordViewerIF {
 
     private val localTA = TextHistoryPane()
     private val localWindow  = IndependentWindow("Details", BAMutil.getImage("rlauxe-logo.png"), JScrollPane(localTA))
 
     private val countyTable: BeanTable<CountyBean>
-    val countySampling =  CvCountySampling(prefs, infoTA, infoWindow, fontSize, headerLabel, setCountyMvrs)
+    val countySampling =  CvCountySampling(prefs, infoTA, infoWindow, fontSize, headerLabel) { cs -> setCountySample(cs) }
     private val countyContestTable = countySampling.samplingTable
 
     private val split1: JSplitPane
@@ -78,6 +77,10 @@ class CvCounties(
                 setSelectedCounty(county)
             }
         }
+        countyTable.addPopupOption(
+            "Show Row",
+            countyTable.makeShowAction(infoTA, infoWindow) { bean: CountyBean -> showCounty(bean) }
+        )
         /*countyTable.addPopupOption(
             "Go to county sampling",
             countyTable.makeActionOnCurrentBean { bean: CountyBean? ->
@@ -166,7 +169,7 @@ class CvCounties(
         val _countyMap = mutableMapOf<String, CountyBean>()
         for (countyData in countyAudit!!.countyData) {
             if (countyData.strataName != "Statewide") {
-                val bean = CountyBean(countyData)
+                val bean = CountyBean(countyData, auditRiskLimit)
                 countyList.add(bean)
                 _countyMap.put(bean.name, bean)
             }
@@ -192,26 +195,36 @@ class CvCounties(
     fun addTotal(countyList: MutableList<CountyBean>): Int {
         var population = 0
         var corlaSampling = 0
-        var rlauxeSampling = 0
+        var rlauxeNmvrs = 0
         var totalDiff = 0
-        // println("nbeans = ${countyTable.beans.size}")
+
+        var totalContests = 0
+        var rlauxeSuccess = 0
+        var corlaSuccess = 0
+
         countyTable.beans.forEach { bean ->
             if (bean.name != "=Total") {
                 // println(bean)
                 population += bean.population
-                corlaSampling += bean.corlaSampling
-                rlauxeSampling += bean.rlauxeSampling
+                corlaSampling += bean.corlaNmvrs
+                rlauxeNmvrs += bean.rlauxeNmvrs
                 totalDiff += bean.getDiff()
+                totalContests += bean.ncontests ?: 0
+                rlauxeSuccess += bean.contestRisk.filter { it.value.second <= auditRiskLimit }.count()
+                corlaSuccess += bean.contestRisk.filter { it.value.first <= auditRiskLimit }.count()
             }
         }
 
-        val countyTotal = CountyBean( Strata("=Total", corlaSampling, population))
-        countyTotal.rlauxeSampling = rlauxeSampling
+        val countyTotal = CountyBean( Strata("=Total", corlaSampling, population), auditRiskLimit)
+        countyTotal.rlauxeNmvrs = rlauxeNmvrs
         countyTotal.totalDiff = totalDiff
+        countyTotal.ncontests = totalContests
+        countyTotal.corlaSuccess = corlaSuccess
+        countyTotal.rlauxeSuccess = rlauxeSuccess
 
         countyList.add(countyTotal)
         countyTable.setBeans(countyList)
-        return rlauxeSampling
+        return rlauxeNmvrs
     }
 
     fun setSelectedCounty(countyBean: CountyBean) {
@@ -219,9 +232,13 @@ class CvCounties(
         countyContestTable.refresh()
     }
 
-    fun setCountyNmvrs(county: String, nmvrs: Int) {
-        val countyBean: CountyBean? = countyTable.beans.find { it.name == county }
-        if (countyBean != null) countyBean.rlauxeSampling = nmvrs
+    fun setCountySample(countySample: CountySample) {
+        val countyBean: CountyBean? = countyTable.beans.find { it.name == countySample.county }
+        if (countyBean != null) {
+            countyBean.rlauxeNmvrs = countySample.nmvrs
+            countyBean.ncontests = countySample.ncountyContests
+            countyBean.contestRisk = countySample.contestRisk
+        }
 
         addTotal(countyTable.beans.filter{ it.name != "=Total"}.toMutableList())
         countyTable.refresh()
@@ -269,9 +286,8 @@ class CvCounties(
         appendLine("sortedVotes   = $sortedVotes")
     }
 
-    fun showCountyContest(countyContestBean: CvContestBean) = buildString {
-        append(countyContestTable.tableModel.showBean(countyContestBean, BeanProperties.contests))
-        append(countyContestBean.contestUA.show())
+    fun showCounty(bean: CountyBean) = buildString {
+        append(bean.show())
     }
 
     override fun saveState() {
@@ -288,37 +304,64 @@ class CvCounties(
 }
 
 ////////////////////////////////////////////////////////////////
-class CountyBean(countyData: Strata) {
+class CountyBean(countyData: Strata, val auditRiskLimit: Double) {
     val name: String
     val population: Int
-    val corlaSampling: Int
-    var rlauxeSampling: Int = 0
+    val corlaNmvrs: Int
+
     var totalDiff: Int = 0
+    var corlaSuccess: Int? = null
+    var rlauxeSuccess: Int? = null
+
+    var rlauxeNmvrs: Int = 0
+    var ncontests: Int? = null
+    //// contestRisk: contestId -> Pair(corla, rlauxe risk), for contests wholly contained in the county
+    //data class CountySample(val county: String, val nmvrs: Int, val ncountyContests: Int, val contestRisk: Map<Int, Pair<Double, Double>>)
+    var contestRisk: Map<Int, Pair<Double, Double>> = emptyMap()
 
     init {
         this.name = countyData.strataName
         this.population = countyData.population
-        this.corlaSampling = countyData.nmvrs
+        this.corlaNmvrs = countyData.nmvrs
     }
 
-    fun getCorlaSamplePct() = 100 * corlaSampling / population.toDouble()
-    fun getRlauxeSamplePct() = 100 * rlauxeSampling / population.toDouble()
+    fun getCorlaSamplePct() = 100 * corlaNmvrs / population.toDouble()
+    fun getRlauxeSamplePct() = 100 * rlauxeNmvrs / population.toDouble()
 
     fun getDiff(): Int {
         return when {
             (totalDiff != 0) -> totalDiff
-            (rlauxeSampling == 0) -> 0
-            else -> corlaSampling - rlauxeSampling
+            (rlauxeNmvrs == 0) -> 0
+            else -> corlaNmvrs - rlauxeNmvrs
         }
     }
 
-    override fun toString(): String {
-        return "CountyBean(name='$name', population=$population, corlaSampling=$corlaSampling, rlauxeSampling=$rlauxeSampling, totalDiff=$totalDiff)"
+    fun getCorlaContestSuccess(): String {
+        if (corlaSuccess != null) return "$corlaSuccess / $ncontests"
+        val n = contestRisk.filter { it.value.first <= auditRiskLimit }.count()
+        return "$n / $ncontests"
+    }
+
+    fun getRlauxeContestSuccess(): String {
+        if (rlauxeSuccess != null) return "$rlauxeSuccess / $ncontests"
+        val n = contestRisk.filter { it.value.second <= auditRiskLimit }.count()
+        return "$n / $ncontests"
+    }
+
+    fun show() = buildString {
+        appendLine("county='$name', population=$population, corlaNmvrs=$corlaNmvrs, rlauxeNmvrs=$rlauxeNmvrs, diff=${getDiff()} ncontests=$ncontests")
+        println()
+        appendLine("contest,  Corla risk,  Rlauxe risk")
+        contestRisk.toSortedMap().forEach {
+            val corlaStar = if (it.value.first <= auditRiskLimit ) "*" else " "
+            val rlauxeStar = if (it.value.second <= auditRiskLimit ) "*" else " "
+            appendLine("    ${nfn(it.key, 3)},    ${dfn(it.value.first, 6)}$corlaStar,     ${dfn(it.value.second, 6)}$rlauxeStar")
+        }
     }
 
     companion object {
         @JvmStatic
-        fun hiddenProperties() = "totalDiff"
+        fun hiddenProperties() = "totalDiff corlaSuccess rlauxeSuccess auditRiskLimit contestRisk"
     }
 }
 

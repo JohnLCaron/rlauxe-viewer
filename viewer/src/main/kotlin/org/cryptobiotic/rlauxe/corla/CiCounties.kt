@@ -169,7 +169,16 @@ class CiCounties(
     class CountyTabBean(val county: String, val countyTab: CountyTabAllContests, val strata: StrataInfo?,
                         val countyInput: CountyInput?, val data: CountyInputData?, val rc: RedactionCount?) {
         val ncontests = countyTab.contests.size
-        val nmvrs = strata?.nmvrs ?: 0
+
+        //     public final val countyMvrs: kotlin.Int /* compiled code */
+        //
+        //    public final val stateMvrs: kotlin.Int /* compiled code */
+        //
+        //    public final val ballotCardCount: kotlin.Int /* compiled code */
+        //
+        //    public final val nmvrs: kotlin.Int /* compiled code */
+
+        val nmvrs = strata?.nmvrs ?: 0  // countyMvrs + stateMvrs
         val total = strata?.ballotCardCount ?: 0
         val hasCvrs = (countyInput != null) && countyInput.hasCvrs()
 
