@@ -6,7 +6,6 @@ import org.cryptobiotic.rlauxe.audit.Config
 import org.cryptobiotic.rlauxe.audit.ContestRound
 import org.cryptobiotic.rlauxe.beans.BeanProperties
 import org.cryptobiotic.rlauxe.beans.BeanTable
-import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
 import org.cryptobiotic.rlauxe.bridge.Naming
@@ -16,7 +15,14 @@ import org.cryptobiotic.rlauxe.corlaCounty.sampleCountyCvrs
 import org.cryptobiotic.rlauxe.persist.AuditRecordIF
 import org.cryptobiotic.rlauxe.persist.CountyAuditRecord
 import org.cryptobiotic.rlauxe.persist.CountyContestData
-import org.cryptobiotic.rlauxe.util.*
+import org.cryptobiotic.rlauxe.util.Welford
+import org.cryptobiotic.rlauxe.util.calcProbabilityMassFunction
+import org.cryptobiotic.rlauxe.util.dfn
+import org.cryptobiotic.rlauxe.util.nfn
+import org.cryptobiotic.rlauxe.util.roundToClosest
+import org.cryptobiotic.rlauxe.util.sfn
+import org.cryptobiotic.rlauxe.util.showDeciles
+import org.cryptobiotic.rlauxe.util.showDecilesShort
 import org.cryptobiotic.rlauxe.viewer.AuditRecordViewerIF
 import org.cryptobiotic.rlauxe.viewer.INFO_BOUNDS
 import ucar.ui.widget.BAMutil
@@ -37,7 +43,7 @@ class CvCountySampling(
     infoWindow: IndependentWindow,
     fontSize: Float,
     val headerLabel: JLabel,
-    val setCountyMvrs: (String, Int) -> Unit,
+    val setCountySample: (CountySample) -> Unit,
 ) : AuditRecordViewerIF {
 
     private val localTA = TextHistoryPane()
@@ -143,11 +149,12 @@ class CvCountySampling(
         val beanList = mutableListOf<CvContestBean>()
         countyContestData.filter { it.countyName == county }.forEach {
             val contestRound = contestRoundMap[it.id]
-            if (contestRound != null && contestRound.status == TestH0Status.InProgress) {
+            if (contestRound != null) {
                 val counties = contestCounties[contestRound.id] ?: emptyList()
                 if (counties.find { it.countyName == county } != null) {
-                    // class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: ContestRound?, val sampleChanged: (Boolean) -> Any) {
-                    val bean = CvContestBean(contestRound.contestUA, contestRound, counties, county) { b -> samplingChanged = b }
+                    val bean = CvContestBean(contestRound.contestUA, contestRound, counties, county) { b ->
+                        samplingChanged = b
+                    }
                     beanList.add(bean)
                     //bean.countyPopulation = countyBean.population
                     //bean.rlauxeNmvrs = countyBean.rlauxeSampling
@@ -257,8 +264,17 @@ class CvCountySampling(
 
             this.meanNmvrs = roundToClosest(welford.mean)
             setHeaderText()
-            setCountyMvrs(county, this.meanNmvrs!!)
-            logger.debug{"setCountyMvrs ${this.meanNmvrs}"}
+
+            // contests contained in the county
+            val contestRisk = mutableMapOf<Int, Pair<Double, Double>>()
+            var nCountContests = 0
+            samplingTable.beans.filter { it.getNCounties() == county }.forEach {
+                nCountContests++
+                contestRisk[it.getId()] = Pair(it.getCorlaRisk(), it.getEstRisk())
+            }
+            val countySample = CountySample(county, this.meanNmvrs!!, nCountContests, contestRisk)
+            setCountySample(countySample)
+            logger.debug{"setCountyMvrs ${countySample}"}
 
             samplingTable.refresh()
             samplingChanged = false // perhaps not needed
@@ -707,3 +723,6 @@ fun reportRisks(who: String, wantNmvrs: Map<Int, Int>, dist: List<Int>, beans: L
     appendLine("  uniform sampling = ${showDecilesShort(riskus, 2)}")
     appendLine()
 }
+
+// contestRisk: contestId -> Pair(corla, rlauxe risk), for contests wholly contained in the county
+data class CountySample(val county: String, val nmvrs: Int, val ncountyContests: Int, val contestRisk: Map<Int, Pair<Double, Double>>)

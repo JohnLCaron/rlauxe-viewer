@@ -88,7 +88,7 @@ object BeanProperties {
         contests.add(
             TableBeanProperty(
                 "corlaEstMvrs",
-                "Corla estimated nmvrs (from contestRoundFile estimated_samples_to_audit)"
+                "Corla estimated nmvrs, targeted only (from contestRoundFile estimated_samples_to_audit)"
             )
         )
 

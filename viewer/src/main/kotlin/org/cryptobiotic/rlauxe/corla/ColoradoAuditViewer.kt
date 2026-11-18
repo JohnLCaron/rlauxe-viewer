@@ -56,7 +56,7 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         activePanels.add(stateContests)
 
         countyTable = CvCounties((prefs.node("CountyContests") as PreferencesExt), infoTA, infoWindow, fontSize,
-            headerLabel) { county, nmvrs -> countyTable.setCountyNmvrs(county, nmvrs)}
+            headerLabel) // { countySample -> countyTable.setCountyNmvrs(countySample)}
         topTabs.addTab("County Sampling", countyTable)
         activePanels.add(countyTable)
 

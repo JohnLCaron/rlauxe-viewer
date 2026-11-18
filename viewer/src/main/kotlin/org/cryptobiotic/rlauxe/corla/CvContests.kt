@@ -212,10 +212,11 @@ class CvContests(
         logger.debug { "loadAuditRecord ${contestRoundMap.size} rounds" }
 
         val contestList = mutableListOf<CvContestBean>()
-        auditRecord.contests.filter { !onlyShowInprogressContests || it.preAuditStatus == TestH0Status.InProgress }
+        auditRecord.contests
             .forEach { cwa ->
                 val cr = contestRoundMap.get(cwa.id)
                 val bean = CvContestBean(cwa, cr, null, null) { b -> samplingChanged = b }
+                if (!onlyShowInprogressContests || bean.getStatus() == Naming.status(TestH0Status.InProgress))
                 contestList.add(bean)
             }
         contestTable.setBeans(contestList)
@@ -250,18 +251,18 @@ class CvContests(
 
     // actions on right side of Audit record chooser
     fun getActions(container: JPanel) {
-        val onlyProcessAction: AbstractAction = object : AbstractAction() {
+        val onlyInProgress: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
                 val state = getValue(BAMutil.STATE)
                 val onlyProcess = state as Boolean
-                onlyProcess(onlyProcess)
+                onlyProgress(onlyProcess)
                 prefs.putBoolean("onlyInProgress", onlyProcess)
             }
         }
         val savedState = prefs.getBoolean("onlyInProgress", false)
-        onlyProcessAction.putValue(BAMutil.STATE, savedState)
-        BAMutil.setActionProperties(onlyProcessAction, "sunrise-icon.png", "Only show Contests InProgress", true, 'S'.code, -1)
-        BAMutil.addActionToContainer(container, onlyProcessAction)
+        onlyInProgress.putValue(BAMutil.STATE, savedState)
+        BAMutil.setActionProperties(onlyInProgress, "sunrise-icon.png", "Only show Contests InProgress", true, 'S'.code, -1)
+        BAMutil.addActionToContainer(container, onlyInProgress)
 
         val resampleAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
@@ -344,7 +345,7 @@ class CvContests(
     }
 
     // only show active contests
-    fun onlyProcess(onlyInProgress: Boolean) {
+    fun onlyProgress(onlyInProgress: Boolean) {
         this.onlyShowInprogressContests = onlyInProgress
         loadAuditRecord()
     }
@@ -566,6 +567,8 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         if (oldState != include) {
             contestRound!!.included = include
             sampleChanged(true)
+
+            // TODO change round.status ?? or make sure include overrides in the audit
         }
     }
 
@@ -607,7 +610,10 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         if (minAssertion == null) return 0
         val noerror = minAssertion.noerror
 
-        return estSampleSizeStandardBet(contestUA.population(), noerror, maxRisk)
+        val estRisk =  estSampleSizeStandardBet(contestUA.population(), noerror, maxRisk)
+        println("${getId()}: ${contestUA.population()} ${noerror} ${estRisk}")
+        return estRisk
+
     }
 
     fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
@@ -632,7 +638,7 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
     }
 
     fun getCorlaEstMvrs(): Int {
-        if (!targeted()) return -1
+        if (!targeted()) return -1 // no estimate if not targeted
         val CORLAsample = contestUA.contest.info().metadata.get("CORLAestMvrs") ?: return -1
         return CORLAsample.toInt()
     }
@@ -751,11 +757,14 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         return reason == "state_wide_contest" || reason == "county_wide_contest"
     }
 
-    fun getPayoff(): String {
+    fun getNoerror(): Double {
+        val minClcaAssertion = contestUA.minClcaAssertion()
+        val noerrorClca = minClcaAssertion!!.noerror
+
         val minAssertion = contestUA.minAssertion()
-        if (minAssertion == null) return "N/A"
-        val noerror = minAssertion.assorter.noerror(contestUA.hasStyle)
-        return dfn(payoff(2.0 / 1.03905, noerror), 6)
+        if (minAssertion == null) return Double.NaN
+        return minAssertion.assorter.noerror(contestUA.hasStyle)
+        // payoff = return dfn(payoff(2.0 / 1.03905, noerror), 6)
     }
 
     fun getMargin(): Double{
@@ -779,7 +788,10 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
             return min ?: 0.0
         }
 
-    fun getStatus() = Naming.status(contestUA.preAuditStatus)
+    fun getStatus():String {
+        return if (contestRound != null) Naming.status(contestRound!!.status)
+        else Naming.status(contestUA.preAuditStatus)
+    }
     fun getType() = contestUA.choiceFunction.toString()
     fun getUndervotes() = contestUA.contest.Nundervotes()
     fun getUvPct() = contestUA.contest.undervotePct()
