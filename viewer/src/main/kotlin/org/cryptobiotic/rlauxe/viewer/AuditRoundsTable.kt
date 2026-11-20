@@ -738,7 +738,7 @@ class AssertionRoundBean(val assertionRound: AssertionRound, val contestRound: C
         get() = assertion.assorter.shortName()
 
     val noerror: Double
-        get() = assertion.assorter.noerror(contestUA.hasStyle)
+        get() = assertion.assorter.noerror()
 
     val upper: Double
         get() = assertion.assorter.upperBound()

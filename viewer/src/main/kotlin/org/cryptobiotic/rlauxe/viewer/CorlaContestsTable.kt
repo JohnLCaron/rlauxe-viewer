@@ -397,7 +397,7 @@ class CorlaContestsTable(
             val noerror = minAssertion.noerror
 
             val haveMvrs = this.getHaveMvrs()
-            return estRiskStandardBet(contestUA.population(), noerror, haveMvrs)
+            return estRiskStandardBet(contestUA.Npop, noerror, haveMvrs)
         }
 
         fun getEstMvrs(): Int {
@@ -409,7 +409,7 @@ class CorlaContestsTable(
             if (minAssertion == null) return 0
             val noerror = minAssertion.noerror
 
-            return estSampleSizeStandardBet(contestUA.population(), noerror, maxRisk)
+            return estSampleSizeStandardBet(contestUA.Npop, noerror, maxRisk)
         }
 
         fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
@@ -481,7 +481,7 @@ class CorlaContestsTable(
         fun getPayoff(): String {
             val minAssertion = contestUA.minAssertion()
             if (minAssertion == null) return "N/A"
-            val noerror = minAssertion.assorter.noerror(contestUA.hasStyle)
+            val noerror = minAssertion.assorter.noerror()
             return dfn(payoff(2.0 / 1.03905, noerror), 6)
         }
 
@@ -553,7 +553,7 @@ class CorlaContestsTable(
             return roundToClosest(100 * getDiffNvotes() / getNvotes().toDouble())
         }
 
-        fun  getPopulation() = contestUA.population()
+        fun  getPopulation() = contestUA.Npop
 
         fun getPhantoms() = contestUA.Nphantoms
 

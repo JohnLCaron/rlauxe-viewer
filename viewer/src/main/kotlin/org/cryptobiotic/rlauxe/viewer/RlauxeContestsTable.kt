@@ -338,14 +338,14 @@ class RlauxeContestBean(val contestUA: ContestWithAssertions, val contestRound: 
         get() {
             val minAssertion = contestUA.minAssertion()
             if (minAssertion == null) return "N/A"
-            return dfn(minAssertion.assorter.noerror(contestUA.hasStyle), 5)
+            return dfn(minAssertion.assorter.noerror(), 5)
         }
 
     val payoff: String
         get() {
             val minAssertion = contestUA.minAssertion()
             if (minAssertion == null) return "N/A"
-            val noerror = minAssertion.assorter.noerror(contestUA.hasStyle)
+            val noerror = minAssertion.assorter.noerror()
             return dfn(payoff(2.0 / 1.03905, noerror), 6)
         }
 
@@ -499,11 +499,11 @@ class RlauxeAssertionBean(val cua: ContestWithAssertions, val contestRound: Cont
 
     val noerror: String
         // could use payoff
-        get() = dfn(assertion.assorter.noerror(cua.hasStyle), 5)
+        get() = dfn(assertion.assorter.noerror(), 5)
 
     val payoff: String
         get() {
-            val noerror = assertion.assorter.noerror(cua.hasStyle)
+            val noerror = assertion.assorter.noerror()
             return dfn(payoff(2.0 / 1.03905, noerror), 6)
         }
 
