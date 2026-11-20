@@ -558,13 +558,13 @@ class ContestBean(val contestRound: ContestRound, val auditData: BelgiumContestT
     val noerror: String
         get() {
             val minAssertion = contestUA.minAssertion() ?: return "N/A"
-            return dfn(minAssertion.assorter.noerror(contestUA.hasStyle), 5)
+            return dfn(minAssertion.assorter.noerror(), 5)
         }
 
     val payoff: String
         get() {
             val minAssertion = contestUA.minAssertion() ?: return "N/A"
-            val noerror = minAssertion.assorter.noerror(contestUA.hasStyle)
+            val noerror = minAssertion.assorter.noerror()
             return dfn(payoff(2.0 / 1.03905, noerror), 6)
         }
 
@@ -649,18 +649,18 @@ class AssertionBean(val contestBean: ContestBean, val assertionRound: AssertionR
     val estMvrs = assertionRound.estNewMvrs
     val margin: Double = cassertion.cassorter.assorterMargin
     val recountMargin = cua.contest.recountMargin(assorter)
-    val noerror = dfn(assorter.noerror(cua.hasStyle), 5)
+    val noerror = dfn(assorter.noerror(), 5)
 
     fun getEstMvrs2(): Int {
-        val noerror = assorter.noerror(cua.hasStyle)
+        val noerror = assorter.noerror()
         val payoff = 1 + stdBet * (noerror - 0.5)  // mui ~= 1/2
         return roundUp((-ln(alpha) / ln(payoff)))
-        // return estSampleSize(cua.Npop, 2.0 / 1.03905, assorter.noerror(cua.hasStyle), alpha)
+        // return estSampleSize(cua.Npop, 2.0 / 1.03905, assorter.noerror(), alpha)
     }
 
     val payoff: String
         get() {
-            val noerror = assorter.noerror(cua.hasStyle)
+            val noerror = assorter.noerror()
             return dfn(payoff(2.0 / 1.03905, noerror), 6)
         }
 

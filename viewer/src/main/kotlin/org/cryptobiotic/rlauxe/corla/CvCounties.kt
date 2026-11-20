@@ -404,13 +404,13 @@ class CountyContestBean(val contestRound: ContestRound, val counties: List<Count
         if (minAssertion == null) return 0
         val noerror = minAssertion.noerror
 
-        return estSampleSizeStandardBet(contestUA.population(), noerror, maxRisk)
+        return estSampleSizeStandardBet(contestUA.Npop, noerror, maxRisk)
     }
 
     fun getName() = contestUA.name
     fun getId() = contestUA.id
     fun getNc() = contestUA.Nc
-    fun getPopulation() = contestUA.population()
+    fun getPopulation() = contestUA.Npop
     fun isInclude() = contestRound.included
 
     var countyPopulation = 1
@@ -516,11 +516,11 @@ class CountyContestBean(val contestRound: ContestRound, val counties: List<Count
 
     fun getEstRisk(): Double {
         val haveMvrs = this.getHaveMvrs()
-        return estRiskStandardBet(contestUA.population(), getNoerror(), haveMvrs)
+        return estRiskStandardBet(contestUA.Npop, getNoerror(), haveMvrs)
     }
 
     fun getEstMvrs(): Int {
-        return estSampleSizeStandardBet(contestUA.population(), getNoerror(), maxrisk())
+        return estSampleSizeStandardBet(contestUA.Npop, getNoerror(), maxrisk())
     }
 
     fun getEstNewMvrs(): Int {

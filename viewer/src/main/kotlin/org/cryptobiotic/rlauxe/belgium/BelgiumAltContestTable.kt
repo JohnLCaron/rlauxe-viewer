@@ -460,13 +460,13 @@ class BelgiumAltContestTable(
         }
 
         fun getEstRisk(): Double {
-            val noerror = assorter.noerror(true)
+            val noerror = assorter.noerror()
             val haveMvrs = contestBean.sampleLimit
             return estRiskStandardBet(contestBean.dcontest.Nc, noerror, haveMvrs)
         }
 
         fun getEstMvrs(): Int {
-            val noerror = assorter.noerror(true)
+            val noerror = assorter.noerror()
             val haveMvrs = contestBean.sampleLimit
             return estSampleSizeStandardBet(contestBean.dcontest.Nc, noerror, .05)
         }
@@ -493,11 +493,11 @@ class BelgiumAltContestTable(
         //val estMvrs = assertionRound.estNewMvrs
         //val margin: Double = cassertion.cassorter.assorterMargin
         //val recountMargin = cua.contest.recountMargin(assorter)
-        val noerror = dfn(assorter.noerror(true), 5)
+        val noerror = dfn(assorter.noerror(), 5)
 
         val payoff: String
             get() {
-                val noerror = assorter.noerror(true)
+                val noerror = assorter.noerror()
                 return dfn(payoff(2.0 / 1.03905, noerror), 6)
             }
 

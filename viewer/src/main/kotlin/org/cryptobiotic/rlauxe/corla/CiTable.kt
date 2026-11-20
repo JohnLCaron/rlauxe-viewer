@@ -179,6 +179,7 @@ class ColoradoInputTable(
             return when (mcontest.auditReason) {
                 AuditReason.county_wide_contest -> "county"
                 AuditReason.state_wide_contest -> "state"
+                AuditReason.single_county -> "single"
                 else -> null
             }
         }

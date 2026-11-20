@@ -573,7 +573,7 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
     fun getVoteMargin() = countyContestData.voteDiff
     fun getVotes() = countyContestData.votes.toString()
 
-    fun getContestPopulation() = contestUA?.population() ?: 1
+    fun getContestPopulation() = contestUA?.Npop ?: 1
 
     fun getMargin() = countyContestData.voteDiff / getContestPopulation().toDouble()
 
@@ -680,7 +680,7 @@ class CountyContestBean(val countyContestData: CountyContestData, val auditRiskL
 
     fun getEstMvrs(): Int {
         if (contestUA == null) return 0
-        return estSampleSizeStandardBet(contestUA!!.population(), getNoerror(), maxrisk())
+        return estSampleSizeStandardBet(contestUA!!.Npop, getNoerror(), maxrisk())
     }
 
     fun getEstNewMvrs(): Int {

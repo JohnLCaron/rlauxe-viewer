@@ -12,7 +12,6 @@ import org.cryptobiotic.rlauxe.beans.showContestWithDesc
 import org.cryptobiotic.rlauxe.betting.TestH0Status
 import org.cryptobiotic.rlauxe.betting.estRiskStandardBet
 import org.cryptobiotic.rlauxe.betting.estSampleSizeStandardBet
-import org.cryptobiotic.rlauxe.betting.payoff
 import org.cryptobiotic.rlauxe.bridge.Naming
 import org.cryptobiotic.rlauxe.core.*
 import org.cryptobiotic.rlauxe.corlaCounty.sampleStateCvrs
@@ -23,7 +22,6 @@ import org.cryptobiotic.rlauxe.persist.CountyContestData
 import org.cryptobiotic.rlauxe.util.ContestTabulation
 import org.cryptobiotic.rlauxe.util.Stopwatch
 import org.cryptobiotic.rlauxe.util.Welford
-import org.cryptobiotic.rlauxe.util.dfn
 import org.cryptobiotic.rlauxe.util.nfn
 import org.cryptobiotic.rlauxe.util.roundToClosest
 import org.cryptobiotic.rlauxe.util.trunc
@@ -554,6 +552,7 @@ acNu = 614, cvrNu = 597 diff = 17
 // TODO use in Counties as CountySampling
 class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: ContestRound?, val counties: List<CountyContestData>?, val county: String?, val sampleChanged: (Boolean) -> Any) {
     var mvrLimit: Int = -1
+    val orgHave = contestRound?.haveSampleSize ?: 0
 
     fun canedit(): Boolean {
         return true
@@ -566,9 +565,14 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         val oldState = contestRound!!.included
         if (oldState != include) {
             contestRound!!.included = include
+            if (!include) {
+                contestRound!!.status = TestH0Status.AuditorRemoved
+                contestRound!!.haveSampleSize = 0
+            } else {
+                contestRound!!.status = contestUA.preAuditStatus
+                contestRound!!.haveSampleSize = orgHave
+            }
             sampleChanged(true)
-
-            // TODO change round.status ?? or make sure include overrides in the audit
         }
     }
 
@@ -598,7 +602,7 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         val noerror = minAssertion.noerror
 
         val haveMvrs = this.getHaveMvrs()
-        return estRiskStandardBet(contestUA.population(), noerror, haveMvrs)
+        return estRiskStandardBet(contestUA.Npop, noerror, haveMvrs)
     }
 
     fun getEstMvrs(): Int {
@@ -610,10 +614,9 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         if (minAssertion == null) return 0
         val noerror = minAssertion.noerror
 
-        val estRisk =  estSampleSizeStandardBet(contestUA.population(), noerror, maxRisk)
-        println("${getId()}: ${contestUA.population()} ${noerror} ${estRisk}")
+        val estRisk =  estSampleSizeStandardBet(contestUA.Npop, noerror, maxRisk)
+        println("${getId()}: ${contestUA.Npop} ${noerror} ${estRisk}")
         return estRisk
-
     }
 
     fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
@@ -747,8 +750,9 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
 
     fun getTarget(): String {
         val reason = contestUA.contest.info().metadata.get("CORLAauditReason") ?: return ""
-        if (reason == "state_wide_contest") return "STATE"
-        if (reason == "county_wide_contest") return "COUNTY"
+        if (reason == "state_wide_contest") return "state"
+        if (reason == "county_wide_contest") return "county"
+        if (reason == "single_county") return "single"
         return ""
     }
 
@@ -763,7 +767,7 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
 
         val minAssertion = contestUA.minAssertion()
         if (minAssertion == null) return Double.NaN
-        return minAssertion.assorter.noerror(contestUA.hasStyle)
+        return minAssertion.assorter.noerror()
         // payoff = return dfn(payoff(2.0 / 1.03905, noerror), 6)
     }
 

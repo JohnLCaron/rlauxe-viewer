@@ -29,7 +29,7 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
     var countyStylesTable: CiStyles
     var countyRedactionTable: CiRedactions
     var countySchemaTable: CiSchema
-    var countyMvrTable: MvrSampleTable
+    // var countyMvrTable: MvrSampleTable
 
     var currentStateInput: StatewideInput? = null
     var currentCountyInput: CountyInput? = null
@@ -44,18 +44,18 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         activePanels.add(corlaInputPanel)
 
         countiesTab = CiCounties((prefs.node("CiCounties") as PreferencesExt),
-            infoTA, infoWindow, fontSize, { setCountyInput(it)}, { setCounty(it)})
+            infoTA, infoWindow, fontSize, { setCountyInput(it) }, { setCounty(it)} )
         topTabs.addTab("Counties", countiesTab)
         activePanels.add(countiesTab)
 
         mvrSamplePanel = MvrSampleTable((prefs.node("mvrSamplePanel") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        topTabs.addTab("All Samples", mvrSamplePanel)
+        topTabs.addTab("County Samples", mvrSamplePanel)
         activePanels.add(mvrSamplePanel)
 
         mvrComparisonPanel = MvrComparisonTable((prefs.node("mvrComparisonPanel") as PreferencesExt),
             infoTA, infoWindow, fontSize)
-        topTabs.addTab("Mvr Comparisons", mvrComparisonPanel)
+        topTabs.addTab("County Mvr Comparisons", mvrComparisonPanel)
         activePanels.add(mvrComparisonPanel)
 
         topTabs.addTab("CountyCvrs", countyCvrTabs)
@@ -77,10 +77,10 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         countyCvrTabs.addTab("Styles", countyStylesTable)
         activePanels.add(countyStylesTable)
 
-        countyMvrTable = MvrSampleTable((prefs.node("countyMvrTable") as PreferencesExt),
+        /* countyMvrTable = MvrSampleTable((prefs.node("countyMvrTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
         countyCvrTabs.addTab("County Samples", countyMvrTable)
-        activePanels.add(countyMvrTable)
+        activePanels.add(countyMvrTable) */
 
         countyCardsTable = CiCountyCards((prefs.node("countyCvrsTable") as PreferencesExt),
             infoTA, infoWindow, fontSize)
@@ -144,8 +144,8 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
     fun setInput(input: StatewideInput) {
         currentStateInput = input
         countiesTab.setColoradoInput(input)
-        mvrSamplePanel.setColoradoInput(input, null)
-        mvrComparisonPanel.setColoradoInput(input)
+        // mvrSamplePanel.setColoradoInput(input, null)
+        // mvrComparisonPanel.setColoradoInput(input)
         headerLabel.setText(input.name())
         logger.info{"ColoradoInput.setAuditRecord to $auditRecordDir"}
     }
@@ -154,10 +154,13 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         currentCountyInput = countyInput
         countyCards = null
 
+        mvrSamplePanel.setColoradoInput(currentStateInput!!, countyInput.countyName)
+        mvrComparisonPanel.setColoradoInput(currentStateInput!!, countyInput.countyName)
+
         countySchemaTable.setCorlaInput( currentStateInput!!, countyInput)
         // countyStylesTable.setCountyInput(countyInput)
         // countyRedactionTable.setCorlaCvrs(countySchemaTable.currentCorlaCvrs)
-        countyMvrTable.setColoradoInput(currentStateInput!!, countyInput.countyName)
+        //countyMvrTable.setColoradoInput(currentStateInput!!, countyInput.countyName)
         // countyCardsTable.setCountyInput(countyCards())
 
         topTabs.setSelectedComponent(countyCvrTabs)

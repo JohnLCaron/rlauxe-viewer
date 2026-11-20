@@ -136,7 +136,7 @@ class CiCountyCards(
 //   val poolName: String?, // must be set if its from a OneAudit CardPool
 //)
 class CountyCardBean(val row: CountyCard, val index: Int) {
-    val imprintedId = row.imprintedId
+    val imprintedId = ImprintedId(row.imprintedId)
     val location = row.location
     val style = row.style
     val poolName = row.poolName

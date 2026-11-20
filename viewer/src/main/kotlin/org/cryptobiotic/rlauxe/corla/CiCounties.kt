@@ -61,7 +61,7 @@ class CiCounties(
                 if (bean?.countyInput != null) {
                     setCountyInput(bean.countyInput)
                 } else if (bean != null) {
-                    setCounty(bean.county)
+                   setCounty(bean.county)
                 }
                 return@makeActionOnCurrentBean ((bean?.countyInput != null))
             }

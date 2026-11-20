@@ -116,7 +116,7 @@ class MvrComparisonTable(
 
         val countyName = valueMap["county_name"]
         val contestName = valueMap["contest_name"]
-        val imprintedId = valueMap["imprinted_id"]
+        val imprintedId = ImprintedId(valueMap["imprinted_id"]?:"0-1-0")
         val ballotType = valueMap["ballot_type"]
         val cvrSelection = valueMap["choice_per_voting_computer"]
         val auditSelection = valueMap["audit_board_selection"]
