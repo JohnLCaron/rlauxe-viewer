@@ -5,12 +5,13 @@
 package org.cryptobiotic.rlauxe.corla
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.cryptobiotic.rlauxe.auditcenter.AuditReason
 import org.cryptobiotic.rlauxe.auditcenter.ComparisonMvr
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
-import org.cryptobiotic.rlauxe.co.auditcenter.ContestMergedInfos
 import org.cryptobiotic.rlauxe.co.auditcenter.MvrComparison
-import org.cryptobiotic.rlauxe.co.auditcenter.MvrMergedInfo
+import org.cryptobiotic.rlauxe.co.input.ContestMvrMergedInfos
+import org.cryptobiotic.rlauxe.co.input.MvrMergedInfo
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
@@ -37,7 +38,7 @@ class MvrSampleTable(
     private val split1: JSplitPane
     // private val split2: JSplitPane
 
-    var contestMergedInfos: ContestMergedInfos? = null
+    var contestMergedInfos: ContestMvrMergedInfos? = null
 
     init {
         /* mvrSampleTable = BeanTable(
@@ -82,7 +83,7 @@ class MvrSampleTable(
 
     fun setColoradoInput(stateInput: StatewideInput, county: String?) {
         logger.debug { "MvrSampleTable setColoradoInput ${stateInput.name()} $county" }
-        contestMergedInfos = ContestMergedInfos(stateInput)
+        contestMergedInfos = ContestMvrMergedInfos(stateInput, true, true)
 
         /* if (county != null) {
             this.corlaPrngCounty = CorlaPrngCounty(stateInput, county)
@@ -151,14 +152,18 @@ class MvrSampleTable(
     //////////////////////////////////////////////////////
 
     class MvrInfoBean(val mvr: MvrMergedInfo) {
-        val imprintedId = ImprintedId(mvr.imprintedId)
-        val county = mvr.county
         val dbid = mvr.dbId
+        val county = mvr.county
+        val imprintedId = ImprintedId(mvr.imprintedId)
+        val discrepency = mvr.discrepency
+        val revision = mvr.revision
+        val auditReason = mvr.auditReason
+        val timeOfSubmission = mvr.timeOfSubmission
+
         val prn = mvr.prn
         val seq = mvr.seq
         val duplicate = mvr.mult - 1
-        val counties = mvr.counties
-        val auditReason = mvr.auditReason
+
         val disagree = if (mvr.lines == null) 0 else mvr.lines!!.filter { it.choice_per_voting_computer != it.audit_board_selection }.count()
 
         companion object {
@@ -167,15 +172,17 @@ class MvrSampleTable(
 
             @JvmStatic
             val beanProperties = listOf(
-                TableBeanProperty("county", "county name"),
-                TableBeanProperty("ballotType", "mvr ballotType"),
-                TableBeanProperty("imprintedId", "mvr imprintedId"),
                 TableBeanProperty("dbid", "CORLA internal database id"),
+                TableBeanProperty("county", "county name"),
+                TableBeanProperty("imprintedId", "mvr imprintedId"),
+                TableBeanProperty("discrepency", "mvr discrepency score"),
+                TableBeanProperty("revision", "mvr revision"),
                 TableBeanProperty("auditReason", "drawn for statewide sample, else county sample"),
+                TableBeanProperty("timeOfSubmission", "time of submission"),
                 TableBeanProperty("disagree", "number of choices that disagreed with CVR"),
                 TableBeanProperty("prn", "psuedo random number"),
                 TableBeanProperty("seq", "sequence in county or statewide draw"),
-                TableBeanProperty("mult", "number of duplicate times the card was drawn"),
+                TableBeanProperty("duplicate", "number of duplicate times the card was drawn"),
             )
         }
     }
@@ -214,15 +221,22 @@ class MvrSampleTable(
     //    val dbId: Int, // apparently the opaque "db creation id"
     //    val statewide: Boolean,
     //)
-    class ComparisionLineBean(line: MvrComparison) {
-        val countyName = line.county_name
-        val contest = line.contest_name
-        val imprintedId = line.imprinted_id
-        val ballotType = line.ballot_type
+    inner class ComparisionLineBean(line: MvrComparison) {
+        val countyName = line.county_name    // could live on the mvr
+        val contest = line.contest_name     // could live on the mvr
+        val imprintedId = line.imprinted_id     // could live on the mvr
+        val ballotType = line.ballot_type   // could live on the mvr
         val cvrChoice = line.choice_per_voting_computer
         val mvrChoice = line.audit_board_selection
         val comment = line.audit_board_comment
         val disagree = line.choice_per_voting_computer != line.audit_board_selection
+        val target: AuditReason
+        init {
+            target = if (contestMergedInfos != null) {
+                val mcontest = contestMergedInfos!!.mcontests[line.contest_name]!!
+                mcontest.auditReason
+            } else AuditReason.none
+        }
     }
 }
 

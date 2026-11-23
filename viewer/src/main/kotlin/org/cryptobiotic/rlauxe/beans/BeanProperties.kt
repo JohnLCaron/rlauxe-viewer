@@ -207,17 +207,22 @@ fun <T> printTable(
     val sortedIndexBeans = indexBeans.sortedBy { it.viewIndex }
     val sortedBeans = sortedIndexBeans.map { it.bean }
 
-    val sb = StringBuilder()
-    val sb2 = StringBuilder()
+    val csv = StringBuilder()
+    val md = StringBuilder()
 
     val header: String = beanTable.tableModel.beanTableHeader(properties)
-    sb.append(header)
-    sb2.append("| " + header.replace(',', '|'))
+    csv.append(header)
+    md.append("| " + header.replace(',', '|'))
+
+    val nfields = header.split(",").size
+    md.appendLine(buildString {
+        repeat(nfields-1) { append("|----") }
+        append("|")
+    })
 
     for (bean in sortedBeans) {
-        val beanCsv: String = beanTable.tableModel.beanCsv(bean, properties)
-        sb.append(beanCsv)
-        sb2.append("| " + beanCsv.replace(',', '|'))
+        csv.append(beanTable.tableModel.beanCsv(bean, properties))
+        md.append(beanTable.tableModel.beanMd(bean, properties))
     }
 
     // TODO user settable
@@ -225,7 +230,7 @@ fun <T> printTable(
     try {
         FileOutputStream(file).use { fout ->
             OutputStreamWriter(fout, StandardCharsets.UTF_8).use { writer ->
-                writer.write(sb.toString())
+                writer.write(csv.toString())
                 writer.flush()
             }
         }
@@ -233,5 +238,5 @@ fun <T> printTable(
         throw RuntimeException(e)
     }
 
-    return sb2.toString()
+    return md.toString()
 }

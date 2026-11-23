@@ -8,9 +8,11 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.AuditReason
 import org.cryptobiotic.rlauxe.auditcenter.ContestTabAllCounties
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
-import org.cryptobiotic.rlauxe.corlaInput.MergedContestInfo
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.beans.printTable
+import org.cryptobiotic.rlauxe.co.corla.pValueApproximation
+import org.cryptobiotic.rlauxe.co.input.ContestMergedInfo
 import org.cryptobiotic.rlauxe.corlaInput.statewideInputs
 import org.cryptobiotic.rlauxe.util.sfn
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
@@ -23,6 +25,7 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JPanel
 import javax.swing.JSplitPane
+import kotlin.String
 
 private val logger = KotlinLogging.logger("ColoradoInputTable")
 
@@ -38,6 +41,8 @@ class ColoradoInputTable(
 
     private val inputTable: BeanTable<ColoradoInputBean>
     private val contestTable: BeanTable<CanonicalContestBean>
+    private var selectedInputBean: ColoradoInputBean? = null
+    private var onlyContested: Boolean = prefs.getBoolean("onlyContested", false)
 
     // TextHistoryPane localInfo = new TextHistoryPane();
     private val split1: JSplitPane
@@ -60,6 +65,10 @@ class ColoradoInputTable(
             "Show Row",
             contestTable.makeShowAction(infoTA, infoWindow) { bean: CanonicalContestBean -> showCanonicalContest(bean) }
         )
+        contestTable.addPopupOption(
+            "Print Contests", contestTable.makeShowAction(infoTA, infoWindow)
+                { printTable(contestTable, CanonicalContestBean.beanProperties,"CanonicalContests") }
+        )
         tables.add(contestTable)
 
         setFontSize(fontSize)
@@ -80,31 +89,51 @@ class ColoradoInputTable(
 
     // actions on right side of Audit record chooser
     fun getActions(container: JPanel) {
-        val readMvrAction: AbstractAction = object : AbstractAction() {
+        val onlyContestedAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent) {
-                val selected = contestTable.getSelectedBean()
-                if (selected != null) {
-                    // readMvrTabulation(selected)
+                val state = getValue( BAMutil.STATE)
+                onlyContested = state as Boolean
+                if (selectedInputBean != null) {
+                    if (onlyContested) filterContested() else allContests(selectedInputBean!!)
                 }
+                prefs.putBoolean( "onlyContested", onlyContested)
             }
         }
-        BAMutil.setActionProperties(readMvrAction, "sunrise-icon.png", "Read Mvr Tabulation", false, 'T'.code, -1)
-        BAMutil.addActionToContainer(container, readMvrAction)
+        val savedState = prefs.getBoolean("onlyContested", false)
+        onlyContestedAction.putValue(BAMutil.STATE, savedState)
+        BAMutil.setActionProperties(onlyContestedAction, "sunrise-icon.png", "Contested Contests only", true, 'T'.code, -1)
+        BAMutil.addActionToContainer(container, onlyContestedAction)
     }
 
-    fun setSelectedInput(inputBean: ColoradoInputBean) {
+    ////////////////////////////////////////////////////////////////
+    fun setInputBeans() {
+        val inputBeans = mutableListOf<ColoradoInputBean>()
+        statewideInputs.forEach { inputBeans.add(ColoradoInputBean(it)) }
+        inputTable.setBeans(inputBeans)
+    }
+
+    fun setSelectedInput(bean: ColoradoInputBean) {
+        this.selectedInputBean = bean
+
+        if (onlyContested) filterContested() else allContests(bean)
+        setInput(bean.input)
+    }
+
+    fun allContests(inputBean: ColoradoInputBean) {
+        this.selectedInputBean = inputBean
         contestTable.setBeans(emptyList())
 
         val contestTabs: Map<String, ContestTabAllCounties> = inputBean.input.contestTabsAllCounties()
-
-        // using mergedContestMap instead of canonical contests
         val contestBeans = mutableListOf<CanonicalContestBean>()
         inputBean.input.mergedContestMap.forEach {
             contestBeans.add(CanonicalContestBean(it.key, it.value, contestTabs[it.key]))
         }
         contestTable.setBeans(contestBeans)
+    }
 
-        setInput(inputBean.input)
+    fun filterContested() {
+        val filtered = contestTable.beans.filter { it.contested() }
+        contestTable.setBeans(filtered)
     }
 
     override fun setFontSize(size: Float) {
@@ -128,13 +157,6 @@ class ColoradoInputTable(
         }
     }
 
-    ////////////////////////////////////////////////////////////////
-    fun setInputBeans() {
-        val inputBeans = mutableListOf<ColoradoInputBean>()
-        statewideInputs.forEach { inputBeans.add(ColoradoInputBean(it)) }
-        inputTable.setBeans(inputBeans)
-    }
-
     class ColoradoInputBean(val input: StatewideInput) {
         val name = input.name()
         val ncontests = input.ncontests()
@@ -148,22 +170,31 @@ class ColoradoInputTable(
     }
 
     ////////////////////////////////////////////////////////////////
+    // use ContestMergedInfo ?
 
-    class CanonicalContestBean(val name: String, val mcontest: MergedContestInfo, val contestTab: ContestTabAllCounties?) {
+    class CanonicalContestBean(val name: String, val mcontest: ContestMergedInfo, val contestTab: ContestTabAllCounties?) {
         val contest = mcontest.canonicalContest
 
         // contest round
         val auditReason = mcontest.auditReason
         val corlaPop = mcontest.corlaPop       // ballot_card_count
-        val ncast = mcontest.nc         // contest_ballot_card_count
+        val corlaNc = mcontest.corlaNc         // contest_ballot_card_count
         val estSamples  = mcontest.estSamples // Corla estimated_samples_to_audit
         val marginInVotes = mcontest.marginInVotes // min_margin
+        val margin = mcontest.marginInVotes / mcontest.corlaPop.toDouble()
         val voteForN = mcontest.voteForN  // winners_allowed
         val riskLimit  = mcontest.riskLimit // risk_limit
 
         // mvr file
-        val countyMvrs = mcontest.countyMvrs
-        val statewideMvrs = mcontest.statewideMvrs
+        val countyMvrs = mcontest.strata!!.countyMvrs
+        val statewideMvrs = mcontest.strata!!.stateMvrs
+        val extraMvrs =  countyMvrs + statewideMvrs - mcontest.estSamples
+
+        fun getRecount(): Double {
+            if (contestTab == null) return Double.NaN
+            val winnerVote = contestTab.choices.maxOf { it.value }
+            return mcontest.marginInVotes / winnerVote.toDouble()
+        }
 
         fun getNCounties(): String {
             val counties = counties()
@@ -191,28 +222,42 @@ class ColoradoInputTable(
         fun getNCand() = contest.choices.size
 
         fun getChoices() = contest.choices.toString()
+
+        fun contested() = getNCand() > voteForN
+
+        fun getCorlaRisk(): Double {
+            return pValueApproximation(
+                    n = mcontest.strata!!.nmvrs, // n = auditedBallots the number of ballots audited for this strata
+                    dilutedMargin = margin, // probably minimum margin of the contest's assertions,
+                    gamma = 1.03905,  // “inflator” γ > 1; same purpose as MaxRisk I think. Corla uses 1.03905.
+                    0, 0, 0, 0, // TODO we need the number of discrepencies in the mvrs for each contest
+                )
+        }
         
         companion object {
             @JvmStatic
-            fun hiddenProperties() = "mcontest contest contestTab"
+            fun hiddenProperties() = "mcontest contest contestTab strata"
 
             @JvmStatic
             val beanProperties = listOf(
                 TableBeanProperty("auditReason", "from round.audit_reason"),
-                TableBeanProperty("corlaPop", "round.ballot_card_count"),
-                TableBeanProperty("ncast", "from round.contest_ballot_card_count"),
-                TableBeanProperty("estSamples", "from round.estimated_samples_to_audit"),
-                TableBeanProperty("voteForN", "from round.winners_allowed"),
-                TableBeanProperty("marginInVotes", "from round.min_margin"),
-                TableBeanProperty("riskLimit", "from round.risk_limit"),
-
-                TableBeanProperty("name", "contest name"),
-                TableBeanProperty("countyMvrs", "count of county mvrs over all counties with this contest"),
-                TableBeanProperty("statewideMvrs", "count of statewide mvrs over all counties with this contest"),
-                TableBeanProperty("NCounties", "number of counties, or county name if only one"),
                 TableBeanProperty("choices", "list of choices/candidates"),
-                TableBeanProperty("targeted", "if targeted for audit"),
+                TableBeanProperty("corlaPop", "round.ballot_card_count"),
+                TableBeanProperty("corlaNc", "from round.contest_ballot_card_count"),
+                TableBeanProperty("corlaRisk", "risk achieved"),
+                TableBeanProperty("countyMvrs", "count of mvrs in this county"),
+                TableBeanProperty("estSamples", "from round.estimated_samples_to_audit"),
+                TableBeanProperty("extraMvrs", "countyMvrs + statewideMvrs - estSamples"),
+                TableBeanProperty("margin", "vote margin / corlaPop"),
+                TableBeanProperty("marginInVotes", "from round.min_margin"),
+                TableBeanProperty("name", "contest name"),
                 TableBeanProperty("NCand", "number of choices (candidates)"),
+                TableBeanProperty("NCounties", "number of counties, or county name if only one"),
+                TableBeanProperty("recount", "vote margin / winner's votes"),
+                TableBeanProperty("riskLimit", "from round.risk_limit"),
+                TableBeanProperty("statewideMvrs", "count of statewide mvrs over all this countest's counties"),
+                TableBeanProperty("target", "if targeted for audit"),
+                TableBeanProperty("voteForN", "from round.winners_allowed"),
             )
         }
     }
