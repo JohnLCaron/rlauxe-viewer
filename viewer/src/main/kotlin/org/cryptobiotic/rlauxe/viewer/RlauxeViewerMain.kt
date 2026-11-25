@@ -7,8 +7,8 @@ package org.cryptobiotic.rlauxe.viewer
 import com.formdev.flatlaf.FlatLightLaf
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.belgium.BelgiumContests
-import org.cryptobiotic.rlauxe.corla.ColoradoInputViewer
-import org.cryptobiotic.rlauxe.corla.ColoradoAuditViewer
+import org.cryptobiotic.rlauxe.corla.input.ColoradoInputViewer
+import org.cryptobiotic.rlauxe.corla.viewer.ColoradoAuditViewer
 import ucar.ui.widget.BAMutil
 import ucar.ui.widget.FontUtil
 import ucar.ui.widget.FontUtil.StandardFont
@@ -226,12 +226,14 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             var datadir = ""
             for (idx in args.indices) {
                 val arg = args[idx]
-                if (arg == "-datadir") datadir = args[idx + 1]
-                if (arg == "-ColoradoAuditViewer") type = "ColoradoAuditViewer"
-                if (arg == "-ColoradoInputViewer") type = "ColoradoInput"
-                if (arg == "-BelgiumContests") type = "BelgiumContests"
-                if (arg == "-RlauxeViewer") type = "RlauxeViewer"
-                else logger.warn { "unknown argument: $arg"}
+                when (arg) {
+                    "-datadir" -> datadir = args[idx + 1]
+                    "-ColoradoAuditViewer" -> type = "ColoradoAuditViewer"
+                    "-ColoradoInputViewer" -> type = "ColoradoInput"
+                    "-BelgiumContests" -> type = "BelgiumContests"
+                    "-RlauxeViewer" -> type = "RlauxeViewer"
+                    else -> logger.warn { "unknown argument: $arg" }
+                }
             }
             val name = if (type == "ColoradoInput") "ColoradoInputViewer" else type // kludge to change visible name
 
@@ -240,11 +242,12 @@ abstract class RlauxeViewerMain(val prefs: PreferencesExt, fontSize: Float) : JP
             val storedDefaults = "/resources/prefs/${type}Defaults.xml"
 
             val prefsx: PreferencesExt = try {
-                val storedDefaultsStore = if (type == "TestPrefs") null else XMLStore.createFromResource(storedDefaults, null)
+                val storedDefaultsStore =
+                    if (type == "TestPrefs") null else XMLStore.createFromResource(storedDefaults, null)
                 store = XMLStore.createFromFile(prefsStore, storedDefaultsStore)
                 store!!.getPreferences()
             } catch (e: IOException) {
-                logger.error(e) {"RlauxeViewerMain MLStore.createFromFile($prefsStore, $storedDefaults) failed"}
+                logger.error(e) { "RlauxeViewerMain MLStore.createFromFile($prefsStore, $storedDefaults) failed" }
                 throw e
             }
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.input
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.corlaCounty.CountyCardsFromManifest
@@ -48,13 +48,17 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         topTabs.addTab("Counties", countiesTab)
         activePanels.add(countiesTab)
 
-        mvrSamplePanel = MvrSampleTable((prefs.node("mvrSamplePanel") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
+        mvrSamplePanel = MvrSampleTable(
+            (prefs.node("mvrSamplePanel") as PreferencesExt),
+            infoTA, infoWindow, fontSize
+        )
         topTabs.addTab("County Samples", mvrSamplePanel)
         activePanels.add(mvrSamplePanel)
 
-        mvrComparisonPanel = MvrComparisonTable((prefs.node("mvrComparisonPanel") as PreferencesExt),
-            infoTA, infoWindow, fontSize)
+        mvrComparisonPanel = MvrComparisonTable(
+            (prefs.node("mvrComparisonPanel") as PreferencesExt),
+            infoTA, infoWindow, fontSize
+        )
         topTabs.addTab("County Mvr Comparisons", mvrComparisonPanel)
         activePanels.add(mvrComparisonPanel)
 
@@ -133,7 +137,7 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
         headerLabel.setText("")
 
-        logger.debug{"ColoradoInput started"}
+        logger.debug{"ColoradoInputViewer started"}
     }
 
     override fun name() = "Colorado Input Data"
@@ -199,7 +203,6 @@ class ColoradoInputViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
             appendLine("cvr file election name = ${corlaCvrs.electionName}")
             appendLine("cvr formatVersion= ${corlaCvrs.formatVersion}")
             appendLine("cvr redactionVersion = ${corlaCvrs.redactionVersion}")
-
         }
     }
 

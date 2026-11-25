@@ -105,7 +105,7 @@ class CountyTable(
         setLayout(BorderLayout())
         add(split2, BorderLayout.CENTER)
 
-        logger.debug("CountyPoolTable init")
+        logger.debug("CountyTable init")
     }
 
     // actions on right side of Audit record chooser

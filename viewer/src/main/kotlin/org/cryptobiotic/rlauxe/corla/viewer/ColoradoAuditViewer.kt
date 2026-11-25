@@ -2,7 +2,7 @@
  * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.persist.AuditRecord.Companion.checkExists
@@ -142,7 +142,7 @@ class ColoradoAuditViewer(prefs: PreferencesExt, fontSize: Float) : RlauxeViewer
         this.rightPanel.add(actionsPanel, BorderLayout.EAST)
 
         ////////////////////////////////////////////
-        this.fileChooser = FileManager(RlauxeViewerMain.frame, "", null, prefs.node("FileManager") as PreferencesExt?)
+        this.fileChooser = FileManager(frame, "", null, prefs.node("FileManager") as PreferencesExt?)
         this.auditRecordDirCB = ComboBox<String>(prefs.node("auditRecordDirCB") as PreferencesExt?)
         this.auditRecordDirCB.addChangeListener {
             if (this.eventOk) {

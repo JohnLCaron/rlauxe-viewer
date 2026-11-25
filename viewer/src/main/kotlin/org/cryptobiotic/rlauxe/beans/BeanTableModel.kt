@@ -442,9 +442,8 @@ class BeanTableModel<T>(val store: PreferencesExt, val beanClass: Class<T>, val 
         try {
             // follow which columns are visible
             val tableColumnModel = jtable.getColumnModel() as HidableTableColumnModel
-            var visibleCols = tableColumnModel.getColumns(true)
+            val visibleCols = tableColumnModel.getColumns(true)
 
-            visibleCols = tableColumnModel.getColumns(true)
             while (visibleCols.hasMoreElements()) {
                 val vc = visibleCols.nextElement()
                 val id = vc.getIdentifier()
@@ -454,6 +453,39 @@ class BeanTableModel<T>(val store: PreferencesExt, val beanClass: Class<T>, val 
                 val colVal = getValueAt(bean, modelIdx)
                 append(colVal)
                 append(", ")
+            }
+            append("\n")
+        } catch (t: Throwable) {
+            logger.error("fail in beanCsv", t)
+            append(t.message)
+        }
+    }
+
+    fun beanMd(bean: T, props: List<TableBeanProperty>) = buildString {
+        val propm = props.stream()
+            .collect(
+                Collectors.toMap(
+                    Function { prop: TableBeanProperty -> prop.name },
+                    Function { prop: TableBeanProperty -> prop })
+            )
+
+        try {
+            // follow which columns are visible
+            val tableColumnModel = jtable.getColumnModel() as HidableTableColumnModel
+            val visibleCols = tableColumnModel.getColumns(true)
+            append("|")
+            while (visibleCols.hasMoreElements()) {
+                val vc = visibleCols.nextElement()
+                val id = vc.getIdentifier()
+                val modelIdx = vc.getModelIndex()
+
+                val pc = propm.get(id.toString())
+                if (pc == null) continue
+                val colVal = getValueAt(bean, modelIdx)
+                var useVal = if (colVal == "N/A") "   " else colVal
+                if (useVal.toString().length > 40 ) useVal = trunc(useVal.toString(), 40) // cant find displayed width
+                append(useVal)
+                append(" | ")
             }
             append("\n")
         } catch (t: Throwable) {

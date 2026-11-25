@@ -7,6 +7,7 @@ package org.cryptobiotic.rlauxe.corla
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
+import org.cryptobiotic.rlauxe.corla.input.readContestComparisonCsv
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
@@ -53,7 +54,7 @@ class CountyMvrTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug { "CountyPoolTable init" }
+        logger.debug { "CountyMvrTable init" }
     }
 
     fun setColoradoInput(input: StatewideInput, county: String) {

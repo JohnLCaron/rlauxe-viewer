@@ -2,16 +2,15 @@
  * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.input
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.auditcenter.CountyContestVotes
-import org.cryptobiotic.rlauxe.auditcenter.CountyTabAllContests
-import org.cryptobiotic.rlauxe.corlaInput.StrataInfo
+import org.cryptobiotic.rlauxe.co.input.StrataInfo
 import org.cryptobiotic.rlauxe.corlaInput.RedactionCount
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.printTable
+import org.cryptobiotic.rlauxe.co.auditcenter.TabulateCounty
 import org.cryptobiotic.rlauxe.corlaInput.CountyInput
 import org.cryptobiotic.rlauxe.corlaInput.CountyInputData
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
@@ -56,7 +55,7 @@ class CiCounties(
             countyTable.makeShowAction(infoTA, infoWindow) { bean: CountyTabBean -> showCounty(bean) }
         )
         countyTable.addPopupOption(
-            "Use this county for CountyCvrs tabs",
+            "Read CountyCvrs",
             countyTable.makeActionOnCurrentBean { bean: CountyTabBean? ->
                 if (bean?.countyInput != null) {
                     setCountyInput(bean.countyInput)
@@ -95,7 +94,7 @@ class CiCounties(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug { "CountyPoolTable init" }
+        logger.debug { "CiCounties init" }
     }
 
     fun setColoradoInput(input: StatewideInput) {
@@ -120,17 +119,16 @@ class CiCounties(
         } catch (e: Exception) {
             emptyMap()
         }
-        redactedCountMap.forEach { (key, it) ->
+        /* redactedCountMap.forEach { (key, it) ->
             println("'$key' == $it")
-        }
-        logger.debug { redactedCountMap.toString() }
+        } */
+        // logger.debug { redactedCountMap.toString() }
 
         val countyContests = mutableListOf<CountyTabBean>()
         input.countyTabsAllContests().forEach { (county, countyTab) ->
             val corlaCountyInput = input.corlaCountyInput(county)
-
-            countyContests.add(CountyTabBean(county, countyTab, strataMap[county], corlaCountyInput,
-                inputDataMap[county], redactedCountMap[county]))
+            countyContests.add(
+                CountyTabBean(county, countyTab, strataMap[county]!!, corlaCountyInput, inputDataMap[county], redactedCountMap[county]))
         }
         countyTable.setBeans(countyContests)
     }
@@ -139,7 +137,7 @@ class CiCounties(
         countyContestTable.setBeans(emptyList())
 
         val countyContests = mutableListOf<CountyContestTabBean>()
-        bean.countyTab.contests.forEach {
+        bean.countyTab.forEach {
             countyContests.add(CountyContestTabBean(it.value))
         }
         countyContestTable.setBeans(countyContests)
@@ -166,9 +164,9 @@ class CiCounties(
     // data class CountyInputData(val county: String, val manifestCount: Int, val ncvrs, val cvrInManifest: Int, val cvrNoManifest:Int,
 //    val manifestNoCvr: Int, val ngroups: Int, val minCards: Int)
 
-    class CountyTabBean(val county: String, val countyTab: CountyTabAllContests, val strata: StrataInfo?,
+    class CountyTabBean(val county: String, val countyTab: Map<String, TabulateCounty>, val strata: StrataInfo,
                         val countyInput: CountyInput?, val data: CountyInputData?, val rc: RedactionCount?) {
-        val ncontests = countyTab.contests.size
+        val ncontests = countyTab.size
 
         //     public final val countyMvrs: kotlin.Int /* compiled code */
         //
@@ -178,11 +176,12 @@ class CiCounties(
         //
         //    public final val nmvrs: kotlin.Int /* compiled code */
 
-        val nmvrs = strata?.nmvrs ?: 0  // countyMvrs + stateMvrs
-        val total = strata?.ballotCardCount ?: 0
+        val countyMvrs = strata.countyMvrs  // countyMvrs + stateMvrs
+        val stateMvrs = strata.stateMvrs  // countyMvrs + stateMvrs
+        val population = strata.population ?: 0
         val hasCvrs = (countyInput != null) && countyInput.hasCvrs()
 
-        fun getManifest() =  data?.manifestCount ?: 0
+        // fun getManifest() =  data?.manifestCount ?: 0
         fun getCvrUnredacted() =  data?.unredactedCvrs ?: 0
         fun getCvrRedacted() =  data?.redactedCvrs ?: 0
         fun getCvrInManifest() =  data?.cvrInManifest ?: 0
@@ -198,12 +197,12 @@ class CiCounties(
         fun getPrecinctStyleMin() =  data?.precinctStyleMin
 
         // fun getTotalCvrs() =  if (data != null) (data.ncvrs + data.nredactedCvrs) else 0
-        fun getMissing() =  if (data != null) (getManifest() - getCvrUnredacted() - getCvrRedacted()) else 0
-        fun getPhantoms() =  if (data != null) (total - getManifest()) else 0
+        fun getMissing() =  if (data != null) (population - getCvrUnredacted() - getCvrRedacted()) else 0
+        // fun getPhantoms() =  if (data != null) (population - getManifest()) else 0
 
         fun show() = buildString {
             appendLine("Contest Tabulations for this County")
-            appendLine(countyTab.show())
+            appendLine(countyTab)
         }
 
         companion object {
@@ -214,7 +213,7 @@ class CiCounties(
             val beanProperties = listOf(
                 TableBeanProperty("county", "county name"),
                 TableBeanProperty("ncontests", "number of contests from CountyTabAllContests"),
-                TableBeanProperty("nmvrs", "corla uniform sampling MVRs in the county"),
+                TableBeanProperty("stateMvrs", "state MVRs from thia county"),
                 TableBeanProperty("total", "county total cards from round.ballotCardCount"),
                 TableBeanProperty("hasCvrs", "has county CVRs"),
                 TableBeanProperty("phantoms", "population - manifestCount"),
@@ -241,11 +240,11 @@ class CiCounties(
         }
     }
 
-    class CountyContestTabBean(val countyContest: CountyContestVotes) {
+    class CountyContestTabBean(val countyContest: TabulateCounty) {
         val county = countyContest.countyName
         val contest = countyContest.contestName
         val choices = countyContest.choices
-        val totalVotes = countyContest.contestVotes()
+        val totalVotes = countyContest.choices
 
         companion object {
             val header = " id,                                     name, tabNCards, styleNCards, diffNCards, nvotes, undervotes, uvPct"

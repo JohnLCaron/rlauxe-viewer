@@ -2,7 +2,7 @@
  * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.input
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.commons.csv.CSVFormat
@@ -10,7 +10,6 @@ import org.apache.commons.csv.CSVParser
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
-import org.cryptobiotic.rlauxe.viewer.CardBean
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
 import ucar.ui.widget.TextHistoryPane
@@ -19,7 +18,6 @@ import java.awt.BorderLayout
 import java.io.File
 import java.nio.charset.Charset
 import javax.swing.JPanel
-import javax.swing.JSplitPane
 
 private val logger = KotlinLogging.logger("CvrStylesTable")
 
@@ -62,7 +60,7 @@ class MvrComparisonTable(
         setLayout(BorderLayout())
         add(mvrComparisonTable, BorderLayout.CENTER)
 
-        logger.debug { "CountyPoolTable init" }
+        logger.debug { "MvrComparisonTable init" }
     }
 
     fun showMvr(bean: MvrComparisonBean) = buildString {
@@ -116,7 +114,7 @@ class MvrComparisonTable(
 
         val countyName = valueMap["county_name"]
         val contestName = valueMap["contest_name"]
-        val imprintedId = ImprintedId(valueMap["imprinted_id"]?:"0-1-0")
+        val imprintedId = ImprintedId(valueMap["imprinted_id"] ?: "0-1-0")
         val ballotType = valueMap["ballot_type"]
         val cvrSelection = valueMap["choice_per_voting_computer"]
         val auditSelection = valueMap["audit_board_selection"]

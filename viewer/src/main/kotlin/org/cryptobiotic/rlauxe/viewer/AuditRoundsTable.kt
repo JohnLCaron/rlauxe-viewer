@@ -31,7 +31,7 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 
-private val logger = KotlinLogging.logger("CvrStylesTable")
+private val logger = KotlinLogging.logger("AuditRoundsTable")
 
 class AuditRoundsTable(
     private val prefs: PreferencesExt, infoTA: TextHistoryPane, infoWindow: IndependentWindow, fontSize: Float,
@@ -48,7 +48,7 @@ class AuditRoundsTable(
     private val split3: JSplitPane
     private val split4: JSplitPane
 
-    private var auditRecordLocation = "none";
+    // private var auditRecordLocation = "none";
     private var auditRecord: AuditRecordIF? = null
     var isComposite: Boolean = false
     private var config: Config? = null
@@ -98,7 +98,9 @@ class AuditRoundsTable(
             auditRoundTable.makeShowAction(infoTA, infoWindow) { bean: AuditRoundBean -> showAuditRound(bean) })
         auditRoundTable.addPopupOption(
             "Reread Audit Record",
-            makeAction { setAuditRecordLocation(auditRecordLocation) }
+            makeAction {
+                if (auditRecord != null) setAuditRecordLocation(auditRecord!!.topdir)
+            }
         )
         // auditRoundTable.addPopupOption("Show sampled Mvrs", mvrAction)
 
@@ -241,7 +243,6 @@ class AuditRoundsTable(
     override fun setAuditRecordLocation(location: String): Boolean {
         val auditRecord = read(location)
         if (auditRecord != null) {
-            auditRecordLocation = location
             return setAuditRecord(auditRecord)
         }
         logger.info{"no audit record at $location"}
@@ -433,7 +434,7 @@ class AuditRoundsTable(
                 runRound(auditRecord!!.topdir, null, null)
                 logger.debug { "return from runRound" }
 
-                setAuditRecordLocation(auditRecordLocation) // reread in
+                setAuditRecordLocation(auditRecord!!.topdir) // reread in
                 refreshAll()
             }
         } catch (e: Exception) {
@@ -531,6 +532,7 @@ class AuditRoundBean(val auditRound: AuditRoundIF, val prevTotal: Int, val setCh
     val isAuditWasDone = auditRound.auditWasDone
     val isAuditIsComplete = auditRound.auditIsComplete
     val round =  auditRound.roundIdx
+    val included =  auditRound.contestRounds.filter { it.included == true }.count()
 
     companion object {
         var beanProperties = mutableListOf<TableBeanProperty>()
@@ -605,18 +607,14 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
         get() = contestRound.estMvrs
     val estPct: Double
         get() = contestRound.estMvrs / (contestRound.contestUA.Nc.toDouble())
-    val estNewMvrs: Int
-        get() = contestRound.estNewMvrs
-    val haveNewMvrs: Int
-        get() = contestRound.haveNewSampleSize
-    val margin: Double?
-        get() = contestUA.minMargin()
-    val maxIndex: Int?
-        get() = contestRound.maxSampleAllowed
+    val estNewMvrs = contestRound.estNewMvrs
+    val haveMvrs = contestRound.haveSampleSize
+    val haveNewMvrs = contestRound.haveNewSampleSize
+    val margin = contestUA.minMargin()
+    val maxIndex = contestRound.maxSampleAllowed
     val mvrsExtra: Int
         get() = this.haveMvrs - this.estMvrs
-    val mvrsUsed: Int
-        get() = contestRound.maxSamplesUsed()
+    val mvrsUsed = contestRound.maxSamplesUsed()
     val nc: Int
         get() = contestUA.Nc
     //val oneshotEst: Int?
@@ -632,8 +630,6 @@ class ContestRoundBean(val contestRound: ContestRound, val auditRound: Int, val 
     val type: String?
         get() = contestUA.choiceFunction.toString()
 
-    val haveMvrs: Int
-        get() = contestRound.haveSampleSize
 
     val estRisk: Double
         get() {
