@@ -197,17 +197,18 @@ class ColoradoInputTable(
         val auditReason = mcontest.corlaReason
         val corlaPop = mcontest.corlaPop       // ballot_card_count
         val corlaNc = mcontest.corlaNc         // contest_ballot_card_count
-        val corlaEstSamples  = mcontest.corlaEstSamples // Corla estimated_samples_to_audit
-        val estSamples  = mcontest.rlauxeEstSamples // Corla estimated_samples_to_audit
+        val corlaNmvrs  = mcontest.corlaEstSamples // Corla estimated_samples_to_audit
+        val estNmvrs  = mcontest.rlauxeEstSamples // Corla estimated_samples_to_audit
         val marginInVotes = mcontest.marginInVotes // min_margin
         val margin = mcontest.marginInVotes / mcontest.corlaPop.toDouble()
-        val voteForN = mcontest.voteForN  // winners_allowed
-        val riskLimit  = mcontest.riskLimit // risk_limit
 
         val p2o = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[0]
         val p1o = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[1]
         val p1u = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[2]
         val p2u = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[3]
+
+        val riskLimit  = mcontest.riskLimit // risk_limit
+        val voteForN = mcontest.voteForN  // winners_allowed
 
         // mvr file
         val countyMvrs = mcontest.strata!!.countyMvrs
@@ -228,26 +229,6 @@ class ColoradoInputTable(
 
         fun counties(): List<String> {
             return contest.counties.toList()
-        }
-
-        fun getTarget(): String? {
-            return when (mcontest.corlaReason) {
-                AuditReason.county_wide_contest -> "county"
-                AuditReason.state_wide_contest -> "state"
-                AuditReason.single_county -> "single"
-                else -> null
-            }
-        }
-
-        fun statewide(): Boolean {
-            return (counties().size > 60)
-        }
-
-        fun getStatus(): String {
-            return when {
-                !contested() -> "noloser"
-                else -> ""
-            }
         }
 
         fun getNCand() = contest.choices.size
@@ -275,6 +256,26 @@ class ColoradoInputTable(
                 0, 0, 0, 0,
             )
             return getCorlaRisk() - noerrs
+        }
+
+        fun getTarget(): String? {
+            return when (mcontest.corlaReason) {
+                AuditReason.county_wide_contest -> "county"
+                AuditReason.state_wide_contest -> "state"
+                AuditReason.single_county -> "single"
+                else -> null
+            }
+        }
+
+        fun statewide(): Boolean {
+            return (counties().size > 60)
+        }
+
+        fun getStatus(): String {
+            return when {
+                !contested() -> "noloser"
+                else -> ""
+            }
         }
         
         companion object {

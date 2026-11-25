@@ -536,8 +536,6 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
     fun getId() = contestUA.id
 
     fun getEstRisk(): Double {
-        // if (!isInclude()) return 1.0 ??
-
         val minAssertion = contestUA.minClcaAssertion()
         if (minAssertion == null) return 0.0
         val noerror = minAssertion.noerror
