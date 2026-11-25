@@ -30,6 +30,7 @@ import kotlin.String
 
 private val logger = KotlinLogging.logger("ColoradoInputTable")
 
+
 class ColoradoInputTable(
     val prefs: PreferencesExt,
     val infoTA: TextHistoryPane,
