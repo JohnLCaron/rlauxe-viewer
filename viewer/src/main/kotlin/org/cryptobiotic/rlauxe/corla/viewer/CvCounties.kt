@@ -1,4 +1,4 @@
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditRound
@@ -304,7 +304,7 @@ class CvCounties(
 }
 
 ////////////////////////////////////////////////////////////////
-class CountyBean(countyData: Strata, val auditRiskLimit: Double) {
+class CountyBean(countyStrata: Strata, val auditRiskLimit: Double) {
     val name: String
     val population: Int
     val corlaNmvrs: Int
@@ -320,9 +320,9 @@ class CountyBean(countyData: Strata, val auditRiskLimit: Double) {
     var contestRisk: Map<Int, Pair<Double, Double>> = emptyMap()
 
     init {
-        this.name = countyData.strataName
-        this.population = countyData.population
-        this.corlaNmvrs = countyData.nmvrs
+        this.name = countyStrata.strataName
+        this.population = countyStrata.population
+        this.corlaNmvrs = countyStrata.nmvrs
     }
 
     fun getCorlaSamplePct() = 100 * corlaNmvrs / population.toDouble()

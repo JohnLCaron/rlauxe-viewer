@@ -1,10 +1,11 @@
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.cryptobiotic.rlauxe.audit.AuditRoundIF
+import org.cryptobiotic.rlauxe.audit.AuditRound
 import org.cryptobiotic.rlauxe.audit.Config
 import org.cryptobiotic.rlauxe.audit.ContestRound
 import org.cryptobiotic.rlauxe.audit.CountyPools
+import org.cryptobiotic.rlauxe.audit.resampleAndSaveResults
 import org.cryptobiotic.rlauxe.beans.BeanProperties
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.printTable
@@ -57,7 +58,7 @@ class CvContests(
     private var auditRecordLocation: String? = "none"
     private var countyAudit: CountyAuditRecord? = null
     private var config: Config? = null
-    private var lastAuditRound: AuditRoundIF? = null // may not be null
+    private var lastAuditRound: AuditRound? = null // may not be null
     private var infos: Map<Int, ContestInfo> = emptyMap()
     private var countyAcPools: List<CountyPools> = emptyList()
 
@@ -129,53 +130,6 @@ class CvContests(
         contestCountyTable.setFontSize(size)
     }
 
-    /*
-    override fun setAuditRecordLocation(auditRecordLocation: String): Boolean {
-        this.onlyShowInprogressContests = prefs.getBoolean( "onlyInProgress", false)
-
-        this.auditRecordLocation = auditRecordLocation
-        contestTable.setBeans(null)
-
-        logger.debug { "setAuditRecord $auditRecordLocation" }
-
-        try {
-            this.auditRecordLocation = auditRecordLocation
-            val record = AuditRecord.read(auditRecordLocation)
-            if (record == null) return false
-            if (record.rounds.isEmpty()) {
-                logger.info{"$auditRecordLocation first round was not started"}
-                return false
-            }
-            if (record !is CountyAuditRecord) {
-                logger.info{"$auditRecordLocation  must be CountyAuditRecord"}
-                return false
-            }
-            this.countyAudit = record
-            this.lastAuditRound = countyAudit!!.rounds.last()
-            this.config = countyAudit!!.config
-            this.auditRiskLimit = config!!.riskLimit
-            CvContestBean.auditRiskLimit = config!!.riskLimit
-
-            val mvrManager = PersistedMvrManager(this.countyAudit!!, false)
-            val countyPools = mvrManager.countyAcPools()
-            if (countyPools == null) return false
-            this.countyAcPools = countyPools
-
-            this.infos = countyAudit!!.contests.associate { it.contest.info().id to it.contest.info() }
-
-            loadAuditRecord()
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-            JOptionPane.showMessageDialog(null, e.message)
-            logger.error(e) {"setAuditRecord failed"}
-        }
-
-        return true
-    } */
-
-    // TODO share the AuditRecord with CvContests, so changes to ContestRound affect both
-    // So use functions, not values for those fields like include
     override fun setAuditRecord(auditRecord: AuditRecordIF): Boolean {
         if (auditRecord !is CountyAuditRecord) {
             logger.info { "$auditRecordLocation  must be CountyAuditRecord" }
@@ -263,63 +217,48 @@ class CvContests(
         BAMutil.addActionToContainer(container, onlyInProgress)
 
         val resampleAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                resample()
-                //localTA.setText(reportRisks())
-                //localWindow.show()
-            }
+            override fun actionPerformed(e: ActionEvent?) { resample() }
         }
         BAMutil.setActionProperties(resampleAction, "ambition.png", "Resample", false, 'S'.code, -1)
         BAMutil.addActionToContainer(container, resampleAction)
 
         val targetAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                includeTargetedOnly()
-            }
+            override fun actionPerformed(e: ActionEvent?) { includeTargetedOnly() }
         }
         BAMutil.setActionProperties(targetAction, "goal.png", "Include Targets Only", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, targetAction)
 
         val targetLessThanAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                includeImportant()
-            }
+            override fun actionPerformed(e: ActionEvent?) { includeImportant() }
         }
-        BAMutil.setActionProperties(
-            targetLessThanAction,
-            "important.png",
-            "Include Important Contests",
-            false,
-            'T'.code,
-            -1
-        )
+        BAMutil.setActionProperties(targetLessThanAction, "important.png", "Include Important Contests", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, targetLessThanAction)
 
         val targetPlusAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                setRisk()
-            }
+            override fun actionPerformed(e: ActionEvent?) { setRisk() }
         }
         BAMutil.setActionProperties(targetPlusAction, "risk.png", "Set variable risk", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, targetPlusAction)
 
         val includeSelectedAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                setInclude(true)
-            }
+            override fun actionPerformed(e: ActionEvent?) = setInclude(true)
         }
         BAMutil.setActionProperties(includeSelectedAction, "add-cart.png", "Include selected Contests", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, includeSelectedAction)
 
         val excludeSelectedAction: AbstractAction = object : AbstractAction() {
-            override fun actionPerformed(e: ActionEvent?) {
-                setInclude(false)
-            }
+            override fun actionPerformed(e: ActionEvent?) = setInclude(false)
         }
         BAMutil.setActionProperties(excludeSelectedAction, "remove-cart.png", "Exclude selected Contests", false, 'T'.code, -1)
         BAMutil.addActionToContainer(container, excludeSelectedAction)
 
-        val reportAction: AbstractAction = object : AbstractAction() {
+        val saveAction: AbstractAction = object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent?) { saveContests() }
+        }
+        BAMutil.setActionProperties(saveAction, "saveConfig.png", "Save contests", false, 'S'.code, -1)
+        BAMutil.addActionToContainer(container, saveAction)
+
+        /* val reportAction: AbstractAction = object : AbstractAction() {
             override fun actionPerformed(e: ActionEvent?) {
                 if (dist.isEmpty()) return
                 infoTA.setText(reportRisks("Election", wantNmvrs, dist, contestTable.beans))
@@ -327,7 +266,7 @@ class CvContests(
             }
         }
         BAMutil.setActionProperties(reportAction, "count.png", "Show Sampling Report", false, 'T'.code, -1)
-        BAMutil.addActionToContainer(container, reportAction)
+        BAMutil.addActionToContainer(container, reportAction) */
     }
 
     // all include or exclude
@@ -352,14 +291,14 @@ class CvContests(
     fun includeTargetedOnly() {
         for (bean in contestTable.beans) {
             bean.setInclude(bean.targeted())
-            bean.setMaxRisk(auditRiskLimit)
+            // bean.setMaxRisk(auditRiskLimit)
         }
         samplingChanged = true
         contestTable.refresh()
     }
 
     fun setRisk() {
-        for (bean in contestTable.beans) {
+        /* for (bean in contestTable.beans) {
             if (bean.getStatus() != TestH0Status.InProgress.name) continue
             if (bean.contestRound == null) continue
 
@@ -369,12 +308,16 @@ class CvContests(
             else bean.setMaxRisk(auditRiskLimit)
         }
         samplingChanged = true
-        contestTable.refresh()
+        contestTable.refresh() */
     }
 
     fun includeImportant(): Boolean {
+
         for (bean in contestTable.beans) {
-            if ((bean.counties()?.size ?: 0) > 1) bean.setInclude(true)
+            if ((bean.counties()?.size ?: 0) > 55) bean.setInclude(true) // statewide
+            if (bean.getName().contains("Judicial District")) bean.setInclude(true)
+            if (bean.getName().startsWith("Regent")) bean.setInclude(true)
+            if (bean.getName().startsWith("Regional")) bean.setInclude(true)
             if (bean.getName().startsWith("Representative to the")) bean.setInclude(true)
             if (bean.getName().startsWith("State")) bean.setInclude(true)
         }
@@ -382,6 +325,12 @@ class CvContests(
         samplingChanged = true
         contestTable.refresh()
         return true
+    }
+
+    fun saveContests() {
+        if (countyAudit == null || lastAuditRound == null) return
+        val ok = resampleAndSaveResults(countyAudit!!, lastAuditRound!!)
+        logger.info { "resampleAndSaveResults = $ok" }
     }
 
     fun resample() {
@@ -421,7 +370,7 @@ class CvContests(
     }
 
     fun setHeaderText() {
-        val text = "Election estimated nmvrs=${this.meanNmvrs!!}"
+        val text = "Election included= ${contestTable.beans.filter { it.isInclude() }.count()} estimated nmvrs=${this.meanNmvrs!!}"
         headerLabel.setText(text)
     }
 
@@ -520,15 +469,7 @@ acNu = 614, cvrNu = 597 diff = 17
                 acNvotes += bean.nvotes
                 acNu += bean.undervotes
             }
-            appendLine(
-                "${trunc("Total", 15)} ${nfn(acNcards, 6)} ${nfn(acNvotes, 6)} ${nfn(cvrNcards, 6)} ${
-                    nfn(
-                        cvrNvotes,
-                        6
-                    )
-                } "
-            )
-
+            appendLine("${trunc("Total", 15)} ${nfn(acNcards, 6)} ${nfn(acNvotes, 6)} ${nfn(cvrNcards, 6)} ${nfn(cvrNvotes, 6)} ")
             appendLine()
             appendLine("ac   = $acSum")
             appendLine("cvrs = $cvrSum")
@@ -576,7 +517,7 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         }
     }
 
-    fun getMaxRisk(): Double {
+    /* fun getMaxRisk(): Double {
         if (contestRound == null) return 1.0
         val risk = contestRound!!.auditorWantRisk
         return if (risk != null) risk else auditRiskLimit
@@ -586,10 +527,10 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
     fun setMaxRisk(risk: Double) {
         if (contestRound == null) return
         contestRound!!.auditorWantRisk = risk
-        contestRound!!.estMvrs = this.calcEstMvrs(risk)
+        contestRound!!.estMvrs = this.calcEstMvrs(risk) // TODO HEY WTF
         // this.setInclude(true)
         sampleChanged(true)
-    }
+    } */
 
     fun getName() = contestUA.name
     fun getId() = contestUA.id
@@ -605,8 +546,12 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         return estRiskStandardBet(contestUA.Npop, noerror, haveMvrs)
     }
 
+    fun getCalcMvrs(): Int {
+        return calcEstMvrs(auditRiskLimit)
+    }
+
     fun getEstMvrs(): Int {
-        return calcEstMvrs(this.getMaxRisk())
+        return contestRound?.estMvrs ?: -1
     }
 
     fun calcEstMvrs(maxRisk: Double): Int {
@@ -614,9 +559,7 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         if (minAssertion == null) return 0
         val noerror = minAssertion.noerror
 
-        val estRisk =  estSampleSizeStandardBet(contestUA.Npop, noerror, maxRisk)
-        println("${getId()}: ${contestUA.Npop} ${noerror} ${estRisk}")
-        return estRisk
+        return estSampleSizeStandardBet(contestUA.Npop, noerror, maxRisk) // note Npop is not corla pop
     }
 
     fun getHaveMvrs() = if (contestRound == null) 0 else contestRound!!.haveSampleSize
@@ -762,13 +705,9 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
     }
 
     fun getNoerror(): Double {
-        val minClcaAssertion = contestUA.minClcaAssertion()
-        val noerrorClca = minClcaAssertion!!.noerror
-
         val minAssertion = contestUA.minAssertion()
         if (minAssertion == null) return Double.NaN
         return minAssertion.assorter.noerror()
-        // payoff = return dfn(payoff(2.0 / 1.03905, noerror), 6)
     }
 
     fun getMargin(): Double{
@@ -820,7 +759,7 @@ class CvContestBean(var contestUA: ContestWithAssertions, var contestRound: Cont
         fun editableProperties() = "include maxRisk"
 
         @JvmStatic
-        fun hiddenProperties() = "contestRound contestUA sampleChanged counties"
+        fun hiddenProperties() = "contestRound contestUA sampleChanged counties orgHave"
     }
 }
 

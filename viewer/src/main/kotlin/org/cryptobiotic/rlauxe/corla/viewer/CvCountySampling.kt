@@ -1,4 +1,4 @@
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.viewer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.audit.AuditRound
@@ -36,7 +36,6 @@ import kotlin.text.appendLine
 import kotlin.text.drop
 
 // TODO County specific sampling tool
-// what if this is a JTable instead of a JPanel
 class CvCountySampling(
     private val prefs: PreferencesExt,
     infoTA: TextHistoryPane,
@@ -252,6 +251,7 @@ class CvCountySampling(
 
             // TODO save this state ??
             wantNmvrs = samplingTable.beans.filter { it.isInclude() }.map { Pair(it.getId(), it.getCountyMvrs())}.toMap()
+
 
             // TODO maxSamples, ntrials ??
             val qdist = sampleCountyCvrs(countyAudit!!, county, wantNmvrs, 10)
@@ -679,7 +679,7 @@ fun reportRisks(who: String, wantNmvrs: Map<Int, Int>, dist: List<Int>, beans: L
     val riskus = mutableListOf<Double>()
     beans.forEach { bean ->
         countBeans++
-        val maxRisk = bean.getMaxRisk()
+        val maxRisk = CvCountySamplingBean.auditRiskLimit
 
         val risk = bean.getEstRisk()
         risks.add(risk)

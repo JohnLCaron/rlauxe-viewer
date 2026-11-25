@@ -1,5 +1,5 @@
 [versions]
-rlauxe = "0.11.0.0"
+rlauxe = "0.11.0.3"  ## prerelease 0.MAJOR.MINOR.PATCH
 
 # main dependency versions
 kotlin = "2.4.10"
@@ -12,6 +12,7 @@ slf4j-version="2.0.18"
 bull-result = "2.3.1"
 commons-csv = "1.14.1"
 commons-math = "3.6.1"
+commons-poi = "5.5.0"
 kandy-letsPlot = "0.8.3"
 kotlin-statistics = "0.8.3"
 serialization = "1.11.0"
@@ -29,15 +30,16 @@ flatlaf = "3.7.2"
 # test only dependency versions
 junit-jupiter-params = "5.13.1"
 logback = "1.6.2"
-mockk = "1.14.9" # used ??
+mockk = "1.14.9" # used ?
 kotest = "6.2.0"
 
 [libraries]
 
 # Kotlinx libraries
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinx-cli" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-serialization-protobuf = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-protobuf", version.ref = "serialization" }
 
 # Lets-Plot
 lets-plot = { group = "org.jetbrains.kotlinx", name = "kandy-lets-plot", version.ref = "kandy-letsPlot" }
@@ -78,5 +80,4 @@ jvmtest = ["junit-jupiter-params", "kotlin-test-junit5", "logback-classic", "moc
 xmlutil = ["pdvrieze-xmlutil-core-xml", "pdvrieze-xmlutil-serialization-xml", ]
 
 [plugins]
-kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-# kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" } # must match kotlin

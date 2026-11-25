@@ -3,7 +3,7 @@
  * See LICENSE for license information.
  */
 
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.input
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.beans.BeanTable

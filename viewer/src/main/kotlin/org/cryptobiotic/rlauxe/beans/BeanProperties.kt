@@ -23,9 +23,6 @@ object BeanProperties {
         contests.add(TableBeanProperty("cvrNcards", "number of cards from cvrs"))
         contests.add(TableBeanProperty("diffNcards", "contest.Nc  - cvrNcards"))
 
-        contests.add(TableBeanProperty("estMvrs", "estimated number of mvrs needed"))
-        contests.add(TableBeanProperty("estRisk", "estimated risk"))
-        contests.add(TableBeanProperty("haveMvrs", "number of mvrs that were sampled for this contest"))
         contests.add(TableBeanProperty("id", "contest identifier"))
         contests.add(TableBeanProperty("include", "include the contest in this audit round"))
         contests.add(TableBeanProperty("margin", "voteMargin / population size (smallest assertion)"))
@@ -33,7 +30,7 @@ object BeanProperties {
         // contests.add(TableBeanProperty("missing", "TODO"))
         contests.add(TableBeanProperty("mvrLimit", "limit on number of mvrs to audit; set by auditor"))
         contests.add(TableBeanProperty("mvrsExtra", "(haveMvrs-estMvrs)"))
-        contests.add(TableBeanProperty("mvrsUsed", "number of mvrs actually used during audit"))
+
         contests.add(TableBeanProperty("name", "contest name"))
         contests.add(TableBeanProperty("nc", "trusted upper bound on contest number of cards"))
         // contests.add(TableBeanProperty("ncast", "number of cards cast"))
@@ -66,12 +63,18 @@ object BeanProperties {
         contests.add(TableBeanProperty("fail", "number of contested assertions"))
         contests.add(TableBeanProperty("nseats", "nseats to win"))
 
+        // sample count when testH0 terminates
+
         // ContestRound
         contests.add(TableBeanProperty("done", "contest has completed"))
-        contests.add(TableBeanProperty("estNewMvrs", "estimated new samples needed"))
-        contests.add(TableBeanProperty("estPct", "estimated samples needed / contest Nc"))
-        contests.add(TableBeanProperty("haveNewMvrs", "new contest cards in sample"))
+        contests.add(TableBeanProperty("estMvrs", "estimated number of mvrs needed (contestRound.estMvrs) "))
+        contests.add(TableBeanProperty("estNewMvrs", "estimated new samples needed (contestRound.estNewMvrs)"))
+        contests.add(TableBeanProperty("estPct", "estMvrs / contest Nc"))
+        contests.add(TableBeanProperty("estRisk", "estimated risk: estRiskStandardBet for min assertion"))
+        contests.add(TableBeanProperty("haveMvrs", "number of mvrs that were sampled for this contest (contestRound.haveSampleSize)"))
+        contests.add(TableBeanProperty("haveNewMvrs", "new contest cards in sample (contestRound.haveNewSampleSize)"))
         contests.add(TableBeanProperty("maxIndex", "max sample index for this contest"))
+        contests.add(TableBeanProperty("mvrsUsed", "mvrs used in this round (sample count when testH0 terminates"))
         contests.add(TableBeanProperty("round", "index of audit round"))
 
         // Corla
@@ -146,7 +149,7 @@ object BeanProperties {
         // assertion round
         assertions.add(TableBeanProperty("completed", "round that assertions was proved"))
         assertions.add(TableBeanProperty("estNewMvrs", "estimated new samples needed"))
-        assertions.add(TableBeanProperty("mvrsUsed", "mvrs used in this round"))
+        assertions.add(TableBeanProperty("mvrsUsed", "mvrs used in this round (sample count when testH0 terminates"))
         assertions.add(TableBeanProperty("prevMvrs", "mvrs from previous rounds"))
         assertions.add(TableBeanProperty("round", "index of audit round"))
         assertions.add(TableBeanProperty("status", "status of assertion completion"))

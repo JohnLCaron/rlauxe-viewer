@@ -2,7 +2,7 @@
  * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.input
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.AuditReason
@@ -10,8 +10,8 @@ import org.cryptobiotic.rlauxe.auditcenter.ComparisonMvr
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.co.auditcenter.MvrComparison
-import org.cryptobiotic.rlauxe.co.input.ContestMvrMergedInfos
-import org.cryptobiotic.rlauxe.co.input.MvrMergedInfo
+import org.cryptobiotic.rlauxe.co.input.ContestMvrComparisons
+import org.cryptobiotic.rlauxe.co.input.MvrMergedComparison
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.viewer.SubPanelIF
 import ucar.ui.widget.IndependentWindow
@@ -32,13 +32,13 @@ class MvrSampleTable(
 
     val tables = mutableListOf<BeanTable<out Any>>()
     // private val mvrSampleTable: BeanTable<MvrSampleBean>
-    private val mvrInfoTable: BeanTable<MvrInfoBean>
+    private val mvrInfoTable: BeanTable<MvrMergedComparisonBean>
     private val comparisonLineTable: BeanTable<ComparisionLineBean>
     // val localInfo = TextHistoryPane()
     private val split1: JSplitPane
     // private val split2: JSplitPane
 
-    var contestMergedInfos: ContestMvrMergedInfos? = null
+    var contestMvrComparisons: ContestMvrComparisons? = null
 
     init {
         /* mvrSampleTable = BeanTable(
@@ -52,8 +52,8 @@ class MvrSampleTable(
         tables.add(mvrSampleTable) */
 
         mvrInfoTable = BeanTable(
-            MvrInfoBean::class.java, prefs.node("MvrInfoBean") as PreferencesExt, false,
-            "MvrInfo", "Mvr", null
+            MvrMergedComparisonBean::class.java, prefs.node("MvrInfoBean") as PreferencesExt, false,
+            "Mvr", "MvrMergedComparison", null
         )
         mvrInfoTable.addListSelectionListener {
             val selected = mvrInfoTable.getSelectedBean()
@@ -83,7 +83,7 @@ class MvrSampleTable(
 
     fun setColoradoInput(stateInput: StatewideInput, county: String?) {
         logger.debug { "MvrSampleTable setColoradoInput ${stateInput.name()} $county" }
-        contestMergedInfos = ContestMvrMergedInfos(stateInput, true, true)
+        contestMvrComparisons = ContestMvrComparisons(stateInput, stateInput.mergedInfo().mergedContestInfo, keepLines = true)
 
         /* if (county != null) {
             this.corlaPrngCounty = CorlaPrngCounty(stateInput, county)
@@ -95,11 +95,11 @@ class MvrSampleTable(
         comparisonLineTable.setBeans(null)
 
         if (county != null) {
-            val mvrInfos = contestMergedInfos!!.getMvrsForCounty(county)
+            val mvrInfos: List<MvrMergedComparison> = contestMvrComparisons!!.getMvrsForCounty(county)
             logger.debug { "mvrInfoTable ${mvrInfos.size} mvrs" }
-            val beans = mutableListOf<MvrInfoBean>()
+            val beans = mutableListOf<MvrMergedComparisonBean>()
             mvrInfos.forEach { mvr ->
-                beans.add(MvrInfoBean(mvr))
+                beans.add(MvrMergedComparisonBean(mvr))
 
                 //if (county == null || mvr.county() == county) {
                 /* val sampled = if (corlaPrngCounty?.claim("${mvr.county()}: ${mvr.imprintedId()}") ?: false) "county" else {
@@ -127,9 +127,9 @@ class MvrSampleTable(
         logger.debug { "MvrSampleBean setColoradoInput added ${beanss.size} mvrs" } */
     }
 
-    fun setSelectedSample(bean: MvrInfoBean) {
+    fun setSelectedSample(bean: MvrMergedComparisonBean) {
         if (bean.mvr.lines != null)
-            comparisonLineTable.setBeans(bean.mvr.lines!!.map { ComparisionLineBean(it) })
+            comparisonLineTable.setBeans(bean.mvr.lines!!.map { ComparisionLineBean(it, bean.mvr.auditReason) })
     }
 
     override fun setFontSize(size: Float) {
@@ -151,7 +151,7 @@ class MvrSampleTable(
 
     //////////////////////////////////////////////////////
 
-    class MvrInfoBean(val mvr: MvrMergedInfo) {
+    class MvrMergedComparisonBean(val mvr: MvrMergedComparison) {
         val dbid = mvr.dbId
         val county = mvr.county
         val imprintedId = ImprintedId(mvr.imprintedId)
@@ -221,7 +221,7 @@ class MvrSampleTable(
     //    val dbId: Int, // apparently the opaque "db creation id"
     //    val statewide: Boolean,
     //)
-    inner class ComparisionLineBean(line: MvrComparison) {
+    inner class ComparisionLineBean(line: MvrComparison, auditReason: AuditReason) {
         val countyName = line.county_name    // could live on the mvr
         val contest = line.contest_name     // could live on the mvr
         val imprintedId = line.imprinted_id     // could live on the mvr
@@ -230,13 +230,7 @@ class MvrSampleTable(
         val mvrChoice = line.audit_board_selection
         val comment = line.audit_board_comment
         val disagree = line.choice_per_voting_computer != line.audit_board_selection
-        val target: AuditReason
-        init {
-            target = if (contestMergedInfos != null) {
-                val mcontest = contestMergedInfos!!.mcontests[line.contest_name]!!
-                mcontest.auditReason
-            } else AuditReason.none
-        }
+        val target = auditReason
     }
 }
 

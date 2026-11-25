@@ -2,15 +2,16 @@
  * Copyright (c) 2026 John L. Caron
  * See LICENSE for license information.
  */
-package org.cryptobiotic.rlauxe.corla
+package org.cryptobiotic.rlauxe.corla.input
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.cryptobiotic.rlauxe.auditcenter.AuditReason
-import org.cryptobiotic.rlauxe.auditcenter.ContestTabAllCounties
 import org.cryptobiotic.rlauxe.corlaInput.StatewideInput
 import org.cryptobiotic.rlauxe.beans.BeanTable
 import org.cryptobiotic.rlauxe.beans.TableBeanProperty
 import org.cryptobiotic.rlauxe.beans.printTable
+import org.cryptobiotic.rlauxe.co.auditcenter.ContestSelection
+import org.cryptobiotic.rlauxe.co.auditcenter.TabulateContest
 import org.cryptobiotic.rlauxe.co.corla.pValueApproximation
 import org.cryptobiotic.rlauxe.co.input.ContestMergedInfo
 import org.cryptobiotic.rlauxe.corlaInput.statewideInputs
@@ -46,7 +47,7 @@ class ColoradoInputTable(
 
     // TextHistoryPane localInfo = new TextHistoryPane();
     private val split1: JSplitPane
-    // private val split2: JSplitPane
+    private var isInit = false
 
     init {
         inputTable = BeanTable(
@@ -54,13 +55,13 @@ class ColoradoInputTable(
             "Available Colorado Data", "ColoradoInput", null)
         inputTable.addListSelectionListener {
             val selected = inputTable.getSelectedBean()
-            if (selected != null) setSelectedInput(selected)
+            if (isInit && selected != null) setSelectedInput(selected)
         }
         tables.add(inputTable)
 
         contestTable = BeanTable(
             CanonicalContestBean::class.java, prefs.node("CanonicalContests") as PreferencesExt, false,
-            "Canonical Contests", "Merged Canonical Contest Information", null)
+            "Contest Merged Info", "Merged Canonical Contest Information", null)
         contestTable.addPopupOption(
             "Show Row",
             contestTable.makeShowAction(infoTA, infoWindow) { bean: CanonicalContestBean -> showCanonicalContest(bean) }
@@ -84,7 +85,8 @@ class ColoradoInputTable(
         setLayout(BorderLayout())
         add(split1, BorderLayout.CENTER)
 
-        logger.debug { "CountyPoolTable init" }
+        logger.debug { "CiTable init" }
+        isInit = true
     }
 
     // actions on right side of Audit record chooser
@@ -114,7 +116,6 @@ class ColoradoInputTable(
 
     fun setSelectedInput(bean: ColoradoInputBean) {
         this.selectedInputBean = bean
-
         if (onlyContested) filterContested() else allContests(bean)
         setInput(bean.input)
     }
@@ -123,7 +124,7 @@ class ColoradoInputTable(
         this.selectedInputBean = inputBean
         contestTable.setBeans(emptyList())
 
-        val contestTabs: Map<String, ContestTabAllCounties> = inputBean.input.contestTabsAllCounties()
+        val contestTabs = inputBean.input.contestTabsAllCounties()
         val contestBeans = mutableListOf<CanonicalContestBean>()
         inputBean.input.mergedContestMap.forEach {
             contestBeans.add(CanonicalContestBean(it.key, it.value, contestTabs[it.key]))
@@ -162,6 +163,22 @@ class ColoradoInputTable(
         val ncontests = input.ncontests()
         val uncontested = input.nuncontested()
         val contested = ncontests - uncontested
+        val targetedContests: Int
+
+        val countyMvrs: Int
+        val stateMvrs: Int
+        val totalMvrs: Int
+        val totalCards: Int
+
+        init {
+            totalCards = input.countyStrataMap.values.sumOf{ it.population }
+            countyMvrs = input.countyStrataMap.values.sumOf{ it.countyMvrs }
+            stateMvrs = input.countyStrataMap.values.sumOf{ it.stateMvrs }
+            totalMvrs = countyMvrs + stateMvrs
+
+            val selected: Map<String, ContestSelection> = ContestSelection.readFromFile(input.contestSelectionFile)
+            targetedContests = selected.size
+        }
 
         companion object {
             @JvmStatic
@@ -172,23 +189,29 @@ class ColoradoInputTable(
     ////////////////////////////////////////////////////////////////
     // use ContestMergedInfo ?
 
-    class CanonicalContestBean(val name: String, val mcontest: ContestMergedInfo, val contestTab: ContestTabAllCounties?) {
+    class CanonicalContestBean(val name: String, val mcontest: ContestMergedInfo, val contestTab: TabulateContest?) {
         val contest = mcontest.canonicalContest
 
         // contest round
-        val auditReason = mcontest.auditReason
+        val auditReason = mcontest.corlaReason
         val corlaPop = mcontest.corlaPop       // ballot_card_count
         val corlaNc = mcontest.corlaNc         // contest_ballot_card_count
-        val estSamples  = mcontest.estSamples // Corla estimated_samples_to_audit
+        val corlaEstSamples  = mcontest.corlaEstSamples // Corla estimated_samples_to_audit
+        val estSamples  = mcontest.rlauxeEstSamples // Corla estimated_samples_to_audit
         val marginInVotes = mcontest.marginInVotes // min_margin
         val margin = mcontest.marginInVotes / mcontest.corlaPop.toDouble()
         val voteForN = mcontest.voteForN  // winners_allowed
         val riskLimit  = mcontest.riskLimit // risk_limit
 
+        val p2o = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[0]
+        val p1o = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[1]
+        val p1u = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[2]
+        val p2u = if (mcontest.errors.isEmpty()) 0 else mcontest.errors[3]
+
         // mvr file
         val countyMvrs = mcontest.strata!!.countyMvrs
         val statewideMvrs = mcontest.strata!!.stateMvrs
-        val extraMvrs =  countyMvrs + statewideMvrs - mcontest.estSamples
+        val extraMvrs =  countyMvrs + statewideMvrs - mcontest.corlaEstSamples
 
         fun getRecount(): Double {
             if (contestTab == null) return Double.NaN
@@ -207,7 +230,7 @@ class ColoradoInputTable(
         }
 
         fun getTarget(): String? {
-            return when (mcontest.auditReason) {
+            return when (mcontest.corlaReason) {
                 AuditReason.county_wide_contest -> "county"
                 AuditReason.state_wide_contest -> "state"
                 AuditReason.single_county -> "single"
@@ -219,6 +242,13 @@ class ColoradoInputTable(
             return (counties().size > 60)
         }
 
+        fun getStatus(): String {
+            return when {
+                !contested() -> "noloser"
+                else -> ""
+            }
+        }
+
         fun getNCand() = contest.choices.size
 
         fun getChoices() = contest.choices.toString()
@@ -226,12 +256,24 @@ class ColoradoInputTable(
         fun contested() = getNCand() > voteForN
 
         fun getCorlaRisk(): Double {
+            var pe = mcontest.errors
+            if (pe.isEmpty()) pe = listOf(0,0,0,0)
             return pValueApproximation(
                     n = mcontest.strata!!.nmvrs, // n = auditedBallots the number of ballots audited for this strata
                     dilutedMargin = margin, // probably minimum margin of the contest's assertions,
                     gamma = 1.03905,  // “inflator” γ > 1; same purpose as MaxRisk I think. Corla uses 1.03905.
-                    0, 0, 0, 0, // TODO we need the number of discrepencies in the mvrs for each contest
+                    pe[0], pe[1], pe[2], pe[3],
                 )
+        }
+
+        fun getExtraRisk(): Double {
+            val noerrs =  pValueApproximation(
+                n = mcontest.strata!!.nmvrs, // n = auditedBallots the number of ballots audited for this strata
+                dilutedMargin = margin, // probably minimum margin of the contest's assertions,
+                gamma = 1.03905,  // “inflator” γ > 1; same purpose as MaxRisk I think. Corla uses 1.03905.
+                0, 0, 0, 0,
+            )
+            return getCorlaRisk() - noerrs
         }
         
         companion object {
@@ -254,9 +296,13 @@ class ColoradoInputTable(
                 TableBeanProperty("NCand", "number of choices (candidates)"),
                 TableBeanProperty("NCounties", "number of counties, or county name if only one"),
                 TableBeanProperty("recount", "vote margin / winner's votes"),
+                TableBeanProperty("p2o", "two count overstatement"),
+                TableBeanProperty("p1o", "one count overstatement"),
+                TableBeanProperty("p1u", "one count understatement"),
+                TableBeanProperty("p2u", "two count understatement"),
                 TableBeanProperty("riskLimit", "from round.risk_limit"),
                 TableBeanProperty("statewideMvrs", "count of statewide mvrs over all this countest's counties"),
-                TableBeanProperty("target", "if targeted for audit"),
+                TableBeanProperty("target", "if targeted for audit, from round.audit_reason"),
                 TableBeanProperty("voteForN", "from round.winners_allowed"),
             )
         }
